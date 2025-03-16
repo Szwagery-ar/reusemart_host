@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+// ========== Pembeli ==========
+
+model Pembeli {
+  id_pembeli            Int    @id @default(autoincrement())
+  nama                  String
+  no_telepon            BigInt
+  email                 String @unique
+  password              String
+  poin_loyalitas        Int
+  alamat                Alamat[]
+}
+
+model Alamat {
+  id_alamat             Int    @id @default(autoincrement())
+  nama_alamat           String
+  lokasi                String
+  id_pembeli            Int
+  pembeli               Pembeli   @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: Cascade)
+}
+
+// ========== Pembeli ==========
+
+
+// ========== Pegawai ==========
+
+model Pegawai {
+  id_pegawai            Int     @id @default(autoincrement())
+  nama                  String
+  no_telepon            BigInt
+  email                 String @unique
+  password              String
+  tanggal_lahir         DateTime
+  komisi                Decimal @default(0.0)
+  id_jabatan            Int
+  jabatan               Jabatan @relation(fields: [id_jabatan], references: [id_jabatan], onDelete: Cascade)
+}
+
+model Jabatan {
+  id_jabatan            Int @id @default(autoincrement())
+  nama_jabatan          String
+  pegawai               Pegawai[]
+}
+
+// ========== Pegawai ==========
+
+
+// ========== Penitipan Barang ==========
+
+model Penitip {
+  id_penitip            Int @id @default(autoincrement())
+  nama                  String
+  no_ktp                BigInt @unique
+  no_telepon            BigInt
+  email                 String @unique
+  password              String
+  jml_barang_terjual    Int @default(0)
+  badge_level           String
+}
+
+// ========== Penitipan Barang ==========
+
+
+// ========== DONASI ==========
+
+// ENUMS (for status fields)
+enum StatusDonasi {
+  PENDING
+  APPROVED
+  CANCELLED
+}
+
+enum StatusRequest {
+  
+
+  PENDING      // Menunggu acc
+  APPROVED     // Sudah diacc, menunggu pemberian donasi
+  DONE         // Sudah diacc dan dikirimkan
+  CANCELLED    // Dibatalkan
+}
+
+model Donasi {
+  id_donasi             Int @id @default(autoincrement())
+  status_donasi         StatusDonasi
+  tanggal_acc           DateTime?
+  tanggal_donasi        DateTime?
+  nama_penerima         String
+  id_request            Int? @unique
+  requestdonasi         RequestDonasi? @relation(fields: [id_request], references: [id_request], onDelete: SetNull)
+}
+
+model RequestDonasi {
+  id_request            Int @id @default(autoincrement())
+  tanggal_request       DateTime
+  deskripsi             String
+  status_request        StatusRequest
+  donasi                Donasi?
+  id_organisasi         Int?
+  organisasi            Organisasi? @relation(fields: [id_organisasi], references: [id_organisasi], onDelete: SetNull)
+}
+
+model Organisasi {
+  id_organisasi         Int @id @default(autoincrement())
+  nama                  String
+  email                 String
+  password              String
+  no_telepon            BigInt
+  alamat                String
+  requestdonasi         RequestDonasi[] 
+}
+
+// ========== DONASI ==========
+
+
+// ========== Merchandise ==========
+
+model Merchandise {
+  id_merchandise        Int @id @default(autoincrement())
+  nama_merch            String
+  deskripsi_merch       String
+  jumlah_stok           Int
+}
+
+// ========== Merchandise ==========
