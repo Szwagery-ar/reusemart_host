@@ -7,18 +7,18 @@ export async function GET(request) {
         const search = searchParams.get("q");
 
         let query = `
-            SELECT request_donasi.id_request, request_donasi.tanggal_request, request_donasi.deskripsi, 
-                   request_donasi.status_request, request_donasi.id_organisasi, organisasi.nama AS nama_organisasi
-            FROM request_donasi
-            LEFT JOIN organisasi ON request_donasi.id_organisasi = organisasi.id_organisasi
+            SELECT requestdonasi.id_request, requestdonasi.tanggal_request, requestdonasi.deskripsi, 
+                   requestdonasi.status_request, requestdonasi.id_organisasi, organisasi.nama AS nama_organisasi
+            FROM requestdonasi
+            LEFT JOIN organisasi ON requestdonasi.id_organisasi = organisasi.id_organisasi
         `;
 
         let values = [];
 
         if (search) {
             query += `
-                WHERE request_donasi.deskripsi LIKE ? 
-                OR request_donasi.status_request LIKE ?
+                WHERE requestdonasi.deskripsi LIKE ? 
+                OR requestdonasi.status_request LIKE ?
                 OR organisasi.nama LIKE ?
             `;
             values = [`%${search}%`, `%${search}%`, `%${search}%`];
@@ -48,7 +48,7 @@ export async function POST(request) {
         }
 
         await pool.query(
-            "INSERT INTO request_donasi (tanggal_request, deskripsi, status_request, id_organisasi) VALUES (?, ?, ?, ?)",
+            "INSERT INTO requestdonasi (tanggal_request, deskripsi, status_request, id_organisasi) VALUES (?, ?, ?, ?)",
             [tanggal_request, deskripsi, status_request, id_organisasi]
         );
 
@@ -67,14 +67,14 @@ export async function PUT(request) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
-        const [requestExists] = await pool.query("SELECT * FROM request_donasi WHERE id_request = ?", [id_request]);
+        const [requestExists] = await pool.query("SELECT * FROM requestdonasi WHERE id_request = ?", [id_request]);
 
         if (requestExists.length === 0) {
             return NextResponse.json({ error: "RequestDonasi not found!" }, { status: 404 });
         }
 
         await pool.query(
-            "UPDATE request_donasi SET tanggal_request = ?, deskripsi = ?, status_request = ? WHERE id_request = ?",
+            "UPDATE requestdonasi SET tanggal_request = ?, deskripsi = ?, status_request = ? WHERE id_request = ?",
             [tanggal_request, deskripsi, status_request, id_request]
         );
 
@@ -93,13 +93,13 @@ export async function DELETE(request) {
             return NextResponse.json({ error: "id_request is required!" }, { status: 400 });
         }
 
-        const [requestExists] = await pool.query("SELECT * FROM request_donasi WHERE id_request = ?", [id_request]);
+        const [requestExists] = await pool.query("SELECT * FROM requestdonasi WHERE id_request = ?", [id_request]);
 
         if (requestExists.length === 0) {
             return NextResponse.json({ error: "RequestDonasi not found!" }, { status: 404 });
         }
 
-        await pool.query("DELETE FROM request_donasi WHERE id_request = ?", [id_request]);
+        await pool.query("DELETE FROM requestdonasi WHERE id_request = ?", [id_request]);
 
         return NextResponse.json({ message: "RequestDonasi deleted successfully!" }, { status: 200 });
 

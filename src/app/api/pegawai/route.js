@@ -6,8 +6,9 @@ export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");
+
         let query = `
-            SELECT pegawai.id_pegawai, pegawai.nama, pegawai.email, pegawai.no_telepon, 
+            SELECT pegawai.id, pegawai.id_pegawai, pegawai.nama, pegawai.email, pegawai.no_telepon, 
                    pegawai.tanggal_lahir, pegawai.komisi, pegawai.id_jabatan, jabatan.nama_jabatan 
             FROM pegawai 
             JOIN jabatan ON pegawai.id_jabatan = jabatan.id_jabatan
@@ -34,33 +35,77 @@ export async function GET(request) {
     }
 }
 
+
 export async function POST(request) {
     try {
+        // Verifikasi token dan cek apakah pegawai yang melakukan request adalah admin
+        const pegawai = await verifyTokenAndCheckAdmin(request);
+
         const { nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan } = await request.json();
 
+        // Validasi input
         if (!nama || !email || !password || !no_telepon || !tanggal_lahir || !id_jabatan) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
+        // Cek apakah email sudah ada di tabel pegawai
         const [existingEmail] = await pool.query("SELECT email FROM pegawai WHERE email = ?", [email]);
-
         if (existingEmail.length > 0) {
             return NextResponse.json({ error: "Email already exists! Please use a different email." }, { status: 400 });
         }
 
+        // Cek apakah email sudah ada di pembeli
+        const [existingPembeli] = await pool.query("SELECT email FROM pembeli WHERE email = ?", [email]);
+        if (existingPembeli.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Pembeli! Please use a different email." }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di penitip
+        const [existingPenitip] = await pool.query("SELECT email FROM penitip WHERE email = ?", [email]);
+        if (existingPenitip.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Penitip! Please use a different email." }, { status: 400 });
+        }
+
+        // Cek apakah jabatan pegawai yang melakukan request adalah admin
+        if (pegawai.jabatan !== 'admin') {
+            return NextResponse.json({ error: "Only admins can add new pegawai." }, { status: 403 });
+        }
+
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await pool.query(
+        // Insert pegawai baru ke database
+        const [result] = await pool.query(
             "INSERT INTO pegawai (nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan) VALUES (?, ?, ?, ?, ?, ?, ?)",
             [nama, email, hashedPassword, no_telepon, tanggal_lahir, komisi, id_jabatan]
         );
 
-        return NextResponse.json({ message: "Pegawai added successfully!" }, { status: 201 });
+        // Menyusun ID pegawai
+        const id_pegawai = result.insertId;
+        const id = `P${id_pegawai}`;
+
+        // Update ID pegawai pada tabel
+        await pool.query("UPDATE pegawai SET id = ? WHERE id_pegawai = ?", [id, id_pegawai]);
+
+        // Return response sukses
+        return NextResponse.json({ message: "Pegawai added successfully!", id, id_pegawai }, { status: 201 });
 
     } catch (error) {
-        return NextResponse.json({ error: "Failed to add Pegawai" }, { status: 500 });
+        console.error(error);
+
+        if (
+            error.message === 'No token provided' ||
+            error.message === 'Not a pegawai' ||
+            error.message === 'Pegawai not found' ||
+            error.message === 'Forbidden'
+        ) {
+            return NextResponse.json({ error: error.message }, { status: 403 });
+        }
+
+        return NextResponse.json({ error: "Failed to add Penitip", details: error.message }, { status: 500 });
     }
 }
+
 
 export async function PUT(request) {
     try {

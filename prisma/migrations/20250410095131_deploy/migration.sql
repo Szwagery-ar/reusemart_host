@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `penitip` ADD COLUMN `komisi` DECIMAL(65, 30) NOT NULL DEFAULT 0.0;

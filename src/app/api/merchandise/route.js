@@ -6,13 +6,15 @@ export async function GET(request) {
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");
 
-        let query = `SELECT id_merchandise, nama_merch, deskripsi_merch, jumlah_stok FROM merchandise`;
-
+        let query = `
+            SELECT id_merchandise, nama_merch, deskripsi_merch, jumlah_stok, jumlah_poin, src_img
+            FROM merchandise
+        `;
         let values = [];
 
         if (search) {
-            query += ` WHERE nama_merch LIKE ?`;
-            values = [`%${search}%`];
+            query += ` WHERE nama_merch LIKE ? OR deskripsi_merch LIKE ?`;
+            values = [`%${search}%`, `%${search}%`];
         }
 
         const [merchandise] = await pool.query(query, values);
@@ -20,22 +22,21 @@ export async function GET(request) {
         return NextResponse.json({ merchandise }, { status: 200 });
 
     } catch (error) {
-        console.error("GET Merchandise Error:", error);
-        return NextResponse.json({ error: "Failed to fetch Merchandise", details: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Failed to fetch Merchandise" }, { status: 500 });
     }
 }
 
 export async function POST(request) {
     try {
-        const { nama_merch, deskripsi_merch, jumlah_stok } = await request.json();
+        const { nama_merch, deskripsi_merch, jumlah_stok, jumlah_poin, src_img } = await request.json();
 
-        if (!nama_merch || !deskripsi_merch || jumlah_stok === undefined) {
+        if (!nama_merch || !deskripsi_merch || !jumlah_stok || !jumlah_poin || !src_img) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
         await pool.query(
-            "INSERT INTO merchandise (nama_merch, deskripsi_merch, jumlah_stok) VALUES (?, ?, ?)",
-            [nama_merch, deskripsi_merch, jumlah_stok]
+            "INSERT INTO merchandise (nama_merch, deskripsi_merch, jumlah_stok, jumlah_poin, src_img) VALUES (?, ?, ?, ?, ?)",
+            [nama_merch, deskripsi_merch, jumlah_stok, jumlah_poin, src_img]
         );
 
         return NextResponse.json({ message: "Merchandise added successfully!" }, { status: 201 });
@@ -47,21 +48,21 @@ export async function POST(request) {
 
 export async function PUT(request) {
     try {
-        const { id_merchandise, nama_merch, deskripsi_merch, jumlah_stok } = await request.json();
+        const { id_merchandise, nama_merch, deskripsi_merch, jumlah_stok, jumlah_poin, src_img } = await request.json();
 
-        if (!id_merchandise || !nama_merch || !deskripsi_merch || jumlah_stok === undefined) {
+        if (!id_merchandise || !nama_merch || !deskripsi_merch || !jumlah_stok || !jumlah_poin || !src_img) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
-        const [merchExists] = await pool.query("SELECT * FROM merchandise WHERE id_merchandise = ?", [id_merchandise]);
+        const [merchandiseExists] = await pool.query("SELECT * FROM merchandise WHERE id_merchandise = ?", [id_merchandise]);
 
-        if (merchExists.length === 0) {
+        if (merchandiseExists.length === 0) {
             return NextResponse.json({ error: "Merchandise not found!" }, { status: 404 });
         }
 
         await pool.query(
-            "UPDATE merchandise SET nama_merch = ?, deskripsi_merch = ?, jumlah_stok = ? WHERE id_merchandise = ?",
-            [nama_merch, deskripsi_merch, jumlah_stok, id_merchandise]
+            "UPDATE merchandise SET nama_merch = ?, deskripsi_merch = ?, jumlah_stok = ?, jumlah_poin = ?, src_img = ? WHERE id_merchandise = ?",
+            [nama_merch, deskripsi_merch, jumlah_stok, jumlah_poin, src_img, id_merchandise]
         );
 
         return NextResponse.json({ message: "Merchandise updated successfully!" }, { status: 200 });
@@ -79,9 +80,9 @@ export async function DELETE(request) {
             return NextResponse.json({ error: "id_merchandise is required!" }, { status: 400 });
         }
 
-        const [merchExists] = await pool.query("SELECT * FROM merchandise WHERE id_merchandise = ?", [id_merchandise]);
+        const [merchandiseExists] = await pool.query("SELECT * FROM merchandise WHERE id_merchandise = ?", [id_merchandise]);
 
-        if (merchExists.length === 0) {
+        if (merchandiseExists.length === 0) {
             return NextResponse.json({ error: "Merchandise not found!" }, { status: 404 });
         }
 

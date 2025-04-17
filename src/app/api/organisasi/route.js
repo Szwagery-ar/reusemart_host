@@ -40,27 +40,37 @@ export async function POST(request) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
-        // Check for duplicate email
+        // Cek apakah email sudah digunakan
         const [existingOrg] = await pool.query("SELECT * FROM organisasi WHERE email = ?", [email]);
 
         if (existingOrg.length > 0) {
             return NextResponse.json({ error: "Email already exists!" }, { status: 400 });
         }
 
-        // Hash password before storing
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await pool.query(
+        // Insert organisasi tanpa ID khusus dulu
+        const [result] = await pool.query(
             "INSERT INTO organisasi (nama, email, password, no_telepon, alamat) VALUES (?, ?, ?, ?, ?)",
             [nama, email, hashedPassword, no_telepon, alamat]
         );
 
-        return NextResponse.json({ message: "Organisasi added successfully!" }, { status: 201 });
+        // Ambil ID organisasi yang baru dibuat
+        const id_organisasi = result.insertId;
+        const id = `ORG${id_organisasi}`;
+
+        // Update ID organisasi dengan format baru
+        await pool.query("UPDATE organisasi SET id = ? WHERE id_organisasi = ?", [id, id_organisasi]);
+
+        return NextResponse.json({ message: "Organisasi added successfully!", id, id_organisasi }, { status: 201 });
 
     } catch (error) {
+        console.error("Error adding Organisasi:", error);
         return NextResponse.json({ error: "Failed to add Organisasi" }, { status: 500 });
     }
 }
+
 
 export async function PUT(request) {
     try {

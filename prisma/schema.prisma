@@ -17,30 +17,75 @@ datasource db {
 // ========== Pembeli ==========
 
 model Pembeli {
-  id_pembeli            Int    @id @default(autoincrement())
+  id_pembeli            Int @id @default(autoincrement())
   nama                  String
   no_telepon            BigInt
   email                 String @unique
   password              String
-  poin_loyalitas        Int
+  poin_loyalitas        Int @default(0)
+  src_img_profile       String?
+
   alamat                Alamat[]
+  diskusi               Diskusi[]
+  transaksi             Transaksi[]
+  klaim                 Klaim[]
+  cart                  Cart?
 }
 
 model Alamat {
-  id_alamat             Int    @id @default(autoincrement())
+  id_alamat             Int @id @default(autoincrement())
+  id_pembeli            Int?
   nama_alamat           String
   lokasi                String
-  id_pembeli            Int
-  pembeli               Pembeli   @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: Cascade)
+
+  pembeli               Pembeli? @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: Cascade)
+  pengiriman            Pengiriman[]
 }
 
 // ========== Pembeli ==========
 
 
+// ========== Pengiriman ==========
+
+//ENUM FOR STATUS PENGIRIMAN
+enum StatusPengiriman {
+  IN_PROGRESS
+  IN_DELIVERY
+  PICKED_UP
+  DONE
+  FAILED
+}
+
+//ENUM FOR JENIS PENGIRIMAN
+enum JenisPengiriman {
+  SELF_PICKUP
+  COURIER
+}
+
+model Pengiriman {
+  id_pengiriman         Int @id @default(autoincrement())
+  id_transaksi          Int? @unique
+  id_petugas_kurir      Int?
+  id_alamat             Int?
+  jenis_pengiriman      JenisPengiriman
+  tanggal_kirim         DateTime?
+  tanggal_terima        DateTime?
+  status_pengiriman     StatusPengiriman
+  lokasi                String
+
+  transaksi             Transaksi? @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+  pegawai               Pegawai? @relation(fields: [id_petugas_kurir], references: [id_pegawai], onDelete: Cascade)
+  alamat                Alamat? @relation(fields: [id_alamat], references: [id_alamat], onDelete: Cascade)
+}
+
+// ========== Pengiriman ==========
+
+
 // ========== Pegawai ==========
 
 model Pegawai {
-  id_pegawai            Int     @id @default(autoincrement())
+  id_pegawai            Int @id @default(autoincrement())
+  id                    String @unique @default("")
   nama                  String
   no_telepon            BigInt
   email                 String @unique
@@ -48,7 +93,15 @@ model Pegawai {
   tanggal_lahir         DateTime
   komisi                Decimal @default(0.0)
   id_jabatan            Int
+  src_img_profile       String?
   jabatan               Jabatan @relation(fields: [id_jabatan], references: [id_jabatan], onDelete: Cascade)
+
+  barangQC              Barang[] @relation(name: "PegawaiQC")
+  barangHunter          Barang[] @relation(name: "PegawaiHunter")
+  pembayaran            Pembayaran[]
+  pengiriman            Pengiriman[]
+  komisiDiterima        Komisi[]
+  diskusi               Diskusi[]
 }
 
 model Jabatan {
@@ -64,30 +117,201 @@ model Jabatan {
 
 model Penitip {
   id_penitip            Int @id @default(autoincrement())
+  id                    String @unique @default("")
   nama                  String
   no_ktp                BigInt @unique
   no_telepon            BigInt
   email                 String @unique
   password              String
   jml_barang_terjual    Int @default(0)
-  badge_level           String
+  komisi                Decimal @default(0.0)
+  badge_level           String?
+
+  barang                Barang[]
+  komisiDiterima        Komisi[]
+  diskusi               Diskusi[]
+}
+
+//ENUM FOR STATUS TITIP
+enum StatusTitip {
+  AVAILABLE
+  HOLD
+  SOLD
+  EXTENDED
+  EXPIRED
+  DONATABLE
+  DONATED
+}
+
+//ENUM FOT STATUS GARANSI
+enum StatusGaransi {
+  ACTIVE
+  EXPIRED
+}
+
+model Barang {
+  id_barang             Int @id @default(autoincrement())  //Primary Key
+  id_penitip            Int //Foreign Key
+  id_petugas_qc         Int? //Foreign Key Nullable (optional)
+  id_petugas_hunter     Int? //Foreign Key Nullable (optional)
+  id_transaksi          Int? //Foreign Key Nullable (optional)
+  id_donasi             Int? //Foreign Key Nullable (optional)
+  kode_produk           String
+  nama_barang           String
+  deskripsi_barang      String
+  berat_barang          Int
+  harga_barang          Decimal
+  status_garansi        StatusGaransi
+  status_titip          StatusTitip
+  tanggal_masuk         DateTime
+  tanggal_keluar        DateTime?
+
+  // Relationships
+  penitip               Penitip @relation(fields: [id_penitip], references: [id_penitip], onDelete: Cascade)
+  pegawaiqc             Pegawai? @relation(name: "PegawaiQC", fields: [id_petugas_qc], references: [id_pegawai], onDelete: SetNull)
+  pegawaihunter         Pegawai? @relation(name: "PegawaiHunter", fields: [id_petugas_hunter], references: [id_pegawai], onDelete: SetNull)
+  transaksi             Transaksi? @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: SetNull)
+  donasi                Donasi? @relation(fields: [id_donasi], references: [id_donasi], onDelete: SetNull)
+  bridgeKategori        BridgeKategoriBarang[]
+  diskusi               Diskusi[]
+  bridgeBarangCart      BridgeBarangCart[]
+  gambarbarang          GambarBarang[]
+}
+
+model KategoriBarang {
+  id_kategori           Int @id @default(autoincrement())
+  nama_kategori         String
+
+  bridgeKategori        BridgeKategoriBarang[]
+}
+
+model BridgeKategoriBarang {
+  id_barang_kategori    Int @id @default(autoincrement())
+  id_barang             Int
+  id_kategori           Int
+
+  barang                Barang @relation(fields: [id_barang], references: [id_barang], onDelete: Cascade)
+  kategoribarang        KategoriBarang @relation(fields: [id_kategori], references: [id_kategori], onDelete: Cascade)
+}
+
+model GambarBarang {
+  id_gambar             Int @id @default(autoincrement())
+  id_barang             Int
+  src_img               String
+
+  barang                Barang @relation(fields: [id_barang], references: [id_barang], onDelete: Cascade)
+}
+
+model Diskusi {
+  id_diskusi            Int @id @default(autoincrement())
+  id_barang             Int
+  id_pembeli            Int?  // Added as optional (nullable)
+  id_penitip            Int?  // Added as optional (nullable)
+  id_pegawai            Int?  // Added as optional (nullable)
+  isi_diskusi           String
+
+  barang                Barang @relation(fields: [id_barang], references: [id_barang], onDelete: Cascade)
+  pembeli               Pembeli? @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: SetNull)
+  penitip               Penitip? @relation(fields: [id_penitip], references: [id_penitip], onDelete: SetNull)
+  pegawai               Pegawai? @relation(fields: [id_pegawai], references: [id_pegawai], onDelete: SetNull)
 }
 
 // ========== Penitipan Barang ==========
+
+
+// ========== Transaksi ==========
+//ENUM FOR TRANSAKSI
+enum StatusTransaksi {
+  PENDING
+  PAID
+  ON_PROGRESS
+  DONE
+  CANCELLED
+}
+
+model Transaksi {
+  id_transaksi          Int @id @default(autoincrement()) //Primary Key
+  id_pembeli            Int //Foreign Key
+  status_transaksi      StatusTransaksi
+  tanggal_pesan         DateTime
+  tanggal_lunas         DateTime?
+  no_nota               String
+  harga_awal            Decimal
+  ongkos_kirim          Decimal
+  diskon                Decimal
+  harga_akhir           Decimal
+  tambahan_poin         Int
+
+  pembeli               Pembeli @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: Cascade)
+  barang                Barang[]
+  pengiriman            Pengiriman?
+  pembayaran            Pembayaran?
+  komisi                Komisi[]
+}
+
+model Komisi {
+  id_komisi             Int @id @default(autoincrement())
+  id_transaksi          Int //Foreign Key
+  id_penitip            Int //Foreign Key
+  id_petugas_hunter     Int? //Foreign Key
+  komisi_penitip        Decimal
+  komisi_reusemart      Decimal
+  komisi_hunter         Decimal
+
+  transaksi             Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+  penitip               Penitip @relation(fields: [id_penitip], references: [id_penitip], onDelete: Cascade)
+  pegawaiHunter         Pegawai? @relation(fields: [id_petugas_hunter], references: [id_pegawai], onDelete: Cascade)
+}
+
+//ENUM FOR STATUS PEMBAYARAN
+enum StatusPembayaran {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model Pembayaran {
+  id_pembayaran         Int @id @default(autoincrement())
+  id_transaksi          Int @unique
+  id_petugas_cs         Int?
+  status_pembayaran     StatusPembayaran
+  img_bukti_transfer    String
+
+  pegawai               Pegawai? @relation(fields: [id_petugas_cs], references: [id_pegawai], onDelete: SetNull)
+  transaksi             Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+}
+
+model Cart {
+  id_cart               Int @id @default(autoincrement())
+  id_pembeli            Int @unique
+
+  pembeli               Pembeli @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: Cascade)
+  bridgeBarangCart      BridgeBarangCart[]
+}
+
+model BridgeBarangCart {
+  id_bridge_barang      Int @id @default(autoincrement())
+  id_cart               Int
+  id_barang             Int
+  is_checkout           Boolean @default(false)
+
+  barang                Barang? @relation(fields: [id_barang], references: [id_barang], onDelete: Cascade)
+  cart                  Cart? @relation(fields: [id_cart], references: [id_cart], onDelete: Cascade)
+}
+
+// ========== Transaksi ==========
 
 
 // ========== DONASI ==========
 
 // ENUMS (for status fields)
 enum StatusDonasi {
-  PENDING
   APPROVED
-  CANCELLED
+  DONE
+  REJECTED
 }
 
 enum StatusRequest {
-  
-
   PENDING      // Menunggu acc
   APPROVED     // Sudah diacc, menunggu pemberian donasi
   DONE         // Sudah diacc dan dikirimkan
@@ -101,7 +325,9 @@ model Donasi {
   tanggal_donasi        DateTime?
   nama_penerima         String
   id_request            Int? @unique
-  requestdonasi         RequestDonasi? @relation(fields: [id_request], references: [id_request], onDelete: SetNull)
+  requestdonasi         RequestDonasi? @relation(fields: [id_request], references: [id_request], onDelete: Cascade)
+
+  barang Barang[]
 }
 
 model RequestDonasi {
@@ -116,6 +342,7 @@ model RequestDonasi {
 
 model Organisasi {
   id_organisasi         Int @id @default(autoincrement())
+  id                    String @unique @default("")
   nama                  String
   email                 String
   password              String
@@ -134,6 +361,21 @@ model Merchandise {
   nama_merch            String
   deskripsi_merch       String
   jumlah_stok           Int
+  jumlah_poin           Int
+  src_img               String
+
+  klaim                 Klaim[]
+}
+
+model Klaim {
+  id_klaim              Int @id @default(autoincrement())
+  id_merchandise        Int //Foreign Key
+  id_pembeli            Int //Foreign Key
+  jml_merch_diklaim     Int
+  total_poin            Int
+
+  pembeli               Pembeli @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: Cascade)
+  merchandise           Merchandise @relation(fields: [id_merchandise], references: [id_merchandise], onDelete: Cascade)
 }
 
 // ========== Merchandise ==========

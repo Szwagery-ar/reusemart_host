@@ -8,9 +8,9 @@ export async function GET(request) {
 
         let query = `
             SELECT donasi.id_donasi, donasi.status_donasi, donasi.tanggal_acc, donasi.tanggal_donasi, 
-                   donasi.nama_penerima, donasi.id_request, request_donasi.deskripsi
+                   donasi.nama_penerima, donasi.id_request, requestdonasi.deskripsi
             FROM donasi
-            JOIN request_donasi ON donasi.id_request = request_donasi.id_request
+            JOIN requestdonasi ON donasi.id_request = requestdonasi.id_request
         `;
 
         let values = [];
@@ -40,11 +40,22 @@ export async function POST(request) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
-        // Check if RequestDonasi exists
-        const [requestExists] = await pool.query("SELECT id_request FROM request_donasi WHERE id_request = ?", [id_request]);
+        const [requestExists] = await pool.query(
+            "SELECT id_request FROM requestdonasi WHERE id_request = ?",
+            [id_request]
+        );
 
         if (requestExists.length === 0) {
             return NextResponse.json({ error: "RequestDonasi not found!" }, { status: 404 });
+        }
+
+        const [donasiExists] = await pool.query(
+            "SELECT id_donasi FROM donasi WHERE id_request = ?",
+            [id_request]
+        );
+
+        if (donasiExists.length > 0) {
+            return NextResponse.json({ error: "id_request already used in Donasi. Please use another one." }, { status: 409 });
         }
 
         await pool.query(
@@ -55,9 +66,10 @@ export async function POST(request) {
         return NextResponse.json({ message: "Donasi added successfully!" }, { status: 201 });
 
     } catch (error) {
-        return NextResponse.json({ error: "Failed to add Donasi" }, { status: 500 });
+        return NextResponse.json({ error: error.message || "Failed to add Donasi" }, { status: 500 });
     }
 }
+
 
 export async function PUT(request) {
     try {
