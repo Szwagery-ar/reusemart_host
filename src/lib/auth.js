@@ -25,8 +25,7 @@ export async function verifyTokenAndCheckAdmin(request) {
     const pegawai = pegawaiData[0];
     if (pegawai.nama_jabatan !== 'admin') throw new Error('Forbidden');
 
-    return pegawai; // jika admin, kembalikan datanya
-
+    return pegawai; 
   } catch (err) {
     throw new Error(err.message);
   }

@@ -7,11 +7,24 @@ export async function GET(request) {
         const search = searchParams.get("q");
 
         let query = `
-            SELECT b.id_barang, b.kode_produk, b.nama_barang, b.deskripsi_barang, b.harga_barang, b.status_titip, 
-                   b.tanggal_masuk, b.tanggal_keluar, b.status_garansi, p.nama AS penitip_name
+            SELECT 
+                b.id_barang, 
+                b.kode_produk, 
+                b.nama_barang, 
+                b.deskripsi_barang, 
+                b.harga_barang, 
+                b.status_titip, 
+                b.tanggal_masuk, 
+                b.tanggal_keluar, 
+                b.status_garansi, 
+                p.nama AS penitip_name,
+                gb.id_gambar, 
+                gb.src_img
             FROM barang b
             LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+            LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
         `;
+
         let values = [];
 
         if (search) {
@@ -21,9 +34,28 @@ export async function GET(request) {
 
         const [barang] = await pool.query(query, values);
 
-        return NextResponse.json({ barang }, { status: 200 });
+        const groupedBarang = barang.reduce((acc, item) => {
+            if (!acc[item.id_barang]) {
+                acc[item.id_barang] = {
+                    ...item,
+                    gambar_barang: [],
+                };
+            }
+            if (item.id_gambar) {
+                acc[item.id_barang].gambar_barang.push({
+                    id_gambar: item.id_gambar,
+                    src_img: item.src_img,
+                });
+            }
+            return acc;
+        }, {});
+
+        const result = Object.values(groupedBarang);
+
+        return NextResponse.json({ barang: result }, { status: 200 });
 
     } catch (error) {
+        console.error('Error fetching barang:', error);
         return NextResponse.json({ error: "Failed to fetch Barang" }, { status: 500 });
     }
 }
@@ -59,12 +91,10 @@ export async function PUT(request) {
     try {
         const { id_barang, deskripsi_barang, berat_barang, harga_barang, status_garansi, status_titip } = await request.json();
 
-        // Validasi input
-        if (!id_barang || !deskripsi_barang || !berat_barang || !harga_barang || !status_garansi || !status_titip ) {
+        if (!id_barang || !deskripsi_barang || !berat_barang || !harga_barang || !status_garansi || !status_titip) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
-        // Update barang
         await pool.query(
             `UPDATE barang SET deskripsi_barang = ?, berat_barang = ?, harga_barang = ?, status_garansi = ?, status_titip = ? WHERE id_barang = ?`,
             [deskripsi_barang, berat_barang, harga_barang, status_garansi, status_titip, id_barang]
@@ -101,3 +131,4 @@ export async function DELETE(request) {
         return NextResponse.json({ error: "Failed to delete Barang" }, { status: 500 });
     }
 }
+

@@ -3,108 +3,328 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import RippleButton from '../components/RippleButton/RippleButton';
+
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  const handleLoginSubmit = (e) => {
+
+  const [step, setStep] = useState(1);
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+
+
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Email dan password wajib diisi!');
       return;
-    } else {
-      setError('');
-      console.log('Login:', email, password);
+    }
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || 'Gagal masuk!');
+        setShowForgotPassword(true);
+        return;
+      }
+
+      if (data.success) {
+        if (data.userType === 'penitip') router.push('/penitip');
+        else if (data.userType === 'pembeli') router.push('/home');
+        else if (data.userType === 'pegawai') router.push('/pegawai');
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Terjadi kesalahan. Coba lagi nanti.');
     }
   };
 
+  async function handleSendOtp() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/forgot-password/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStep(2);
+        setSuccessMessage('Kode OTP berhasil dikirim!');
+      } else {
+        setErrorMessage(data.error || 'Gagal mengirim OTP');
+      }
+    } catch (error) {
+      setErrorMessage('Terjadi kesalahan.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp() {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/forgot-password/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+
+      console.log(data);
+
+      if (res.ok && data.valid) {
+        setStep(3);
+        setSuccessMessage('OTP valid, lanjut ubah password.');
+      } else {
+        setErrorMessage(data.message || 'OTP salah atau kadaluarsa.');
+      }
+    } catch (error) {
+      setErrorMessage('Terjadi kesalahan.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+  async function handleResetPassword() {
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Password tidak sama!');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/forgot-password/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, newPassword, confirmPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMessage('Password berhasil diganti!');
+        setShowForgotPasswordModal(false);
+      } else {
+        setErrorMessage(data.message || 'Gagal mengganti password');
+      }
+    } catch (error) {
+      setErrorMessage('Terjadi kesalahan.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row text-white bg-[radial-gradient(ellipse_130.87%_392.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-10 xl:px-40 lg:px-20 md:px-30 py-20">
-        <h3 className='text-5xl lg:text-5xl md:text-6xl mb-10 font-[Montage-Demo] text-center'>Masuk ke akun Anda</h3>
+      <img src="/images/login/Stringbackground.png" alt="background"
+        className='absolute bottom-0 w-[50%]'
+      />
+      <div className="z-3 w-full lg:w-1/2 flex flex-col justify-center px-10 xl:px-30 lg:px-20 md:px-30 py-10">
+        <h3 className='text-5xl lg:text-6xl md:text-6xl mb-3 font-[Montage-Demo] text-center'>MASUK AJA DULU</h3>
+        <h5 className='text-lg text-center mb-4'>Login sekarang lalu lanjut eksplor barang-barang kece di <br /> ReUseMart.</h5>
 
-        <button className='w-full bg-white text-indigo-950 font-semibold py-3 px-6 rounded-full mb-6'>
-          Login dengan Google
+        <button className='w-full bg-white text-indigo-950 font-semibold py-3 px-6 rounded-full mb-4'>
+          Masuk dengan Google
         </button>
 
-        <div className="flex items-center mb-6">
+        <div className="flex items-center mb-3">
           <hr className="flex-grow border-white border-1" />
           <span className="mx-3">Atau</span>
           <hr className="flex-grow border-white border-1" />
         </div>
 
         <form onSubmit={handleLoginSubmit}>
-          <div className='mb-4'>
-            <label htmlFor="email" className='block text-lg font-medium'>Email</label>
-            <input
-              id="email"
-              className="w-full bg-white text-black rounded-full px-6 py-2 mt-1"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+          <div className="mb-3">
+            <label htmlFor="email" className="block text-lg font-medium text-white mb-1">Email</label>
 
-          <div className='mb-9'>
-            <label htmlFor="password" className='block text-lg font-medium'>Kata Sandi</label>
-            <input
-              id="password"
-              className="w-full bg-white text-black rounded-full px-6 py-2 mt-1"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center mb-6">
-            <label htmlFor="remember" className="flex items-center cursor-pointer">
+            <div className="p-[2px] rounded-full bg-white focus-within:bg-[radial-gradient(ellipse_130.87%_392.78%_at_-1.67%_100%,_#26C2FF_0%,_#220593_90%)] transition duration-300">
               <input
-                type="checkbox"
-                id="remember"
-                className="hidden peer"
+                id="email"
+                type="email"
+                placeholder="email.anda@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-full px-6 py-2 text-black bg-white focus:outline-none"
               />
-              <div className="w-6 h-6 bg-white rounded-lg transition-all duration-150 flex items-center justify-center opacity-0 peer-checked:opacity-100">
+            </div>
+          </div>
+
+          <div className='mb-3'>
+            <label htmlFor="password" className='block text-lg font-medium text-white mb-1'>Kata Sandi</label>
+            <div className="p-[2px] rounded-full bg-white focus-within:bg-[radial-gradient(ellipse_130.87%_392.78%_at_-1.67%_100%,_#26C2FF_0%,_#220593_90%)] transition duration-300">
+              <input
+                id="password"
+                className="w-full rounded-full px-6 py-2 text-black bg-white focus:outline-none"
+                type="password"
+                placeholder="•••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="inline-flex items-center mb-3">
+            <label
+              className="relative flex cursor-pointer items-center rounded-full p-3"
+              htmlFor="ripple-on"
+              data-ripple-dark="true"
+            >
+              <input
+                id="ripple-on"
+                type="checkbox"
+                className="peer relative h-5 w-5 cursor-pointer appearance-none rounded border bg-white border-slate-300 shadow hover:shadow-md transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-slate-400 before:opacity-0 before:transition-opacity checked:border-slate checked:bg-indigo-800 checked:before:bg-slate-400 hover:before:opacity-10"
+              />
+              <span className="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
                 <svg
-                  className="w-4 h-4 text-black"
-                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
                   stroke="currentColor"
-                  strokeWidth="3"
-                  viewBox="0 0 24 24"
+                  strokeWidth="1"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  ></path>
                 </svg>
-              </div>
-              <span className="ml-3 text-white text-base">Ingat Saya</span>
+              </span>
+            </label>
+            <label className="cursor-pointer ml-3 text-white text-base"
+              htmlFor="ripple-on"
+            >
+              Ingat Saya
             </label>
           </div>
 
           {error && <p className="text-red-400 mb-4">{error}</p>}
 
-          <button
-            type="submit"
-            className="w-full text-white py-3 rounded-full font-semibold"
-            style={{
-              background: '#02143A'
-            }}
-          >
+          <RippleButton type="submit" className="w-full text-white py-3 rounded-full font-semibold bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-[3px] border-white">
             Masuk
-          </button>
+          </RippleButton>
         </form>
 
         <p className="text-white mt-4 font-semibold text-center">
-          Tidak punya akun?{' '}
+          Belum punya akun?{' '}
           <span className="font-bold cursor-pointer hover:underline" onClick={() => router.push('/register')}>Daftar</span>
         </p>
+        {showForgotPassword && (
+          <p className="text-white mt-2 font-semibold text-center">
+            <span
+              className="font-bold cursor-pointer hover:underline"
+              onClick={() => setShowForgotPasswordModal(true)} // pastikan kamu punya halaman ini
+            >
+              Lupa Password?
+            </span>
+          </p>
+        )}
       </div>
-      <div className="hidden lg:flex w-1/2 items-center justify-center">
+      <div className="hidden relative lg:flex w-1/2 items-center justify-center">
+        <img src="/images/login/Strips.png" alt="garis"
+          className='absolute w-[25%] top-10 right-130'
+        />
         <img
-          src="/images/Intersect.png"
-          alt="Ilustrasi login"
-          className="w-[85%] object-contain rounded-2xl"
+          src="/images/login/Login 1.png" alt='gambar login'
+          className='absolute w-[60%] rounded-[40px] shadow-[15px_-15px_0px_0px_rgba(255,255,255,1.00)]'
+        />
+        <img src="/images/login/login 2.png" alt="gambar login"
+          className='absolute bottom-20 right-120 w-[30%] rounded-[40px] shadow-[-15px_15px_0px_0px_rgba(255,255,255,1.00)]'
         />
       </div>
+
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            {step === 1 && (
+              <>
+                <h2 className="text-2xl font-bold mb-4 text-black">Lupa Password</h2>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Masukkan email kamu"
+                  className="w-full p-2 mb-4 border rounded text-black"
+                />
+                <button
+                  onClick={handleSendOtp}
+                  className="w-full p-3 bg-blue-500 text-white font-bold rounded hover:bg-blue-600"
+                >
+                  Kirim Kode OTP
+                </button>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <h2 className="text-2xl font-bold mb-4 text-black">Masukkan Kode OTP</h2>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="Kode OTP"
+                  className="w-full p-2 mb-4 border rounded text-black"
+                />
+                <button onClick={handleVerifyOtp} className="w-full p-3 bg-blue-500 text-white font-bold rounded hover:bg-blue-600">
+                  Verifikasi OTP
+                </button>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <h2 className="text-2xl font-bold mb-4 text-black">Atur Password Baru</h2>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Password Baru"
+                  className="w-full p-2 mb-4 border rounded text-black"
+                />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Konfirmasi Password"
+                  className="w-full p-2 mb-4 border rounded text-black"
+                />
+                <button onClick={handleResetPassword} className="w-full p-3 bg-blue-500 text-white font-bold rounded hover:bg-blue-600">
+                  Ganti Password
+                </button>
+              </>
+            )}
+
+            {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+            {successMessage && <p className="text-green-500 mt-2">{successMessage}</p>}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
