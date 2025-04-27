@@ -14,6 +14,7 @@ export default function Register() {
     const [error, setError] = useState(null);
     const [isAgreed, setIsAgreed] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleRegisterSubmit = async (e) => {
         e.preventDefault();
@@ -28,6 +29,7 @@ export default function Register() {
         }
 
         try {
+            setIsLoading(true);
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: {
@@ -52,6 +54,8 @@ export default function Register() {
         } catch (err) {
             console.error('Register error:', err);
             setError('Terjadi kesalahan. Coba lagi nanti.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -175,8 +179,11 @@ export default function Register() {
 
                     {error && <p className="text-red-400 mb-4">{error}</p>}
 
-                    <RippleButton type="submit" className="w-full text-white py-3 rounded-full font-semibold bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-[3px] border-white">
-                        Daftar
+                    <RippleButton type="submit" className="w-full text-white py-3 rounded-full font-semibold flex items-center justify-center gap-2 bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-[3px] border-white">
+                        {isLoading && (
+                            <div className="animate-spin rounded-full h-5 w-5 border-t- border-b-2 border-white"></div>
+                        )}
+                        {isLoading ? 'Mendaftar...' : 'Daftar'}
                     </RippleButton>
                 </form>
 
@@ -185,20 +192,46 @@ export default function Register() {
                     <span className="font-bold cursor-pointer hover:underline" onClick={() => router.push('/login')}>Masuk</span>
                 </p>
 
+
+
                 {showModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-                            <h2 className="text-2xl font-bold mb-4 text-black">Cek Email Kamu!</h2>
-                            <p className="text-black mb-6">Kami telah mengirimkan link verifikasi ke email Anda. Klik link tersebut untuk mengaktifkan akun.</p>
-                            <button
-                                className="w-full text-white py-2 rounded-full bg-indigo-700"
-                                onClick={() => router.push('/login')}
-                            >
-                                Pergi ke Login
-                            </button>
+                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/25">
+                        <div className="bg-white rounded-4xl shadow-2xl text-center max-w-lg w-full">
+                            <div className="flex justify-center p-10 mb-3 bg-[radial-gradient(ellipse_130.87%_392.78%_at_-1.67%_100%,_#26C2FF_0%,_#220593_90%)] rounded-t-4xl rounded-b-[80%] ">
+                                <div className="bg-white p-4 rounded-full">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-10 w-10 text-blue-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M16 12H8m8-4H8m8 8H8m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div className="p-8">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Silahkan Cek Gmail Anda</h2>
+                                <p className="text-gray-600 mb-6 text-md font-medium">
+                                    Halo <b>{name}</b>, selamat datang di Reusemart!
+                                    Terima kasih sudah bergabung. Untuk mulai menggunakan akunmu, kami perlu memverifikasi email kamu. Kami sudah kirimkan link verifikasinya, yuk cek email kamu dan konfirmasi!.
+                                </p>
+                                <RippleButton
+                                    className="text-white font-bold py-2 px-6 rounded-full w-full mb-4 bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-[3px]"
+                                    onClick={() => router.push('/login')}
+                                >
+                                    Kembali ke Login!
+                                </RippleButton>
+                            </div>
                         </div>
                     </div>
                 )}
+
             </div>
         </div>
     );

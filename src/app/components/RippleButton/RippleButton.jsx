@@ -22,6 +22,10 @@ const RippleButton = ({ children, className = '', ...props }) => {
 
     button.appendChild(ripple);
     setTimeout(() => ripple.remove(), 600);
+
+    if (props.onClick) {
+      props.onClick(e);
+    }
   };
 
   return (
