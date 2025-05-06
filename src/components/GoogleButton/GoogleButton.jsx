@@ -1,9 +1,9 @@
-'use client'; // WAJIB kalau pakai event handler di App Router
+'use client';
 
 import React, { useRef } from 'react';
-import './ripple.css';
+import './google.css';
 
-const RippleButton = ({ children, className = '', ...props }) => {
+const GoogleButton = ({ children, className = '', ...props }) => {
   const buttonRef = useRef(null);
 
   const handleClick = (e) => {
@@ -15,7 +15,7 @@ const RippleButton = ({ children, className = '', ...props }) => {
     const x = e.clientX - rect.left - size / 2;
     const y = e.clientY - rect.top - size / 2;
 
-    ripple.className = 'ripple';
+    ripple.className = 'google';
     ripple.style.width = ripple.style.height = `${size}px`;
     ripple.style.left = `${x}px`;
     ripple.style.top = `${y}px`;
@@ -40,4 +40,4 @@ const RippleButton = ({ children, className = '', ...props }) => {
   );
 };
 
-export default RippleButton;
+export default GoogleButton;

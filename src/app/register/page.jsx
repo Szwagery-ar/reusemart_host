@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import RippleButton from '../components/RippleButton/RippleButton';
+import RippleButton from '../../components/RippleButton/RippleButton';
 
 export default function Register() {
     const router = useRouter();
@@ -66,18 +66,18 @@ export default function Register() {
                 className='absolute right-0 w-[50%] rotate-180'
             />
             <div className="hidden relative lg:flex w-1/2 items-center justify-center">
-                <img src="/images/login/Strips.png" alt="garis"
+                {/* <img src="/images/login/Strips.png" alt="garis"
                     className='absolute w-[25%] bottom-10 left-130'
-                />
+                /> */}
                 <img
-                    src="/images/login/Login 1.png" alt='gambar login'
-                    className='absolute w-[60%] rounded-[40px] shadow-[-15px_15px_0px_0px_rgba(255,255,255,1.00)]'
+                    src="/images/login/register.png" alt='gambar login'
+                    className=''
                 />
-                <img src="/images/login/login 2.png" alt="gambar login"
+                {/* <img src="/images/login/login 2.png" alt="gambar login"
                     className='absolute top-20 left-120 w-[30%] rounded-[40px] shadow-[15px_-15px_0px_0px_rgba(255,255,255,1.00)]'
-                />
+                /> */}
             </div>
-            <div className="z-3 w-full lg:w-1/2 flex flex-col justify-center px-10 xl:px-40 lg:px-20 md:px-30 py-10">
+            <div className="z-3 w-full lg:w-1/2 flex flex-col justify-center px-10 xl:px-25 lg:px-20 md:px-30 py-10">
                 <h3 className='text-5xl lg:text-6xl md:text-6xl mb-5 font-[Montage-Demo] text-center'>BUAT AKUNMU SEKARANG</h3>
                 <h5 className='text-lg text-center mb-4'>Bersama ribuan pembeli & penitip lainnya, yuk ramaikan gerakan barang berkelanjutan!    </h5>
 

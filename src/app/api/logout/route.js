@@ -1,7 +1,10 @@
 import { cookies } from 'next/headers';
 
 export async function POST() {
-  cookies().set('token', '', {
+  // Menunggu cookies() secara asinkron
+  const cookieStore = await cookies();
+
+  cookieStore.set('token', '', {
     httpOnly: true,
     path: '/',
     maxAge: 0,

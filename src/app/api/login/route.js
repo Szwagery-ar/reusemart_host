@@ -1,4 +1,4 @@
-import pool from '../../../lib/db';
+import pool from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
@@ -9,10 +9,10 @@ export async function POST(req) {
   const { email, password } = await req.json();
 
   try {
+    // Cek Penitip
     const [penitipResults] = await pool.query('SELECT * FROM Penitip WHERE email = ?', [email]);
     if (penitipResults.length > 0) {
       const user = penitipResults[0];
-
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (isPasswordValid) {
         if (!user.is_verified) {
@@ -23,7 +23,10 @@ export async function POST(req) {
         }
 
         const token = jwt.sign({ id: user.id_penitip, role: 'penitip' }, JWT_SECRET, { expiresIn: '1h' });
-        cookies().set('token', token, {
+
+        // Menunggu cookies() secara asinkron
+        const cookieStore = await cookies();
+        cookieStore.set('token', token, {
           httpOnly: true,
           path: '/',
           maxAge: 60 * 60 * 24,
@@ -38,10 +41,10 @@ export async function POST(req) {
       }
     }
 
+    // Cek Pembeli
     const [pembeliResults] = await pool.query('SELECT * FROM Pembeli WHERE email = ?', [email]);
     if (pembeliResults.length > 0) {
       const user = pembeliResults[0];
-
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (isPasswordValid) {
         if (!user.is_verified) {
@@ -52,7 +55,10 @@ export async function POST(req) {
         }
 
         const token = jwt.sign({ id: user.id_pembeli, role: 'pembeli' }, JWT_SECRET, { expiresIn: '1h' });
-        cookies().set('token', token, {
+
+        // Menunggu cookies() secara asinkron
+        const cookieStore = await cookies();
+        cookieStore.set('token', token, {
           httpOnly: true,
           path: '/',
           maxAge: 60 * 60 * 24,
@@ -67,14 +73,17 @@ export async function POST(req) {
       }
     }
 
-    const [pegawaiResults] = await pool.query('SELECT * FROM Pegawai WHERE email = ?', [email]);
-    if (pegawaiResults.length > 0) {
-      const user = pegawaiResults[0];
-
+    // Cek Organisasi
+    const [organisasiResults] = await pool.query('SELECT * FROM Organisasi WHERE email = ?', [email]);
+    if (organisasiResults.length > 0) {
+      const user = organisasiResults[0];
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (isPasswordValid) {
-        const token = jwt.sign({ id: user.id_pegawai, role: 'pegawai' }, JWT_SECRET, { expiresIn: '1h' });
-        cookies().set('token', token, {
+        const token = jwt.sign({ id: user.id_organisasi, role: 'organisasi' }, JWT_SECRET, { expiresIn: '1h' });
+
+        // Menunggu cookies() secara asinkron
+        const cookieStore = await cookies();
+        cookieStore.set('token', token, {
           httpOnly: true,
           path: '/',
           maxAge: 60 * 60 * 24,
@@ -82,16 +91,18 @@ export async function POST(req) {
 
         return new Response(JSON.stringify({
           success: true,
-          userType: 'pegawai',
+          userType: 'organisasi',
           userName: user.nama,
           token: token,
         }), { status: 200 });
       }
     }
 
+    // Jika kredensial salah
     return new Response(JSON.stringify({ success: false, message: 'Invalid credentials' }), { status: 401 });
 
   } catch (error) {
+    console.log(error);
     return new Response(JSON.stringify({ success: false, message: 'Server error' }), { status: 500 });
   }
 }

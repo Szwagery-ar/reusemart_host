@@ -24,6 +24,7 @@ model Pembeli {
   password              String
   poin_loyalitas        Int @default(0)
   src_img_profile       String?
+  is_verified           Boolean @default(false)
 
   alamat                Alamat[]
   diskusi               Diskusi[]
@@ -37,6 +38,7 @@ model Alamat {
   id_pembeli            Int?
   nama_alamat           String
   lokasi                String
+  note                  String?
 
   pembeli               Pembeli? @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: Cascade)
   pengiriman            Pengiriman[]
@@ -126,6 +128,7 @@ model Penitip {
   jml_barang_terjual    Int @default(0)
   komisi                Decimal @default(0.0)
   badge_level           String?
+  foto_ktp              String
 
   barang                Barang[]
   komisiDiterima        Komisi[]
@@ -202,6 +205,13 @@ model GambarBarang {
   barang                Barang @relation(fields: [id_barang], references: [id_barang], onDelete: Cascade)
 }
 
+
+enum JenisUser {
+  PEGAWAI
+  PENITIP
+  PEMBELI
+}
+
 model Diskusi {
   id_diskusi            Int @id @default(autoincrement())
   id_barang             Int
@@ -209,6 +219,8 @@ model Diskusi {
   id_penitip            Int?  // Added as optional (nullable)
   id_pegawai            Int?  // Added as optional (nullable)
   isi_diskusi           String
+  jenis_user            JenisUser
+  tanggal               DateTime @default(now())
 
   barang                Barang @relation(fields: [id_barang], references: [id_barang], onDelete: Cascade)
   pembeli               Pembeli? @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: SetNull)
@@ -379,3 +391,12 @@ model Klaim {
 }
 
 // ========== Merchandise ==========
+
+
+model passwordresetotps {
+  id                    Int @id @default(autoincrement())
+  email                 String
+  otp                   String
+  expires_at            DateTime
+  expired_at            DateTime @default(now())
+}

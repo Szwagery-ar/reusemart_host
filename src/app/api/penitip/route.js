@@ -1,41 +1,56 @@
 import pool from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { verifyTokenAndCheckAdmin } from '@/lib/auth';
+import { verifyUserRole } from '@/lib/auth';
+import { ForbiddenError, UnauthorizedError } from '@/lib/errors';
 
 export async function GET(request) {
     try {
+        await verifyUserRole(["CS"]);
+
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");
 
         let query = `
-            SELECT penitip.id_penitip, penitip.id, penitip.nama, penitip.no_ktp, penitip.no_telepon, 
-                   penitip.email, penitip.badge_level,
-                   COUNT(barang.id_barang) AS total_barang
-            FROM penitip
-            LEFT JOIN barang ON penitip.id_penitip = barang.id_penitip
-            GROUP BY penitip.id_penitip
-        `;
+        SELECT penitip.id_penitip, penitip.id, penitip.nama, penitip.no_ktp, penitip.no_telepon, 
+               penitip.email, penitip.badge_level,
+               COUNT(barang.id_barang) AS total_barang
+        FROM penitip
+        LEFT JOIN barang ON penitip.id_penitip = barang.id_penitip
+      `;
 
         let values = [];
 
         if (search) {
-            query += ` WHERE penitip.nama LIKE ? OR penitip.email LIKE ? OR penitip.no_telepon LIKE ?`;
+            query += `
+          WHERE penitip.nama LIKE ? OR penitip.email LIKE ? OR penitip.no_telepon LIKE ?
+        `;
             values = [`%${search}%`, `%${search}%`, `%${search}%`];
         }
+
+        query += ` GROUP BY penitip.id_penitip`;
 
         const [penitip] = await pool.query(query, values);
 
         return NextResponse.json({ penitip }, { status: 200 });
 
     } catch (error) {
-        return NextResponse.json({ error: "Failed to fetch Penitip" }, { status: 500 });
+        if (error instanceof ForbiddenError) {
+            return NextResponse.json({ error: "Anda tidak memiliki akses ke halaman ini" }, { status: 403 });
+        }
+        if (error instanceof UnauthorizedError) {
+            return NextResponse.json({ error: "Token tidak valid atau telah kedaluwarsa" }, { status: 401 });
+        }
+
+        console.error("Uncaught error:", error); // hanya log error sistem
+        return NextResponse.json({ error: "Gagal mengambil data penitip" }, { status: 500 });
     }
+
 }
 
 export async function POST(request) {
     try {
-        const pegawai = await verifyTokenAndCheckAdmin(request);
+        await verifyUserRole(["CS"]);
 
         const { nama, no_ktp, no_telepon, email, password } = await request.json();
 
@@ -76,24 +91,23 @@ export async function POST(request) {
         return NextResponse.json({ message: "Penitip added successfully!", id }, { status: 201 });
 
     } catch (error) {
-        console.error(error);
-
-        if (
-            error.message === 'No token provided' ||
-            error.message === 'Not a pegawai' ||
-            error.message === 'Pegawai not found' ||
-            error.message === 'Forbidden'
-        ) {
-            return NextResponse.json({ error: error.message }, { status: 403 });
+        if (error instanceof ForbiddenError) {
+            return NextResponse.json({ error: "Anda tidak memiliki akses ke halaman ini" }, { status: 403 });
+        }
+        if (error instanceof UnauthorizedError) {
+            return NextResponse.json({ error: "Token tidak valid atau telah kedaluwarsa" }, { status: 401 });
         }
 
-        return NextResponse.json({ error: "Failed to add Penitip", details: error.message }, { status: 500 });
+        console.error("Failed to add Penitip:", error);
+        return NextResponse.json({ error: "Failed to add Penitip" }, { status: 500 });
     }
 }
 
 
 export async function PUT(request) {
     try {
+        await verifyUserRole(["CS"]);
+
         const { id_penitip, nama, no_ktp, no_telepon, email, badge_level } = await request.json();
 
         if (!id_penitip || !nama || !no_ktp || !no_telepon || !email || !badge_level) {
@@ -114,12 +128,22 @@ export async function PUT(request) {
         return NextResponse.json({ message: "Penitip updated successfully!" }, { status: 200 });
 
     } catch (error) {
+        if (error instanceof ForbiddenError) {
+            return NextResponse.json({ error: "Anda tidak memiliki akses ke halaman ini" }, { status: 403 });
+        }
+        if (error instanceof UnauthorizedError) {
+            return NextResponse.json({ error: "Token tidak valid atau telah kedaluwarsa" }, { status: 401 });
+        }
+
+        console.error("Failed to update Penitip:", error);
         return NextResponse.json({ error: "Failed to update Penitip" }, { status: 500 });
     }
 }
 
 export async function DELETE(request) {
     try {
+        await verifyUserRole(["CS"]);
+
         const { id_penitip } = await request.json();
 
         if (!id_penitip) {
@@ -137,6 +161,14 @@ export async function DELETE(request) {
         return NextResponse.json({ message: "Penitip deleted successfully!" }, { status: 200 });
 
     } catch (error) {
+        if (error instanceof ForbiddenError) {
+            return NextResponse.json({ error: "Anda tidak memiliki akses ke halaman ini" }, { status: 403 });
+        }
+        if (error instanceof UnauthorizedError) {
+            return NextResponse.json({ error: "Token tidak valid atau telah kedaluwarsa" }, { status: 401 });
+        }
+
+        console.error("Failed to delete Penitip:", error);
         return NextResponse.json({ error: "Failed to delete Penitip" }, { status: 500 });
     }
 }

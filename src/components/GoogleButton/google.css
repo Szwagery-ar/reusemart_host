@@ -1,0 +1,17 @@
+.google {
+    position: absolute;
+    border-radius: 9999px;
+    background: rgba(128, 128, 128, 0.4);
+    transform: scale(0);
+    animation: ripple-animation 0.6s linear;
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  @keyframes ripple-animation {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+  

@@ -1,9 +1,10 @@
-'use server'; 
+'use client'; 
+
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-import Navbar from './components/Navbar/Navbar';
-import Footer from './components/Footer/Footer';
+import Navbar from '../components/Navbar/Navbar';
+import Footer from '../components/Footer/Footer';
 
 export default function Home() {
   const router = useRouter();
@@ -248,7 +249,7 @@ export default function Home() {
               <p className=''>Kumpulkan poin dari setiap pembelian dan tukarkan jadi diskon atau hadiah spesial!</p>
               <button className='bg-white text-[#220593] font-semibold px-6 py-3 rounded-4xl mt-4'>Pelajari Lebih Lanjut</button>
             </div>
-            <img src="" alt="Gambar 1" />
+            {/* <img src="" alt="Gambar 1" /> */}
           </div>
           <div className="text-center rounded-4xl p-8 bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] grid grid-cols-3">
             <div className="text-white text-left col-span-2">
@@ -256,7 +257,7 @@ export default function Home() {
               <p className=''>Jual barang bekasmu di platform kami. Gak ribet, tinggal titip, kami bantu jualin!</p>
               <button className='bg-white text-[#220593] font-semibold px-6 py-3 rounded-4xl mt-4'>Daftar Jadi Penitip</button>
             </div>
-            <img src="" alt="Gambar 1" />
+            {/* <img src="" alt="Gambar 1" /> */}
           </div>
         </div>
 

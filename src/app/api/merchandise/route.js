@@ -1,30 +1,30 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(request) {
-    try {
-        const { searchParams } = new URL(request.url);
-        const search = searchParams.get("q");
+    export async function GET(request) {
+        try {
+            const { searchParams } = new URL(request.url);
+            const search = searchParams.get("q");
 
-        let query = `
-            SELECT id_merchandise, nama_merch, deskripsi_merch, jumlah_stok, jumlah_poin, src_img
-            FROM merchandise
-        `;
-        let values = [];
+            let query = `
+                SELECT id_merchandise, nama_merch, deskripsi_merch, jumlah_stok, jumlah_poin, src_img
+                FROM merchandise
+            `;
+            let values = [];
 
-        if (search) {
-            query += ` WHERE nama_merch LIKE ? OR deskripsi_merch LIKE ?`;
-            values = [`%${search}%`, `%${search}%`];
+            if (search) {
+                query += ` WHERE nama_merch LIKE ? OR deskripsi_merch LIKE ?`;
+                values = [`%${search}%`, `%${search}%`];
+            }
+
+            const [merchandise] = await pool.query(query, values);
+
+            return NextResponse.json({ merchandise }, { status: 200 });
+
+        } catch (error) {
+            return NextResponse.json({ error: "Failed to fetch Merchandise" }, { status: 500 });
         }
-
-        const [merchandise] = await pool.query(query, values);
-
-        return NextResponse.json({ merchandise }, { status: 200 });
-
-    } catch (error) {
-        return NextResponse.json({ error: "Failed to fetch Merchandise" }, { status: 500 });
     }
-}
 
 export async function POST(request) {
     try {

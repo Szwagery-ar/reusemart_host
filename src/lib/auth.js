@@ -1,32 +1,55 @@
+import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import pool from './db';
+import pool from '@/lib/db';
+import { ForbiddenError, UnauthorizedError } from './errors';
+import { unauthorized } from 'next/navigation';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-export async function verifyTokenAndCheckAdmin(request) {
+export async function verifyUserRole(allowedRoles = []) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) throw new Error('No token provided');
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedError("no token provided");
+    }
+
     const decoded = jwt.verify(token, JWT_SECRET);
+    let jabatan = null;
 
-    if (decoded.role !== 'pegawai') throw new Error('Not a pegawai');
+    if (decoded.role === 'pegawai') {
+      const [result] = await pool.query(`
+        SELECT j.nama_jabatan FROM Pegawai p
+        LEFT JOIN Jabatan j ON p.id_jabatan = j.id_jabatan
+        WHERE p.id_pegawai = ?
+      `, [decoded.id]);
 
-    const [pegawaiData] = await pool.query(`
-      SELECT p.*, j.nama_jabatan 
-      FROM pegawai p
-      JOIN jabatan j ON p.id_jabatan = j.id_jabatan
-      WHERE p.id_pegawai = ?
-    `, [decoded.id]);
+      if (result.length === 0) {
+        throw new UnauthorizedError("Pegawai not found");
+      }
 
-    if (pegawaiData.length === 0) throw new Error('Pegawai not found');
+      jabatan = result[0].nama_jabatan;
 
-    const pegawai = pegawaiData[0];
-    if (pegawai.nama_jabatan !== 'admin') throw new Error('Forbidden');
+    } else {
+      throw new ForbiddenError("Role tidak diizinkan");
+    }
 
-    return pegawai; 
+    if (!allowedRoles.includes(jabatan)) {
+      throw new ForbiddenError("You do not have permission");
+    }
+
+    return {
+      id: decoded.id,
+      role: decoded.role,
+      jabatan
+    };
+
   } catch (err) {
-    throw new Error(err.message);
+    if (err instanceof jwt.JsonWebTokenError) {
+      throw new UnauthorizedError("Invalid token");
+    }
+    throw err;
   }
+
 }

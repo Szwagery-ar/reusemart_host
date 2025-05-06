@@ -1,6 +1,5 @@
 import pool from '@/lib/db';
 import { sendEmail } from '@/lib/sendEmail';
-import crypto from 'crypto';
 
 export async function POST(req) {
   const { email } = await req.json();
