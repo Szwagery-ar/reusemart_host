@@ -1,25 +1,30 @@
-'use client';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
+import { redirect } from 'next/navigation';
+import LogoutButton from '@/components/LogoutButton/LogoutButton';
 
-import { useEffect, useState } from 'react';
+export default async function PenitipDashboard() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
 
-export default function PenitipPage() {
-  const [user, setUser] = useState(null);
+    if (!token) redirect('/login');
 
-  useEffect(() => {
-    // Retrieve user data from localStorage
-    const userData = JSON.parse(localStorage.getItem('user'));
-    if (userData) {
-      setUser(userData);
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+        redirect('/login');
     }
-  }, []);
 
-  return (
-    <div>
-      {user ? (
-        <h1>Welcome {user.userName}, you are a {user.userType}</h1>
-      ) : (
-        <p>Loading...</p>
-      )}
-    </div>
-  );
+    if (decoded.role !== 'penitip') redirect('/login');
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/me`, {
+        headers: { Cookie: `token=${token}` },
+        cache: 'no-store',
+    });
+    const { user } = await res.json();
+
+    return (
+        <h1>Test aja dulu buat dashboard penitip ya</h1>
+    );
 }

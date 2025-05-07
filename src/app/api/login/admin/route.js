@@ -9,7 +9,7 @@ export async function POST(req) {
   const { email, password } = await req.json();
 
   try {
-    // Cek Penitip
+    // Cek Pegawai
     const [pegawaiResults] = await pool.query(`
       SELECT p.*, j.nama_jabatan FROM Pegawai p
       LEFT JOIN Jabatan j ON p.id_jabatan = j.id_jabatan
