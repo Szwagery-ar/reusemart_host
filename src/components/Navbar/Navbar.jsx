@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import RippleButton from '../RippleButton/RippleButton';
 
 export default function Navbar() {
     const router = useRouter();
@@ -97,8 +98,8 @@ export default function Navbar() {
                 </div>
 
                 <div className="inline-flex justify-start items-center gap-10">
+                    <div className="text-center justify-center text-neutral-800 text-md font-medium leading-tight cursor-pointer" onClick={() => router.push('/belanja')}>Belanja</div>
                     <div className="text-center justify-center text-neutral-800 text-md font-medium leading-tight">Tentang Kami</div>
-                    <div className="text-center justify-center text-neutral-800 text-md font-medium leading-tight">Belanja</div>
                     <div className="text-center justify-center text-neutral-800 text-md font-medium leading-tight">Ikut Jualan</div>
                     <div className="text-center justify-center text-neutral-800 text-md font-medium leading-tight">Bantuan</div>
                 </div>
@@ -111,13 +112,13 @@ export default function Navbar() {
 
                     ) : user ? (
                         <div
-                            className="p-1 rounded-full cursor-pointer flex items-center justify-center w-12 h-12"
+                            className="p-1 rounded-full cursor-pointer flex items-center justify-center w-11 h-11"
                             onClick={() => router.push('/profile')}
                             style={{
                                 background: 'radial-gradient(ellipse 130.87% 392.78% at 121.67% 0%, #26C2FF 0%, #220593 90%)',
                             }}
                         >
-                            <div className=" w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: generateStableColor(user.nama || user.email) }}>
+                            <div className=" w-9 h-9 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: generateStableColor(user.nama || user.email) }}>
                                 {user.src_img_profile ? (
                                     <img
                                         src={user.src_img_profile}
@@ -132,12 +133,15 @@ export default function Navbar() {
                             </div>
                         </div>
                     ) : (
-                        <div
-                            className="px-5 py-2 text-center justify-center text-white text-sm font-semibold leading-normal rounded-[100px] bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] cursor-pointer"
-                            onClick={() => router.push('/login')}
-                        >
-                            Masuk/Daftar
-                        </div>
+                        <RippleButton>
+                            <div
+                                className="px-5 py-2 text-center justify-center text-white text-sm font-semibold leading-normal rounded-[100px] bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] cursor-pointer"
+                                onClick={() => router.push('/login')}
+                            >
+                                Masuk/Daftar
+                            </div>
+
+                        </RippleButton>
                     )}
                 </div>
 

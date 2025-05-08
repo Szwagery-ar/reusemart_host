@@ -30,7 +30,7 @@ export async function GET(request) {
             FROM transaksi t
             JOIN pembayaran p ON t.id_transaksi = p.id_transaksi
             LEFT JOIN pegawai peg ON p.id_petugas_cs = peg.id_pegawai
-            WHERE t.id_pembeli = ? AND t.status_transaksi != 'pending'
+            WHERE t.id_pembeli = ? AND t.status_transaksi = 'pending'
             ORDER BY t.tanggal_pesan DESC
         `;
 
@@ -38,7 +38,7 @@ export async function GET(request) {
 
         return NextResponse.json({ transaksi }, { status: 200 });
     } catch (error) {
-        console.error("Transaction History GET error:", error);
-        return NextResponse.json({ error: "Failed to fetch Transaction History" }, { status: 500 });
+        console.error("Transaction Pending GET error:", error);
+        return NextResponse.json({ error: "Failed to fetch Transaction Pending" }, { status: 500 });
     }
 }

@@ -22,15 +22,15 @@ export default function ProfileSidebar() {
                         key={item.name}
                         onClick={() => router.push(item.path)}
                         className={`px-4 py-3 text-sm font-medium ${pathname === item.path
-                                ? 'bg-white text-indigo-800 font-semibold'
-                                : 'text-white hover:bg-white hover:text-indigo-700'
+                            ? 'bg-white text-indigo-800 font-semibold'
+                            : 'text-white hover:bg-white hover:text-indigo-700 font-semibold'
                             }`}
                     >
                         {item.name}
                     </button>
                 ))}
+                <LogoutButton className=""/>
             </nav>
-            <LogoutButton />
         </aside>
     );
 }
