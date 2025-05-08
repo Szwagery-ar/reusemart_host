@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { redirect } from 'next/navigation';
-import LogoutButton from '@/components/LogoutButton/LogoutButton';
 
 export default async function PenitipDashboard() {
     const cookieStore = await cookies();
@@ -13,6 +12,7 @@ export default async function PenitipDashboard() {
     try {
         decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
+        console.error('JWT verification error:', err);
         redirect('/login');
     }
 
@@ -22,9 +22,22 @@ export default async function PenitipDashboard() {
         headers: { Cookie: `token=${token}` },
         cache: 'no-store',
     });
-    const { user } = await res.json();
+
+    if (!res.ok) {
+        const errorRes = await res.json();
+        console.error('Fetch error:', errorRes); 
+        redirect('/login');
+    }
+
+    const json = await res.json();
+    const user = json.user;
+
+    if (!user) {
+        console.error('User data is missing:', json);
+        redirect('/login');
+    }
 
     return (
-        <h1>Test aja dulu buat dashboard penitip ya</h1>
+        <h1>Welcome {user.nama}, you are a {user.role}</h1>
     );
 }

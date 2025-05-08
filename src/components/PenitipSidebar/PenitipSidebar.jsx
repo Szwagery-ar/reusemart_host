@@ -10,7 +10,7 @@ import './PenitipSidebar.css';
 
 export default function PenitipSidebar() {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const pathname = usePathname();
     const router = useRouter();
 
@@ -30,17 +30,11 @@ export default function PenitipSidebar() {
                 }
             } catch (err) {
                 console.error("Error fetching user data", err);
-            } finally {
-                setLoading(false);
             }
         };
   
         fetchUserData();
     }, []);
-
-    if (loading) {
-        return <aside className="w-64 p-4 text-gray-500">Memuat menu penitip...</aside>;
-    }
 
     const menuItems = [
         { name: 'Dashboard', path: '/penitip', icon: LayoutDashboard },
@@ -57,7 +51,7 @@ export default function PenitipSidebar() {
                 return (
                     <a key={item.name} href={item.path} className='flex justify-end'>
                         <div
-                            className={`flex items-center gap-2 px-4 py-3 w-100 ml-6 ${
+                            className={`flex items-center gap-2 px-4 py-3 w-100 ml-6 text-sm ${
                                 pathname === item.path
                                     ? 'sidebar-highlight font-semibold bg-white text-indigo-800'
                                     : 'text-white hover:font-semibold'
@@ -70,7 +64,7 @@ export default function PenitipSidebar() {
                 );
             })}
             </nav>
-            <LogoutButton />
+            <LogoutButton className="flex items-center gap-2 px-4 py-3 w-100 ml-6 text-sm text-white hover:font-semibold" />
         </aside>
     );
 }

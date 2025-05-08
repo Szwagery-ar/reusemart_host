@@ -38,8 +38,6 @@ export default function ProfilePage() {
         email: user?.email || '',
     });
 
-
-
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -184,8 +182,6 @@ export default function ProfilePage() {
 
     return (
         <div className="">
-
-
             <div className="rounded-4xl flex w-full text-black font-medium">
                 <div className="flex flex-col w-full rounded-4xl">
                     <div className="flex mb-6 gap-5">
