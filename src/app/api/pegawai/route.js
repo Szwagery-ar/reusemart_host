@@ -1,9 +1,13 @@
 import pool from "@/lib/db"
 import bcrypt from "bcryptjs"
 import { NextResponse } from "next/server"
+import { verifyUserRole } from '@/lib/auth';
+import { ForbiddenError, UnauthorizedError } from '@/lib/errors';
 
 export async function GET(request) {
     try {
+        await verifyUserRole(["Admin"]);
+
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");
 
@@ -30,6 +34,14 @@ export async function GET(request) {
         return NextResponse.json({ pegawai }, { status: 200 });
 
     } catch (error) {
+
+        if (error instanceof ForbiddenError) {
+            return NextResponse.json({ error: "Anda tidak memiliki akses ke halaman ini" }, { status: 403 });
+        }
+        if (error instanceof UnauthorizedError) {
+            return NextResponse.json({ error: "Token tidak valid atau telah kedaluwarsa" }, { status: 401 });
+        }
+
         console.error("Database fetch error:", error);
         return NextResponse.json({ error: "Failed to fetch Pegawai" }, { status: 500 });
     }
@@ -37,52 +49,52 @@ export async function GET(request) {
 
 
 export async function POST(request) {
-  try {
-    const { nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan } = await request.json();
+    try {
+        const { nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan } = await request.json();
 
-    // Validasi input
-    if (!nama || !email || !password || !no_telepon || !tanggal_lahir || !id_jabatan) {
-      return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
+        // Validasi input
+        if (!nama || !email || !password || !no_telepon || !tanggal_lahir || !id_jabatan) {
+            return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di pegawai
+        const [existingEmail] = await pool.query("SELECT email FROM pegawai WHERE email = ?", [email]);
+        if (existingEmail.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Pegawai." }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di pembeli
+        const [existingPembeli] = await pool.query("SELECT email FROM pembeli WHERE email = ?", [email]);
+        if (existingPembeli.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Pembeli." }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di penitip
+        const [existingPenitip] = await pool.query("SELECT email FROM penitip WHERE email = ?", [email]);
+        if (existingPenitip.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Penitip." }, { status: 400 });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Insert pegawai baru
+        const [result] = await pool.query(
+            "INSERT INTO pegawai (nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [nama, email, hashedPassword, no_telepon, tanggal_lahir, komisi || 0, id_jabatan]
+        );
+
+        const id_pegawai = result.insertId;
+        const id = `P${id_pegawai}`;
+
+        await pool.query("UPDATE pegawai SET id = ? WHERE id_pegawai = ?", [id, id_pegawai]);
+
+        return NextResponse.json({ message: "Pegawai added successfully!", id, id_pegawai }, { status: 201 });
+
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: "Failed to add Pegawai", details: error.message }, { status: 500 });
     }
-
-    // Cek apakah email sudah ada di pegawai
-    const [existingEmail] = await pool.query("SELECT email FROM pegawai WHERE email = ?", [email]);
-    if (existingEmail.length > 0) {
-      return NextResponse.json({ error: "Email already exists in Pegawai." }, { status: 400 });
-    }
-
-    // Cek apakah email sudah ada di pembeli
-    const [existingPembeli] = await pool.query("SELECT email FROM pembeli WHERE email = ?", [email]);
-    if (existingPembeli.length > 0) {
-      return NextResponse.json({ error: "Email already exists in Pembeli." }, { status: 400 });
-    }
-
-    // Cek apakah email sudah ada di penitip
-    const [existingPenitip] = await pool.query("SELECT email FROM penitip WHERE email = ?", [email]);
-    if (existingPenitip.length > 0) {
-      return NextResponse.json({ error: "Email already exists in Penitip." }, { status: 400 });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Insert pegawai baru
-    const [result] = await pool.query(
-      "INSERT INTO pegawai (nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [nama, email, hashedPassword, no_telepon, tanggal_lahir, komisi || 0, id_jabatan]
-    );
-
-    const id_pegawai = result.insertId;
-    const id = `P${id_pegawai}`;
-
-    await pool.query("UPDATE pegawai SET id = ? WHERE id_pegawai = ?", [id, id_pegawai]);
-
-    return NextResponse.json({ message: "Pegawai added successfully!", id, id_pegawai }, { status: 201 });
-
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to add Pegawai", details: error.message }, { status: 500 });
-  }
 }
 
 
@@ -162,6 +174,7 @@ export async function PUT(request) {
         const { id_pegawai, nama, email, no_telepon, tanggal_lahir, komisi, id_jabatan } = await request.json();
 
         if (!id_pegawai || !nama || !email || !no_telepon || !tanggal_lahir || !id_jabatan) {
+            console.log("Missing fields:", { id_pegawai, nama, email, no_telepon, tanggal_lahir, komisi, id_jabatan });
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
@@ -181,10 +194,15 @@ export async function PUT(request) {
             "UPDATE pegawai SET nama = ?, email = ?, no_telepon = ?, tanggal_lahir = ?, komisi = ?, id_jabatan = ? WHERE id_pegawai = ?",
             [nama, email, no_telepon, tanggal_lahir, komisi, id_jabatan, id_pegawai]
         );
+        // await pool.query(
+        //     "UPDATE pegawai SET p.nama = ?, p.email = ?, p.no_telepon = ?, p.tanggal_lahir = ?, p.komisi = ?, j.nama_jabatan = ? JOIN jabatan ON pegawai.id_jabatan = jabatan.id_jabatan WHERE id_pegawai = ?",
+        //     [nama, email, no_telepon, tanggal_lahir, komisi, id_jabatan, id_pegawai]
+        // );
 
         return NextResponse.json({ message: "Pegawai updated successfully!" }, { status: 200 });
 
     } catch (error) {
+        console.error("Error updating Pegawai:", error);
         return NextResponse.json({ error: "Failed to update Pegawai" }, { status: 500 });
     }
 }
