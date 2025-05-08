@@ -15,12 +15,12 @@ export async function POST(req) {
       const user = penitipResults[0];
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (isPasswordValid) {
-        if (!user.is_verified) {
-          return new Response(JSON.stringify({
-            success: false,
-            message: 'Akun belum terverifikasi. Silakan cek email Anda untuk verifikasi.'
-          }), { status: 401 });
-        }
+        // if (!user.is_verified) {
+        //   return new Response(JSON.stringify({
+        //     success: false,
+        //     message: 'Akun belum terverifikasi. Silakan cek email Anda untuk verifikasi.'
+        //   }), { status: 401 });
+        // }
 
         const token = jwt.sign({ id: user.id_penitip, role: 'penitip' }, JWT_SECRET, { expiresIn: '1h' });
 

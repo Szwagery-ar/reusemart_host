@@ -32,7 +32,7 @@ export async function verifyUserRole(allowedRoles = []) {
       jabatan = result[0].nama_jabatan;
 
     } else {
-      throw new ForbiddenError("Role tidak diizinkan");
+      throw new ForbiddenError("You do not have permission");
     }
 
     if (!allowedRoles.includes(jabatan)) {
@@ -51,5 +51,4 @@ export async function verifyUserRole(allowedRoles = []) {
     }
     throw err;
   }
-
 }

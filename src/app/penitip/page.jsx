@@ -1,25 +1,43 @@
-'use client';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
+import { redirect } from 'next/navigation';
 
-import { useEffect, useState } from 'react';
+export default async function PenitipDashboard() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
 
-export default function PenitipPage() {
-  const [user, setUser] = useState(null);
+    if (!token) redirect('/login');
 
-  useEffect(() => {
-    // Retrieve user data from localStorage
-    const userData = JSON.parse(localStorage.getItem('user'));
-    if (userData) {
-      setUser(userData);
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+        console.error('JWT verification error:', err);
+        redirect('/login');
     }
-  }, []);
 
-  return (
-    <div>
-      {user ? (
-        <h1>Welcome {user.userName}, you are a {user.userType}</h1>
-      ) : (
-        <p>Loading...</p>
-      )}
-    </div>
-  );
+    if (decoded.role !== 'penitip') redirect('/login');
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/me`, {
+        headers: { Cookie: `token=${token}` },
+        cache: 'no-store',
+    });
+
+    if (!res.ok) {
+        const errorRes = await res.json();
+        console.error('Fetch error:', errorRes); 
+        redirect('/login');
+    }
+
+    const json = await res.json();
+    const user = json.user;
+
+    if (!user) {
+        console.error('User data is missing:', json);
+        redirect('/login');
+    }
+
+    return (
+        <h1>Welcome {user.nama}, you are a {user.role}</h1>
+    );
 }
