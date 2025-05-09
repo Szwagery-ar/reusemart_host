@@ -173,9 +173,9 @@ export default function ProfilePage() {
 
     const generateStableColor = (input) => {
         const colors = ['#EF4444', '#F97316', '#10B981', '#8B5CF6', '#EAB308']; // merah, oranye, hijau, biru, kuning
-        if (!input) return colors[0]; // fallback
+        if (!input) return colors[0]; 
 
-        const charCode = input.charCodeAt(0); // ASCII huruf pertama
+        const charCode = input.charCodeAt(0);
         const index = charCode % colors.length;
         return colors[index];
     };

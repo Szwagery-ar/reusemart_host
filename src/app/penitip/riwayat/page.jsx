@@ -1,165 +1,239 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { CalendarIcon, CogIcon } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-const statuses = [
-  "Aktif",
-  "Dalam Pesanan",
-  "Terjual",
-  "Aktif - Extended",
-  "Masa Tenggang Konfirmasi",
-  "Dapat Diambil Kembali",
-  "Siap Didonasikan",
-  "Didonasikan",
-];
-
-export default function BarangTitipan() {
+export default function PenitipRiwayatPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [barangList, setBarangList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [userLoading, setUserLoading] = useState(true);
+  const [transaksiList, setTransaksiList] = useState([]);
+  const [transaksiLoading, setTransaksiLoading] = useState(false);
+
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
-        try {
-            const res = await fetch('/api/auth/me');
+      try {
+        const res = await fetch("/api/auth/me");
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success) {
-                    setUser(data.user);
-                } else {
-                    setError('Gagal mengambil data pengguna');
-                    router.push('/login');
-                }
-            } else {
-                setError('Gagal mengambil data pengguna');
-                if (res.status === 401) {
-                    router.push('/login');
-                }
-            }
-        } catch (err) {
-            console.error('Error fetching user data:', err);
-            setError('Terjadi kesalahan');
-        } finally {
-            setLoading(false);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setUser(data.user);
+            fetchTransaksiPenitip();
+          } else {
+            setUser(null);
+            setError(userData.message || "User not authenticated");
+            router.push("/login");
+          }
+        } else {
+          setUser(null);
+          setError(userData.message || "User not authenticated");
+          if (res.status === 401) {
+            router.push("/login");
+          }
         }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setError("Terjadi kesalahan");
+      } finally {
+        setUserLoading(false);
+      }
     };
 
     fetchUserData();
-}, [router]);
+  }, [router]);
+
+  // TRANSAKSI
+  const fetchTransaksiPenitip = async () => {
+    try {
+      setTransaksiLoading(true);
+
+      const res = await fetch("/api/transaksi/by-penitip", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error(
+          "Gagal mengambil transaksi:",
+          errorData.error || res.status
+        );
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Transaksi data:", data); // Debug
+      setTransaksiList(data.transaksi);
+    } catch (err) {
+      setError("Gagal mengambil transaksi penitip");
+      console.error("Error fetching transaksi penitip:", err);
+    } finally {
+      setTransaksiLoading(false);
+    }
+  };
+
+  // DROPDOWN
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (!event.target.closest(".dropdown-action")) {
+        setActiveDropdown(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const getFirstLetter = (name) => {
+    return name ? name.charAt(0).toUpperCase() : "";
+  };
+
+  function formatRupiah(value) {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+      .format(date)
+      .replace(".", "");
+  }
+
+  function countTanggalExpire(tanggalString) {
+    const tanggal = new Date(tanggalString);
+    tanggal.setDate(tanggal.getDate() + 30);
+    return tanggal;
+  }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="p-6">
       {/* Main Content */}
-      <main className="flex-1 p-4">
-        <h2 className="text-2xl font-bold mb-4">Barang Titipan</h2>
-
-        {/* Tabs */}
-        <Tabs defaultValue="semua" className="mb-4">
-          <TabsList className="flex gap-4">
-            {["Semua", "Sedang Dititipkan", "Masa Titip Habis", "Dalam Transaksi", "Terjual", "Didonasikan"].map((tab) => (
-              <TabsTrigger key={tab} value={tab.toLowerCase().replace(/ /g, '-')}>{tab}</TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-
-        {/* Search and Filters */}
-        <div className="flex gap-4 items-center mb-6">
-          <Input placeholder="Cari kode atau nama barang" className="w-1/3" />
-          <div className="relative">
-            <Button variant="outline" className="flex items-center gap-2">
-              Tanggal Masuk <CalendarIcon size={16} />
-            </Button>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-4xl font-[Montage-Demo]">Riwayat Transaksi</h2>
+        <div
+          className="p-1 rounded-full cursor-pointer flex items-center justify-center w-12 h-12"
+          onClick={() => router.push("/penitip/profile")}
+          style={{
+            background:
+              "radial-gradient(ellipse 130.87% 392.78% at 121.67% 0%, #26C2FF 0%, #220593 90%)",
+          }}
+        >
+          <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+            {user && user.src_img_profile ? (
+              <img
+                src={user.src_img_profile}
+                alt="Profile"
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : user ? (
+              <span className="text-white text-lg font-semibold">
+                {getFirstLetter(user.nama)}
+              </span>
+            ) : (
+              <div className="animate-pulse w-full h-full bg-gray-300 rounded-full" />
+            )}
           </div>
-          <Input type="date" className="w-1/4" />
         </div>
+      </div>
 
+      {/* Tabs */}
+      <Tabs defaultValue="semua" className="mb-4">
+        <TabsList className="flex gap-4">
+          {[
+            "Semua",
+            "Menunggu Pembayaran",
+            "Berjalan",
+            "Selesai",
+            "Dibatalkan",
+          ].map((tab) => (
+            <TabsTrigger key={tab} value={tab.toLowerCase().replace(/ /g, "-")}>
+              {tab}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      {/* Search and Filters */}
+      <div className="flex gap-4 items-center mb-6">
+        <Input
+          placeholder="Cari kode transaksi, nama barang, atau pembeli"
+          className="w-1/3"
+        />
+        <label htmlFor="tanggal-pemesanan" className="text-sm  ml-5 block">
+          Tanggal Pemesanan
+        </label>
+        <Input id="tanggal-pemesanan" type="date" className="w-1/4" />
+      </div>
+
+      <div className="overflow-x-auto flex flex-col">
         {/* Table Header */}
-        <div className="flex flex-row text-white justify-between p-4 rounded-xl font-semibold text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
-          <div className="max-w-20 grow">Kode</div>
-          <div className="w-30 grow">Nama</div>
-          <div className="grow">Harga</div>
-          <div className="grow">Tanggal Masuk</div>
-          <div className="grow">Tanggal Keluar</div>
-          <div className="grow">Tanggal Expire</div>
-          <div className="grow">Status</div>
-          <div className="grow">Action</div>
-        </div>
-
-          {/* <tbody className="bg-white divide-y divide-gray-100">
-            {penitipList.map((p) => (
-                <tr key={p.id_penitip} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.nama}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.no_ktp}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">+62{p.no_telepon}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.badge_level}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.total_barang}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="relative" ref={dropdownRef}>
-                            <button onClick={() => setActiveDropdown(activeDropdown === p.id_penitip ? null : p.id_penitip)} className="text-gray-400 hover:text-indigo-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
-                                </svg>
-                            </button>
-                            {activeDropdown === p.id_penitip && (
-                                <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
-                                    <button className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100" onClick={() => handleEdit(p)}>Edit</button>
-                                    <button className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100" onClick={() => handleDelete(p.id_penitip)}>Hapus</button>
-                                </div>
-                            )}
-                        </div>
-                    </td>
-                </tr>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="">
+              <tr className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
+                  <th className="px-5 py-3 text-white">No.</th>
+                  <th className="px-5 py-3 text-white">Nomor Nota</th>
+                  <th className="px-5 py-3 text-white">Barang</th>
+                  <th className="px-5 py-3 text-white">Tanggal Pesan</th>
+                  <th className="px-5 py-3 text-white">Nama Pembeli</th>
+                  <th className="px-5 py-3 text-white">Total Harga</th>
+                  <th className="px-5 py-3 text-white">Komisi</th>
+                  <th className="px-5 py-3 text-white">Status</th>
+                  <th className="px-5 py-3 text-white">Action</th>
+              </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-100">
+            {transaksiList.map((item, index) => (
+              <tr key={item.transaksi} className="rounded-xl border border-black text-sm hover:bg-gray-50">
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{index + 1}</td>
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.no_nota}</td>
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.nama_barang}</td>
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.tanggal_pesan}</td>
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.nama_pembeli}</td>
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{formatRupiah(item.total_harga)}</td>
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{formatRupiah(item.komisi_penitip)}</td>
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.status_transaksi}</td>
+                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <EllipsisVertical />
+                </td>
+              </tr>
             ))}
-          </tbody> */}
-
-        {/* Items */}
-        {statuses.map((status, idx) => (
-          <Card key={idx} className="grid grid-cols-7 items-center gap-2">
-            <CardContent className="p-2 col-span-7 grid grid-cols-7 items-center justify-left">
-              <div>V101</div>
-              <div className="truncate">Vinyl Record 'The Beatles - Abbey Road' Edisi Langka</div>
-              <div>Rp 31.850.000</div>
-              <div>08 Apr 2025</div>
-              <div>08 Mei 2025</div>
-              <div>08 Mei 2025</div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-800 whitespace-nowrap">{status}</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <Button variant="ghost" size="icon">
-                      <CogIcon size={16} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Hapus</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+          </tbody>
+        </table>
 
         {/* Pagination */}
-        <div className="mt-6 flex justify-center items-center gap-2">
-          <Button variant="outline" size="sm">1</Button>
-          <Button variant="ghost" size="sm">▶</Button>
+        <div className="mt-2 mb-4 flex justify-center items-center gap-2">
+          <Button variant="outline" size="sm">
+            1
+          </Button>
+          <Button variant="ghost" size="sm">
+            ▶
+          </Button>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
