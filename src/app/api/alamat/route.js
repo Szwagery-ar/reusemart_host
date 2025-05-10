@@ -22,6 +22,9 @@ export async function GET(request) {
             return NextResponse.json({ error: "Unauthorized - not a Pembeli" }, { status: 403 });
         }
 
+        const { searchParams } = new URL(request.url);
+        const search = searchParams.get("q");
+
         let query = `
             SELECT alamat.id_alamat, alamat.nama_alamat, alamat.lokasi, alamat.note, alamat.id_pembeli, pembeli.nama AS nama_pembeli
             FROM alamat
@@ -29,12 +32,24 @@ export async function GET(request) {
             WHERE alamat.id_pembeli = ?
         `;
 
-        const [alamat] = await pool.query(query, [id_pembeli]);
+        let values = [];
+
+        if (search) {
+            query += `
+                AND (
+                    alamat.nama_alamat LIKE ?
+                    OR alamat.lokasi LIKE ?
+                    OR alamat.note LIKE ?
+                )`;
+            values.push(`%${search}%`, `%${search}%`, `%${search}%`); // ✅ tiga parameter
+        }
+        
+        const [alamat] = await pool.query(query, [id_pembeli, ...values]);
 
         return NextResponse.json({ alamat }, { status: 200 });
 
     } catch (error) {
-        console.error("Alamat GET error:", error);
+        console.error("GET Alamat error:", error);
         return NextResponse.json({ error: "Failed to fetch Alamat" }, { status: 500 });
     }
 }
