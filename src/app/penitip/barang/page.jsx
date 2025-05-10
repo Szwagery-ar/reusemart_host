@@ -84,7 +84,6 @@ export default function PenitipBarangPage() {
   // DROPDOWN
   useEffect(() => {
     function handleClickOutside(event) {
-      // Periksa apakah elemen dropdown sedang terbuka
       if (!event.target.closest(".dropdown-action")) {
         setActiveDropdown(null);
       }

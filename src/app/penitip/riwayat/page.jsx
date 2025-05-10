@@ -194,15 +194,15 @@ export default function PenitipRiwayatPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="">
               <tr className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
-                  <th className="px-5 py-3 text-white">No.</th>
-                  <th className="px-5 py-3 text-white">Nomor Nota</th>
-                  <th className="px-5 py-3 text-white">Barang</th>
-                  <th className="px-5 py-3 text-white">Tanggal Pesan</th>
-                  <th className="px-5 py-3 text-white">Nama Pembeli</th>
-                  <th className="px-5 py-3 text-white">Total Harga</th>
-                  <th className="px-5 py-3 text-white">Komisi</th>
-                  <th className="px-5 py-3 text-white">Status</th>
-                  <th className="px-5 py-3 text-white">Action</th>
+                  <th className="px-5 py-3 text-white text-left">No.</th>
+                  <th className="px-5 py-3 text-white text-left">Nomor Nota</th>
+                  <th className="px-5 py-3 text-white text-left">Barang</th>
+                  <th className="px-5 py-3 text-white text-left">Tanggal Pesan</th>
+                  <th className="px-5 py-3 text-white text-left">Nama Pembeli</th>
+                  <th className="px-5 py-3 text-white text-left">Total Harga</th>
+                  <th className="px-5 py-3 text-white text-left">Komisi</th>
+                  <th className="px-5 py-3 text-white text-left">Status</th>
+                  <th className="px-5 py-3 text-white text-left">Action</th>
               </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">

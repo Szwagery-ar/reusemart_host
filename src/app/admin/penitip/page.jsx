@@ -80,39 +80,6 @@ export default function AdminPenitipPage() {
     fetchPenitip();
   }, [searchQuery]);
 
-  // useEffect(() => {
-  //     const fetchUserAndPenitip = async () => {
-  //         try {
-  //             const userRes = await fetch('/api/auth/me');
-  //             const userData = await userRes.json();
-
-  //             if (!userRes.ok || !userData.success || userData.user.jabatan !== 'CS') {
-  //                 setError("Anda tidak memiliki akses ke halaman ini.");
-  //                 return;
-  //             }
-
-  //             setUser(userData.user);
-
-  //             const penitipRes = await fetch(`/api/penitip?q=${encodeURIComponent(searchQuery)}`);
-  //             const penitipData = await penitipRes.json();
-
-  //             if (penitipRes.ok) {
-  //                 setPenitipList(penitipData.penitip);
-  //             } else {
-  //                 setError(penitipData.error || 'Gagal mengambil data penitip');
-  //             }
-
-  //         } catch (err) {
-  //             console.error('Gagal memuat:', err);
-  //             setError('Terjadi kesalahan saat mengambil data');
-  //         } finally {
-  //             setLoading(false);
-  //         }
-  //     };
-
-  //     fetchUserAndPenitip();
-  // }, [searchQuery]);
-
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -402,7 +369,7 @@ export default function AdminPenitipPage() {
         {showEditSidebar && editData && (
           <>
             <div
-              className="fixed inset-0 z-40"
+              className="fixed inset-0 z-40 bg-black opacity-20"
               onClick={() => setShowEditSidebar(false)}
             />
             <div className="fixed inset-y-0 right-0 z-50 bg-white w-full max-w-md h-full p-6 shadow-xl transition-transform duration-300">

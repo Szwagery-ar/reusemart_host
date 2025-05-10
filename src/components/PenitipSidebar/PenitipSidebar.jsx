@@ -54,7 +54,7 @@ export default function PenitipSidebar() {
                                 className={`flex items-center gap-2 px-4 py-3 w-100 ml-6 text-sm ${
                                     pathname === item.path
                                         ? 'sidebar-highlight font-semibold bg-white text-indigo-800'
-                                        : 'text-white hover:font-semibold'
+                                        : 'text-white hover:font-semibold hover:border-b-2 hover:border-white'
                                 }`}
                             >
                                 <Icon className="w-5 h-5" />
@@ -66,7 +66,7 @@ export default function PenitipSidebar() {
             </nav>
             <LogoutButton 
                 icon={LogOut}
-                className="flex items-center mt-2 gap-2 px-4 py-3 w-58 ml-6 text-sm text-white hover:font-semibold cursor-pointer" 
+                className="flex items-center mt-2 gap-2 px-4 py-3 w-58 ml-6 text-sm text-white cursor-pointer hover:font-semibold hover:border-b-2 hover:border-white" 
             />
         </aside>
     );
