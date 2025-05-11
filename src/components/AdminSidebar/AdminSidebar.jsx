@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LogoutButton from '../LogoutButton/LogoutButton';
 
-import { LayoutDashboard, Package, Gift, LogOut, ContactRound } from 'lucide-react';
+import { LayoutDashboard, Package, Gift, LogOut, ContactRound, ShoppingBag, HeartHandshake  } from 'lucide-react';
 import { UserRound, Handshake, Ribbon } from 'lucide-react';
 
 import './AdminSidebar.css';
@@ -17,6 +17,9 @@ const menuByRole = {
         { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
         { name: 'Data Organisasi', path: '/admin/organisasi', icon: Ribbon },
+        { name: 'Request Donasi', path: '/admin/reqdonasi', icon: ShoppingBag },
+        { name: 'Donasi', path: '/admin/donasi', icon: HeartHandshake },
+
     ],
     ADMIN: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -25,7 +28,7 @@ const menuByRole = {
         { name: 'Data Pegawai', path: '/admin/pegawai', icon: ContactRound},
         { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
-        { name: 'Data Organisasi', path: '/admin/organisasi', icon: Ribbon },
+        { name: 'Data Organisasi', path: '/admin/organisasi', icon: ShoppingBag },
     ],
     PEGAWAIGUDANG: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
