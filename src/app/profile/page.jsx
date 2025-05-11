@@ -123,7 +123,6 @@ export default function ProfilePage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formAlamat),
         });
-
         if (res.ok) {
             fetchAlamat();
             setShowModal(false);
@@ -275,6 +274,7 @@ export default function ProfilePage() {
                             </div>
                         </div>
                         {isEditingProfile && (
+                            
                             <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
                                 <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg relative">
                                     <h2 className="text-xl font-bold mb-4">Edit Profil</h2>

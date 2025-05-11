@@ -1,5 +1,10 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
+import { cookies } from 'next/headers';
+
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function GET(request) {
     try {
@@ -36,63 +41,99 @@ export async function GET(request) {
 
 
 export async function POST(request) {
-    try {
-        const { id_pembeli, id_merchandise, jml_merch_diklaim } = await request.json();
+    const connection = await pool.getConnection();
 
-        if (!id_pembeli || !id_merchandise || !jml_merch_diklaim) {
-            return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
+
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get("token")?.value;
+
+        if (!token) {
+            return NextResponse.json({ error: "Unauthorized - no token" }, { status: 401 });
         }
 
-        const [pembeli] = await pool.query(
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const id_pembeli = decoded.id;
+        const role = decoded.role;
+
+        if (role !== "pembeli") {
+            return NextResponse.json({ error: "Unauthorized - not a Pembeli" }, { status: 403 });
+        }
+
+        const { id_merchandise, jml_merch_diklaim } = await request.json();
+
+        const merchId = parseInt(id_merchandise);
+        const jumlahKlaim = parseInt(jml_merch_diklaim);
+
+        if (!merchId || isNaN(merchId) || isNaN(jumlahKlaim) || jumlahKlaim <= 0) {
+            return NextResponse.json({ error: "Field tidak valid" }, { status: 400 });
+        }
+
+        await connection.beginTransaction();
+
+        const [[pembeli]] = await connection.query(
             "SELECT poin_loyalitas FROM pembeli WHERE id_pembeli = ?",
             [id_pembeli]
         );
-        if (pembeli.length === 0) {
-            return NextResponse.json({ error: "Pembeli not found!" }, { status: 404 });
+
+        if (!pembeli) {
+            await connection.rollback();
+            return NextResponse.json({ error: "Pembeli tidak ditemukan." }, { status: 404 });
         }
 
-        const [merch] = await pool.query(
+        const [[merch]] = await connection.query(
             "SELECT jumlah_poin, jumlah_stok FROM merchandise WHERE id_merchandise = ?",
-            [id_merchandise]
-        );
-        if (merch.length === 0) {
-            return NextResponse.json({ error: "Merchandise not found!" }, { status: 404 });
-        }
-
-        const jumlahPoin = merch[0].jumlah_poin;
-        const stokTersedia = merch[0].jumlah_stok;
-
-        const total_poin = jumlahPoin * jml_merch_diklaim;
-
-        if (pembeli[0].poin_loyalitas < total_poin) {
-            return NextResponse.json({ error: "Not enough points to claim this merchandise!" }, { status: 400 });
-        }
-
-        if (stokTersedia < jml_merch_diklaim) {
-            return NextResponse.json({ error: "Not enough stock to claim this merchandise!" }, { status: 400 });
-        }
-
-        await pool.query(
-            "INSERT INTO klaim (id_pembeli, id_merchandise, jml_merch_diklaim, total_poin) VALUES (?, ?, ?, ?)",
-            [id_pembeli, id_merchandise, jml_merch_diklaim, total_poin]
+            [merchId]
         );
 
-        await pool.query(
+        if (!merch) {
+            await connection.rollback();
+            return NextResponse.json({ error: "Merchandise tidak ditemukan." }, { status: 404 });
+        }
+
+        const totalPoinDibutuhkan = merch.jumlah_poin * jumlahKlaim;
+
+        if (pembeli.poin_loyalitas < totalPoinDibutuhkan) {
+            await connection.rollback();
+            return NextResponse.json({ error: "Poin tidak mencukupi untuk klaim." }, { status: 400 });
+        }
+
+        if (merch.jumlah_stok < jumlahKlaim) {
+            await connection.rollback();
+            return NextResponse.json({ error: "Stok merchandise tidak mencukupi." }, { status: 400 });
+        }
+
+        // Simpan klaim
+        await connection.query(
+            `INSERT INTO klaim (id_pembeli, id_merchandise, jml_merch_diklaim, total_poin) 
+             VALUES (?, ?, ?, ?)`,
+            [id_pembeli, merchId, jumlahKlaim, totalPoinDibutuhkan]
+        );
+
+        await connection.query(
             "UPDATE pembeli SET poin_loyalitas = poin_loyalitas - ? WHERE id_pembeli = ?",
-            [total_poin, id_pembeli]
+            [totalPoinDibutuhkan, id_pembeli]
         );
 
-        await pool.query(
+        await connection.query(
             "UPDATE merchandise SET jumlah_stok = jumlah_stok - ? WHERE id_merchandise = ?",
-            [jml_merch_diklaim, id_merchandise]
+            [jumlahKlaim, merchId]
         );
 
-        return NextResponse.json({ message: "Klaim created successfully!" }, { status: 201 });
+        await connection.commit();
+
+        return NextResponse.json({ message: "Klaim berhasil dibuat!" }, { status: 201 });
 
     } catch (error) {
-        return NextResponse.json({ error: error.message || "Failed to create Klaim" }, { status: 500 });
+        await connection.rollback();
+        console.error("KLAIM ERROR:", error); // <- cetak error ke server log
+        return NextResponse.json({ error: error.message || "Terjadi kesalahan saat membuat klaim." }, { status: 500 });
+    }
+    finally {
+        connection.release();
     }
 }
+
 
 
 export async function PUT(request) {

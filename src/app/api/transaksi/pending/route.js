@@ -1,4 +1,4 @@
-import  pool from '@/lib/db';
+import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
@@ -24,14 +24,28 @@ export async function GET(request) {
 
         let query = `
             SELECT 
-                t.id_transaksi, t.no_nota, t.harga_awal, t.ongkos_kirim, t.diskon, t.harga_akhir, 
-                t.status_transaksi, t.tanggal_pesan, t.tanggal_lunas, p.status_pembayaran, 
-                p.img_bukti_transfer, peg.nama AS petugas_name
+                t.id_transaksi, 
+                t.no_nota, 
+                t.harga_awal, 
+                t.ongkos_kirim, 
+                t.diskon, 
+                t.harga_akhir, 
+                t.status_transaksi, 
+                t.tanggal_pesan, 
+                t.tanggal_lunas,
+                t.tambahan_poin,
+                p.status_pembayaran, 
+                p.img_bukti_transfer, 
+                peg.nama AS petugas_name,
+                peng.jenis_pengiriman, 
+                peng.lokasi
             FROM transaksi t
             JOIN pembayaran p ON t.id_transaksi = p.id_transaksi
             LEFT JOIN pegawai peg ON p.id_petugas_cs = peg.id_pegawai
-            WHERE t.id_pembeli = ? AND t.status_transaksi = 'pending'
-            ORDER BY t.tanggal_pesan DESC
+            LEFT JOIN pengiriman peng ON t.id_transaksi = peng.id_transaksi
+            WHERE t.id_pembeli = ? 
+            AND t.status_transaksi = 'pending'
+            ORDER BY t.tanggal_pesan DESC;
         `;
 
         const [transaksi] = await pool.query(query, [id_pembeli]);
