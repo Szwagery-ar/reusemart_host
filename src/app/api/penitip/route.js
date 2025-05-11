@@ -70,6 +70,12 @@ export async function POST(request) {
             return NextResponse.json({ error: "Email already exists in Pembeli!" }, { status: 400 });
         }
 
+        // Cek apakah email sudah ada di organisasi
+        const [existingOrg] = await pool.query("SELECT * FROM organisasi WHERE email = ?", [email]);
+        if (existingOrg.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Organisasi!" }, { status: 400 });
+        }
+
         // Cek apakah email sudah ada di penitip
         const [existingPenitip] = await pool.query("SELECT * FROM penitip WHERE email = ? OR no_ktp = ?", [email, no_ktp]);
         if (existingPenitip.length > 0) {

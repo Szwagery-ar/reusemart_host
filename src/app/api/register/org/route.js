@@ -5,21 +5,21 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
     try {
-        const { nama, no_telepon, email, password } = await request.json();
+        const { nama, email, password, no_telepon } = await request.json();
 
-        if (!nama || !no_telepon || !email || !password) {
-            return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
+        if (!nama || !email || !password || !no_telepon) {
+            return NextResponse.json({ error: "Semua field wajib diisi!" }, { status: 400 });
         }
 
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
         if (!emailRegex.test(email)) {
-            return NextResponse.json({ error: "Invalid email format!" }, { status: 400 });
+            return NextResponse.json({ error: "Format email tidak valid!" }, { status: 400 });
         }
 
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
         if (!passwordRegex.test(password)) {
             return NextResponse.json({
-                error: "Password must be at least 8 characters long and include at least one number, one uppercase letter, and one lowercase letter."
+                error: "Password minimal 8 karakter dan harus mengandung huruf besar, huruf kecil, serta angka."
             }, { status: 400 });
         }
 
@@ -47,21 +47,32 @@ export async function POST(request) {
             return NextResponse.json({ error: "Email already exists in Penitip!" }, { status: 400 });
         }
 
+        if (existingOrg.length > 0) {
+            return NextResponse.json({ error: "Email atau nomor telepon sudah terdaftar!" }, { status: 400 });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const [result] = await pool.query(
-            "INSERT INTO pembeli (nama, no_telepon, email, password, poin_loyalitas, is_verified) VALUES (?, ?, ?, ?, ?, ?)",
-            [nama, no_telepon, email, hashedPassword, 0, 0] 
+            `INSERT INTO organisasi 
+            (nama, email, password, no_telepon, is_verified) 
+            VALUES (?, ?, ?, ?, ?)`,
+            [nama, email, hashedPassword, no_telepon, 0]
         );
 
-        const pembeliId = result.insertId; 
+        const organisasiId = result.insertId;
+        const generatedId = 'ORG' + organisasiId;
 
-        await registerUser(email, pembeliId);
+        await pool.query(
+            `UPDATE organisasi SET id = ? WHERE id_organisasi = ?`,
+            [generatedId, organisasiId]
+        );
 
-        return NextResponse.json({ message: "Registration successful. Please check your email to verify." }, { status: 201 });
+        await registerUser(email, organisasiId);  // kirim email verifikasi
 
+        return NextResponse.json({ message: "Registrasi berhasil. Silakan cek email Anda untuk verifikasi." }, { status: 201 });
     } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "Failed to register pembeli: " + error.message }, { status: 500 });
+        console.error("Register Organisasi Error:", error);
+        return NextResponse.json({ error: "Terjadi kesalahan saat registrasi organisasi: " + error.message }, { status: 500 });
     }
 }

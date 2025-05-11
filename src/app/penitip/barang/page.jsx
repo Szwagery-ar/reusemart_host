@@ -137,7 +137,7 @@ export default function PenitipBarangPage() {
           style={{
               background: 'radial-gradient(ellipse 130.87% 392.78% at 121.67% 0%, #26C2FF 0%, #220593 90%)',
           }}
-      >
+        >
           <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
             {user && user.src_img_profile ? (
               <img
