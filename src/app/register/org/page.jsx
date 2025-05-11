@@ -83,12 +83,12 @@ export default function RegisterOrg() {
 
                 <form onSubmit={handleRegisterSubmit}>
                     <div className='mb-4'>
-                        <label htmlFor="name" className='block text-lg font-medium'>Nama</label>
+                        <label htmlFor="name" className='block text-lg font-medium'>Nama Organisasi</label>
                         <div className='p-[2px] rounded-full bg-white focus-within:bg-[radial-gradient(ellipse_130.87%_392.78%_at_-1.67%_100%,_#26C2FF_0%,_#220593_90%)] transition duration-300'>
                             <input
                                 id="name"
                                 type="text"
-                                placeholder='Nama Lengkap'
+                                placeholder='Nama Organisasi'
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 className="w-full rounded-full px-6 py-2 text-black bg-white focus:outline-none"
@@ -97,7 +97,7 @@ export default function RegisterOrg() {
                     </div>
 
                     <div className="mb-4">
-                        <label htmlFor="telephone" className='block text-lg font-medium text-white mb-1'>No. Telepon</label>
+                        <label htmlFor="telephone" className='block text-lg font-medium text-white mb-1'>No.Telepon</label>
                         <div className='p-[2px] rounded-full bg-white focus-within:bg-[radial-gradient(ellipse_130.87%_392.78%_at_-1.67%_100%,_#26C2FF_0%,_#220593_90%)] transition duration-300'>
                             <input
                                 id="telephone"
@@ -111,7 +111,7 @@ export default function RegisterOrg() {
                     </div>
 
                     <div className="mb-3">
-                        <label htmlFor="email" className="block text-lg font-medium text-white mb-1">Email</label>
+                        <label htmlFor="email" className="block text-lg font-medium text-white mb-1">Email Organisasi</label>
 
                         <div className="p-[2px] rounded-full bg-white focus-within:bg-[radial-gradient(ellipse_130.87%_392.78%_at_-1.67%_100%,_#26C2FF_0%,_#220593_90%)] transition duration-300">
                             <input
@@ -138,7 +138,6 @@ export default function RegisterOrg() {
                             />
                         </div>
                     </div>
-
 
                     <div className="inline-flex items-center mb-3">
                         <label

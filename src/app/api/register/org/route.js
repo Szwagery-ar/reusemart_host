@@ -42,9 +42,9 @@ export async function POST(request) {
         }
 
         // Cek apakah email sudah ada di penitip
-        const [existingPenitip] = await pool.query("SELECT * FROM penitip WHERE email = ? OR no_ktp = ?", [email, no_ktp]);
+        const [existingPenitip] = await pool.query("SELECT * FROM penitip WHERE email = ?", [email]);
         if (existingPenitip.length > 0) {
-            return NextResponse.json({ error: "Email or No KTP already exists in Penitip!" }, { status: 400 });
+            return NextResponse.json({ error: "Email already exists in Penitip!" }, { status: 400 });
         }
 
         if (existingOrg.length > 0) {

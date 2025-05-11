@@ -123,12 +123,6 @@ export default function PenitipRiwayatPage() {
       .replace(".", "");
   }
 
-  function countTanggalExpire(tanggalString) {
-    const tanggal = new Date(tanggalString);
-    tanggal.setDate(tanggal.getDate() + 30);
-    return tanggal;
-  }
-
   return (
     <div className="p-6">
       {/* Main Content */}
@@ -206,21 +200,32 @@ export default function PenitipRiwayatPage() {
               </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {transaksiList.map((item, index) => (
-              <tr key={item.transaksi} className="rounded-xl border border-black text-sm hover:bg-gray-50">
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{index + 1}</td>
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.no_nota}</td>
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.nama_barang}</td>
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.tanggal_pesan}</td>
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.nama_pembeli}</td>
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{formatRupiah(item.total_harga)}</td>
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{formatRupiah(item.komisi_penitip)}</td>
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.status_transaksi}</td>
-                <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">
-                  <EllipsisVertical />
+            {/* Items */}
+            {transaksiList.length === 0 ? (
+              <tr>
+                <td colSpan={9}>
+                  <div className="w-full flex flex-row justify-center p-4 mt-3 rounded-xl border-1 border-black text-sm">
+                    <p>Belum ada riwayat transaksi</p>
+                  </div>
                 </td>
               </tr>
-            ))}
+            ) : (
+              transaksiList.map((item, index) => (
+                <tr key={item.transaksi} className="rounded-xl border border-black text-sm hover:bg-gray-50">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{index + 1}</td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.no_nota}</td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.nama_barang}</td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{formatDate(item.tanggal_pesan)}</td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.nama_pembeli}</td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{formatRupiah(item.total_harga)}</td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{formatRupiah(item.komisi_penitip)}</td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">{item.status_transaksi}</td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <EllipsisVertical />
+                  </td>
+                </tr>
+              )))
+            }
           </tbody>
         </table>
 

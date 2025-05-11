@@ -24,11 +24,6 @@ export default async function OrganisasiDashboard() {
     });
     const { user } = await res.json();
 
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return date.toISOString().split('T')[0];
-    };
-
     return (
         <div className="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-xl shadow-md">
 

@@ -39,7 +39,7 @@ export default function OrganisasiSidebar() {
     const menuItems = [
         { name: 'Dashboard', path: '/organisasi', icon: LayoutDashboard },
         { name: 'Request Donasi', path: '/organisasi/request', icon: HeartPlus},
-        { name: 'Donasi', path: '/penitip/riwayat', icon: HandHeart },
+        { name: 'Donasi', path: '/organisasi/donasi', icon: HandHeart },
     ];
 
     return (
