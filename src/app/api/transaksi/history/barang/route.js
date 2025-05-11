@@ -1,4 +1,4 @@
-import pool  from '@/lib/db'; 
+import pool from '@/lib/db';
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
@@ -34,9 +34,22 @@ export async function GET(request) {
 
         // Ambil data barang berdasarkan id_transaksi
         let query = `
-            SELECT b.kode_produk, b.nama_barang, b.harga_barang, b.berat_barang, b.status_garansi
-            FROM barang b
-            WHERE b.id_transaksi = ?
+            SELECT 
+                b.kode_produk, 
+                b.nama_barang, 
+                b.harga_barang, 
+                b.berat_barang, 
+                b.status_garansi, 
+                gb.src_img
+            FROM 
+                barang b
+            LEFT JOIN 
+                (SELECT DISTINCT id_barang, src_img
+                FROM gambarbarang
+                ORDER BY id_gambar ASC) gb 
+                ON b.id_barang = gb.id_barang
+            WHERE 
+                b.id_transaksi = ?
         `;
 
         const [barang] = await pool.query(query, [id_transaksi]);

@@ -1,7 +1,7 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(_, {params}) {
+export async function GET(_, { params }) {
     const { id_barang } = await params;
 
     try {
@@ -10,10 +10,13 @@ export async function GET(_, {params}) {
                 b.id_barang, b.kode_produk, b.nama_barang, b.deskripsi_barang,
                 b.harga_barang, b.status_titip, b.tanggal_masuk, b.tanggal_keluar,
                 b.status_garansi, b.berat_barang, p.nama AS penitip_name,
-                gb.id_gambar, gb.src_img
+                gb.id_gambar, gb.src_img,
+                k.nama_kategori
             FROM barang b
             LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
             LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
+            LEFT JOIN bridgekategoribarang bk ON b.id_barang = bk.id_barang
+            LEFT JOIN kategoribarang k ON bk.id_kategori = k.id_kategori
             WHERE b.id_barang = ?
         `;
 
@@ -28,6 +31,7 @@ export async function GET(_, {params}) {
                 acc = {
                     ...item,
                     gambar_barang: [],
+                    kategori_barang: [],
                 };
             }
             if (item.id_gambar) {
@@ -36,6 +40,11 @@ export async function GET(_, {params}) {
                     src_img: item.src_img,
                 });
             }
+
+            if (item.nama_kategori && !acc.kategori_barang.includes(item.nama_kategori)) {
+                acc.kategori_barang.push(item.nama_kategori);
+            }
+
             return acc;
         }, null);
 

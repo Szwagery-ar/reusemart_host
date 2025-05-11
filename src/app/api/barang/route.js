@@ -19,10 +19,13 @@ export async function GET(request) {
                 b.status_garansi, 
                 p.nama AS penitip_name,
                 gb.id_gambar, 
-                gb.src_img
+                gb.src_img,
+                kb.nama_kategori
             FROM barang b
             LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
             LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
+            LEFT JOIN bridgekategoribarang bkb ON b.id_barang = bkb.id_barang
+            LEFT JOIN kategoribarang kb ON bkb.id_kategori = kb.id_kategori
         `;
 
         let values = [];
@@ -39,6 +42,7 @@ export async function GET(request) {
                 acc[item.id_barang] = {
                     ...item,
                     gambar_barang: [],
+                    kategori_barang: []
                 };
             }
             if (item.id_gambar) {
@@ -46,6 +50,9 @@ export async function GET(request) {
                     id_gambar: item.id_gambar,
                     src_img: item.src_img,
                 });
+            }
+            if (item.nama_kategori) {
+                acc[item.id_barang].kategori_barang.push(item.nama_kategori);
             }
             return acc;
         }, {});
@@ -59,6 +66,7 @@ export async function GET(request) {
         return NextResponse.json({ error: "Failed to fetch Barang" }, { status: 500 });
     }
 }
+
 
 export async function POST(request) {
     try {

@@ -6,7 +6,7 @@ export default function ProfileLayout({ children }) {
     return (
         <div className="">
             <Navbar />
-            <div className="px-20 my-20">
+            <div className="px-20 my-20 min-h-200">
                 <div className="mt-25 gap-4">
                     <ProfileSidebar />
                     <main className="ml-70">{children}</main>
