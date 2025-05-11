@@ -4,38 +4,41 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LogoutButton from '../LogoutButton/LogoutButton';
 
+import { LayoutDashboard, Package, Gift, LogOut, ContactRound } from 'lucide-react';
+import { UserRound, Handshake, Ribbon } from 'lucide-react';
+
+import './AdminSidebar.css';
 const menuByRole = {
     OWNER: [
-        { name: 'Dashboard', path: '/admin' },
-        { name: 'Barang', path: '/admin/barang' },
-        { name: 'Merchandise', path: '/admin/merchandise' },
-        { name: 'Data Pegawai', path: '/admin/pegawai' },
-        { name: 'Data Pembeli', path: '/admin/pembeli' },
-        { name: 'Data Penitip', path: '/admin/penitip' },
-        { name: 'Data Organisasi', path: '/admin/organisasi' },
+        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Barang', path: '/admin/barang', icon: Package },
+        { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
+        { name: 'Data Pegawai', path: '/admin/pegawai', icon: ContactRound },
+        { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },
+        { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
+        { name: 'Data Organisasi', path: '/admin/organisasi', icon: Ribbon },
     ],
     ADMIN: [
-        { name: 'Dashboard', path: '/admin' },
-        { name: 'Barang', path: '/admin/barang' },
-        { name: 'Merchandise', path: '/admin/merchandise' },
-        { name: 'Data Pegawai', path: '/admin/pegawai' },
-        { name: 'Data Pembeli', path: '/admin/pembeli' },
-        { name: 'Data Penitip', path: '/admin/penitip' },
-        { name: 'Data Organisasi', path: '/admin/organisasi' },
+        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Barang', path: '/admin/barang', icon: Package },
+        { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
+        { name: 'Data Pegawai', path: '/admin/pegawai', icon: ContactRound},
+        { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },
+        { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
+        { name: 'Data Organisasi', path: '/admin/organisasi', icon: Ribbon },
     ],
     PEGAWAIGUDANG: [
-        { name: 'Dashboard', path: '/admin' },
-        { name: 'Data Penitip', path: '/admin/penitip' },
+        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
     ],
     CS: [
-        { name: 'Dashboard', path: '/admin' },
-        { name: 'Data Penitip', path: '/admin/penitip' },
+        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake  },
     ],
     QC: [
-        { name: 'Dashboard', path: '/admin' },
-        { name: 'Barang', path: '/admin/barang' },
+        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Barang', path: '/admin/barang', icon: Package },
     ],
-    // Tambahkan sesuai jabatan lainnya
 };
 
 export default function AdminSidebar() {
@@ -49,8 +52,14 @@ export default function AdminSidebar() {
             try {
                 const res = await fetch('/api/auth/me');
                 const data = await res.json();
+
                 if (res.ok && data.success) {
                     setJabatan(data.user.jabatan?.toUpperCase());
+                } else {
+                    setError('Failed to fetch user data');
+                    if (res.status === 401) {
+                        router.push('/login/admin');
+                    }
                 }
             } catch (err) {
                 console.error("Gagal mengambil jabatan:", err);
@@ -62,30 +71,34 @@ export default function AdminSidebar() {
         fetchUser();
     }, []);
 
-    if (loading) {
-        return <aside className="w-64 p-4 text-gray-500">Memuat menu...</aside>;
-    }
-
     const menuItems = menuByRole[jabatan] || [];
 
     return (
-        <aside className="fixed top-0 left-0 w-64 h-screen bg-white border-r border-gray-200 p-4 shadow-md z-50">
-            <h2 className="text-xl font-bold text-indigo-700 mb-6">Admin Panel</h2>
+        <aside className="sidebar flex-row fixed w-64 h-screen z-50">
+            <h2 className="text-center text-xl font-bold text-white m-6 my-[50px]">Ceritanya Logo</h2>
             <nav className="flex flex-col space-y-2">
-                {menuItems.map((item) => (
-                    <button
-                        key={item.name}
-                        onClick={() => router.push(item.path)}
-                        className={`px-4 py-2 rounded-md text-sm font-medium ${pathname === item.path
-                                ? 'bg-indigo-100 text-indigo-800 font-semibold'
-                                : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'
-                            }`}
-                    >
-                        {item.name}
-                    </button>
-                ))}
+                {menuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                        <a key={item.name} href={item.path} className='flex justify-end'>
+                            <div
+                                className={`flex items-center gap-2 px-4 py-3 w-100 ml-6 text-sm ${
+                                    pathname === item.path
+                                        ? 'sidebar-highlight font-semibold bg-white text-indigo-800'
+                                        : 'text-white hover:font-semibold hover:border-b-2 hover:border-white'
+                                }`}
+                            >
+                                <Icon className="w-5 h-5" />
+                                <h1 className='z-10'>{item.name}</h1>
+                            </div>
+                        </a>
+                    );
+                })}
             </nav>
-            <LogoutButton />
+            <LogoutButton 
+                icon={LogOut}
+                className="flex items-center mt-2 gap-2 px-4 py-3 w-58 ml-6 text-sm text-white cursor-pointer hover:font-semibold hover:border-b-2 hover:border-white" 
+            />
         </aside>
     );
 }

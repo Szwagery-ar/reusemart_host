@@ -1,9 +1,12 @@
 import pool from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { verifyUserRole } from '@/lib/auth';
 
 export async function GET(request) {
     try {
+        await verifyUserRole(["Owner"]);
+
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");
 

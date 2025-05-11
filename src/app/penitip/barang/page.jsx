@@ -1,21 +1,14 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { CalendarIcon, CogIcon } from "lucide-react";
+import { CalendarIcon, EllipsisVertical } from "lucide-react";
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from "react";
 
-export default function BarangTitipan() {
+export default function PenitipBarangPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
@@ -91,7 +84,6 @@ export default function BarangTitipan() {
   // DROPDOWN
   useEffect(() => {
     function handleClickOutside(event) {
-      // Periksa apakah elemen dropdown sedang terbuka
       if (!event.target.closest(".dropdown-action")) {
         setActiveDropdown(null);
       }
@@ -197,13 +189,13 @@ export default function BarangTitipan() {
         </div>
 
         {/* Table Header */}
-        <div className="grid grid-cols-[60px_1fr_140px_140px_140px_140px_160px_80px] text-white p-4 rounded-xl font-semibold text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
+        <div className="grid grid-cols-[60px_1fr_140px_140px_140px_140px_100px_80px] text-white p-4 rounded-xl font-semibold text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
           <div>Kode</div>
           <div>Nama</div>
           <div>Harga</div>
           <div>Tanggal Masuk</div>
-          <div>Tanggal Terbeli</div>
           <div>Tanggal Expire</div>
+          <div>Tanggal Terbeli</div>
           <div>Status</div>
           <div className="flex justify-center">Action</div>
         </div>
@@ -217,13 +209,13 @@ export default function BarangTitipan() {
             ) : (
               <div>
               {barangList.map((item) => (
-                <div key={item.id_barang} className="grid grid-cols-[60px_1fr_140px_140px_140px_140px_160px_80px] p-4 mt-3 rounded-xl border border-black text-sm">
+                <div key={item.id_barang} className="grid grid-cols-[60px_1fr_140px_140px_140px_140px_100px_80px] p-4 mt-3 rounded-xl border border-black text-sm">
                   <div>{item.kode_produk}</div>
                   <div className="truncate">{item.nama_barang}</div>
                   <div className="truncate">{formatRupiah(item.harga_barang)}</div>
                   <div>{formatDate(item.tanggal_masuk)}</div>
-                  <div>{item.tanggal_keluar ? formatDate(item.tanggal_keluar) : "-"}</div>
                   <div>{formatDate(countTanggalExpire(item.tanggal_masuk))}</div>
+                  <div>{item.tanggal_keluar ? formatDate(item.tanggal_keluar) : "-"}</div>
                   <div>{item.status_titip}</div>
                   <div className="flex justify-center items-center">
                     <div className="relative dropdown-action">
@@ -233,14 +225,7 @@ export default function BarangTitipan() {
                         }
                         className="text-gray-400 hover:text-indigo-600"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
-                        </svg>
+                        <EllipsisVertical />
                       </button>
 
                       {/* Dropdown yang hanya muncul jika ID-nya cocok */}

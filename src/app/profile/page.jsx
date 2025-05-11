@@ -16,7 +16,7 @@ export default function ProfilePage() {
     const [showModal, setShowModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [alamatToDelete, setAlamatToDelete] = useState(null);
-
+    const [searchQuery, setSearchQuery] = useState('');
 
     const [alamatList, setAlamatList] = useState([]);
     const [formAlamat, setFormAlamat] = useState({
@@ -81,7 +81,7 @@ export default function ProfilePage() {
 
             if (res.ok) {
                 const data = await res.json();
-                setUser(data.user);  // Memperbarui data user setelah berhasil
+                setUser(data.user); 
                 setIsEditingProfile(false);
             } else {
                 console.error('Gagal memperbarui profil');
@@ -95,27 +95,29 @@ export default function ProfilePage() {
     // ALAMAT
     const fetchAlamat = async () => {
         try {
+            const token = localStorage.getItem("token");
+
             setAlamatLoading(true);
 
-            const res = await fetch('/api/alamat');
-            if (!res.ok) {
-                const errorData = await res.json();
-                console.error("Gagal mengambil alamat:", errorData.error || res.status);
-                return;
-            }
-
+            const res = await fetch(`/api/alamat?q=${encodeURIComponent(searchQuery)}`);
             const data = await res.json();
-            setAlamatList(data.alamat || []);
+            
+            if (res.ok) {
+                setAlamatList(data.alamat || []);
+            } else {
+                setError(data.error || 'Gagal mengambil data organisasi');
+            }
         } catch (err) {
             console.error("Gagal mengambil alamat:", err);
         } finally {
             setAlamatLoading(false);
         }
     };
+
     useEffect(() => {
         if (!user) return;
         fetchAlamat();
-    }, [user])
+    }, [user, searchQuery]); 
 
     const tambahAlamat = async () => {
         const res = await fetch('/api/alamat', {
@@ -173,9 +175,9 @@ export default function ProfilePage() {
 
     const generateStableColor = (input) => {
         const colors = ['#EF4444', '#F97316', '#10B981', '#8B5CF6', '#EAB308']; // merah, oranye, hijau, biru, kuning
-        if (!input) return colors[0]; // fallback
+        if (!input) return colors[0]; 
 
-        const charCode = input.charCodeAt(0); // ASCII huruf pertama
+        const charCode = input.charCodeAt(0);
         const index = charCode % colors.length;
         return colors[index];
     };
@@ -340,6 +342,13 @@ export default function ProfilePage() {
                     <div className="mt-4 border-1 border-[#220593] rounded-3xl p-6">
                         <div className="text-2xl font-bold mb-6">Alamat Tersimpan</div>
                         <div className="overflow-x-auto mb-6 hide-scrollbar">
+                            <input
+                                type="text"
+                                placeholder="Cari nama alamat, lokasi, atau catatan"
+                                className="text-base mb-4 px-4 py-2 border border-gray-300 rounded-md w-full max-w-md"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                             <div className="flex flex-row gap-4">
                                 {alamatList.length === 0 ? (
                                     <div className="text-center text-gray-500 font-medium py-6">
@@ -417,7 +426,7 @@ export default function ProfilePage() {
 
                         <ReuseButton className='w-full' onClick={() => setShowModal(true)}>
                             <div className="py-3 font-semibold">
-                                Tambah ALamat
+                                Tambah Alamat
                             </div>
                         </ReuseButton>
                         {showModal && (

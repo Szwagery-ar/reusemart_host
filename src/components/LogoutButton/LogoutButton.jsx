@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-export default function LogoutButton() {
+export default function LogoutButton({ className = "", icon: Icon }) {
   const router = useRouter();
   const [redirectPath, setRedirectPath] = useState('/login');
 
@@ -40,9 +40,12 @@ export default function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="text-white hover:bg-white hover:text-indigo-700 px-4 py-3 text-sm font-semibold"
+      className={`${className}`}
     >
-      Logout
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="w-5 h-5" />}
+        <span>Logout</span>
+      </div>
     </button>
   );
 }
