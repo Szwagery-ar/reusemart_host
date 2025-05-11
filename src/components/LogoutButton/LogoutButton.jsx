@@ -42,9 +42,9 @@ export default function LogoutButton({ className = "", icon: Icon }) {
       onClick={handleLogout}
       className={`${className}`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 justify-center">
         {Icon && <Icon className="w-5 h-5" />}
-        <span>Logout</span>
+        <span className="flex justify-center items-center">Logout</span>
       </div>
     </button>
   );

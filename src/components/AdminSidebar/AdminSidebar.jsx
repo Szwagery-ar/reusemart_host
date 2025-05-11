@@ -38,7 +38,7 @@ const menuByRole = {
     QC: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Barang', path: '/admin/barang', icon: Package },
-    ],
+    ]
 };
 
 export default function AdminSidebar() {

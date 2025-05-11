@@ -1,0 +1,45 @@
+.debug {
+    border: 1px solid red;
+}
+
+.debug2 {
+    border: 2px solid greenyellow;
+}
+
+.sidebar {
+    background: linear-gradient(28deg, #220593 20.94%, #26C2FF 149.25%);
+}
+
+.sidebar-highlight {
+    position: relative;
+    background-color: white;
+    border-radius: 40px 0px 0px 40px;
+  }
+  
+.sidebar-highlight::before {
+    content: "";
+    position: absolute;
+    
+    background-color: transparent;
+    bottom: -50px;
+    right: 0;
+    height: 50px;
+    width: 80%;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -20px 0px 0 white;
+    z-index: -1;
+}
+
+.sidebar-highlight::after {
+    content: "";
+    position: absolute;
+    
+    background-color: transparent;
+    top: -50px;
+    right: 0;
+    height: 50px;
+    width: 80%;
+    border-bottom-right-radius: 20px;
+    box-shadow: 0 20px 0px 0 white;
+    z-index: -1;
+}
