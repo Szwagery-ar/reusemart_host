@@ -23,12 +23,28 @@ export async function POST(request) {
             }, { status: 400 });
         }
 
-        const [existingPembeli] = await pool.query(
-            "SELECT * FROM pembeli WHERE email = ? OR no_telepon = ?",
-            [email, no_telepon]
-        );
+        // Cek apakah email sudah ada di pegawai
+        const [existingPegawai] = await pool.query("SELECT * FROM pegawai WHERE email = ?", [email]);
+        if (existingPegawai.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Pegawai!" }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di pembeli
+        const [existingPembeli] = await pool.query("SELECT * FROM pembeli WHERE email = ?", [email]);
         if (existingPembeli.length > 0) {
-            return NextResponse.json({ error: "Email or phone number already exists!" }, { status: 400 });
+            return NextResponse.json({ error: "Email already exists in Pembeli!" }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di organisasi
+        const [existingOrg] = await pool.query("SELECT * FROM organisasi WHERE email = ?", [email]);
+        if (existingOrg.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Organisasi!" }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di penitip
+        const [existingPenitip] = await pool.query("SELECT * FROM penitip WHERE email = ? OR no_ktp = ?", [email, no_ktp]);
+        if (existingPenitip.length > 0) {
+            return NextResponse.json({ error: "Email or No KTP already exists in Penitip!" }, { status: 400 });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);

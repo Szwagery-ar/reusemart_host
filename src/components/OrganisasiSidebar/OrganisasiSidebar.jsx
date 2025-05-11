@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LogoutButton from '../LogoutButton/LogoutButton';
 
-import { LayoutDashboard, Package, ClipboardList, LogOut } from 'lucide-react';
+import { LayoutDashboard, HandHeart, HeartPlus, LogOut } from 'lucide-react';
 
 import './OrganisasiSidebar.css';
 
@@ -38,8 +38,8 @@ export default function OrganisasiSidebar() {
 
     const menuItems = [
         { name: 'Dashboard', path: '/organisasi', icon: LayoutDashboard },
-        { name: 'Barang Titipan', path: '/penitip/barang', icon: Package },
-        { name: 'Riwayat Transaksi', path: '/penitip/riwayat', icon: ClipboardList },
+        { name: 'Request Donasi', path: '/organisasi/request', icon: HeartPlus},
+        { name: 'Donasi', path: '/penitip/riwayat', icon: HandHeart },
     ];
 
     return (

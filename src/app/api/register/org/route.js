@@ -23,10 +23,30 @@ export async function POST(request) {
             }, { status: 400 });
         }
 
-        const [existingOrg] = await pool.query(
-            "SELECT * FROM organisasi WHERE email = ? OR no_telepon = ?",
-            [email, no_telepon]
-        );
+        // Cek apakah email sudah ada di pegawai
+        const [existingPegawai] = await pool.query("SELECT * FROM pegawai WHERE email = ?", [email]);
+        if (existingPegawai.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Pegawai!" }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di pembeli
+        const [existingPembeli] = await pool.query("SELECT * FROM pembeli WHERE email = ?", [email]);
+        if (existingPembeli.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Pembeli!" }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di organisasi
+        const [existingOrg] = await pool.query("SELECT * FROM organisasi WHERE email = ?", [email]);
+        if (existingOrg.length > 0) {
+            return NextResponse.json({ error: "Email already exists in Organisasi!" }, { status: 400 });
+        }
+
+        // Cek apakah email sudah ada di penitip
+        const [existingPenitip] = await pool.query("SELECT * FROM penitip WHERE email = ? OR no_ktp = ?", [email, no_ktp]);
+        if (existingPenitip.length > 0) {
+            return NextResponse.json({ error: "Email or No KTP already exists in Penitip!" }, { status: 400 });
+        }
+
         if (existingOrg.length > 0) {
             return NextResponse.json({ error: "Email atau nomor telepon sudah terdaftar!" }, { status: 400 });
         }
@@ -41,11 +61,16 @@ export async function POST(request) {
         );
 
         const organisasiId = result.insertId;
+        const generatedId = 'ORG' + organisasiId;
+
+        await pool.query(
+            `UPDATE organisasi SET id = ? WHERE id_organisasi = ?`,
+            [generatedId, organisasiId]
+        );
 
         await registerUser(email, organisasiId);  // kirim email verifikasi
 
         return NextResponse.json({ message: "Registrasi berhasil. Silakan cek email Anda untuk verifikasi." }, { status: 201 });
-
     } catch (error) {
         console.error("Register Organisasi Error:", error);
         return NextResponse.json({ error: "Terjadi kesalahan saat registrasi organisasi: " + error.message }, { status: 500 });
