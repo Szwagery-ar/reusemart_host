@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LogoutButton from '../LogoutButton/LogoutButton';
 
-import { LayoutDashboard, Package, Gift, LogOut, ContactRound, ShoppingBag, HeartHandshake  } from 'lucide-react';
+import { LayoutDashboard, Package, Gift, LogOut, ContactRound, ShoppingBag, HeartHandshake, HandCoins } from 'lucide-react';
 import { UserRound, Handshake, Ribbon } from 'lucide-react';
 
 import './AdminSidebar.css';
@@ -13,7 +13,7 @@ const menuByRole = {
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Barang', path: '/admin/barang', icon: Package },
         { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
-        { name: 'Klaim Merchandise', path: '/admin/klaimmerchandise', icon: Gift },
+        { name: 'Klaim Merchandise', path: '/admin/klaim-merch', icon: HandCoins },
         { name: 'Data Pegawai', path: '/admin/pegawai', icon: ContactRound },
         { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
@@ -29,7 +29,6 @@ const menuByRole = {
     ],
     ADMIN: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-        { name: 'Barang', path: '/admin/barang', icon: Package },
         { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
         { name: 'Data Pegawai', path: '/admin/pegawai', icon: ContactRound},
         { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },

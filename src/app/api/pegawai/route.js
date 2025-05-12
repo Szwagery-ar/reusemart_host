@@ -47,7 +47,6 @@ export async function GET(request) {
     }
 }
 
-
 export async function POST(request) {
     try {
         const { nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan } = await request.json();
@@ -205,6 +204,29 @@ export async function PUT(request) {
         console.error("Error updating Pegawai:", error);
         return NextResponse.json({ error: "Failed to update Pegawai" }, { status: 500 });
     }
+}
+
+export async function PATCH(request) {
+  try {
+    const { id_pegawai } = await request.json();
+
+    const [pegawai] = await pool.query("SELECT * FROM pegawai WHERE id_pegawai = ?", [id_pegawai]);
+    if (pegawai.length === 0) {
+      return NextResponse.json({ error: "Pegawai not found!" }, { status: 404 });
+    }
+
+    const tanggalLahir = new Date(pegawai[0].tanggal_lahir);
+    const formattedPassword = `${String(tanggalLahir.getDate()).padStart(2, '0')}/${String(tanggalLahir.getMonth() + 1).padStart(2, '0')}/${tanggalLahir.getFullYear()}`;
+    const hashedPassword = await bcrypt.hash(formattedPassword, 10);
+
+    await pool.query("UPDATE pegawai SET password = ? WHERE id_pegawai = ?", [hashedPassword, id_pegawai]);
+
+    return NextResponse.json({ message: "Password has been reset to tanggal lahir (dd/mm/yyyy)" }, { status: 200 });
+
+  } catch (error) {
+    console.error("Failed to reset password:", error);
+    return NextResponse.json({ error: "Failed to reset password" }, { status: 500 });
+  }
 }
 
 export async function DELETE(request) {
