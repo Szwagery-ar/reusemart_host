@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import WithRole from '@/components/WithRole/WithRole';
+import { EllipsisVertical } from "lucide-react";
 
 export default function AdminPegawaiPage() {
     const [pegawaiList, setPegawaiList] = useState([]);
@@ -12,10 +13,8 @@ export default function AdminPegawaiPage() {
     const [activeDropdown, setActiveDropdown] = useState(null);
     const dropdownRef = useRef(null);
     const [showModal, setShowModal] = useState(false);
-    const [editData, setEditData] = useState(null);
-
-
     const [showEditSidebar, setShowEditSidebar] = useState(false);
+    const [editData, setEditData] = useState(null);
 
     const [formData, setFormData] = useState({
         nama: '',
@@ -27,8 +26,6 @@ export default function AdminPegawaiPage() {
         password: '',
         id_jabatan: ''
       });
-      
-
 
     useEffect(() => {
         const fetchPegawai = async () => {
@@ -41,6 +38,7 @@ export default function AdminPegawaiPage() {
                     setError(data.error || 'Gagal mengambil data pegawai');
                 }
             } catch (err) {
+                console.error("Error fetching pegawai:", err);
                 setError('Terjadi kesalahan saat mengambil data');
             } finally {
                 setLoading(false);
@@ -49,20 +47,16 @@ export default function AdminPegawaiPage() {
 
         fetchPegawai();
     }, [searchQuery]);
-
-    if (loading) return <div className="p-6">Loading...</div>;
-    if (error) return <div className="p-6 text-red-600">{error}</div>;
-
+    
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toISOString().split('T')[0];
     };
-
+    
     const handleEdit = (pegawai) => {
         setEditData(pegawai);
         setShowEditSidebar(true);
     };
-
     
     const handleUpdate = async (e) => {
         e.preventDefault();
@@ -71,9 +65,9 @@ export default function AdminPegawaiPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(editData)
         });
-
+        
         if (res.ok) {
-            setPegawaiList(prev => prev.map(pegawai => pegawai.id_pegawai === editData.id_pegawai ? editData : pegawai));
+            setPegawaiList((prev) => prev.map(pegawai => pegawai.id_pegawai === editData.id_pegawai ? editData : pegawai));
             setShowEditSidebar(false);
             alert('Data berhasil diperbarui');
         } else {
@@ -81,7 +75,7 @@ export default function AdminPegawaiPage() {
             
         }
     };
-
+    
     const handleChange = (e) => {
         const { name, value } = e.target;
         if (editData) {
@@ -90,13 +84,13 @@ export default function AdminPegawaiPage() {
             setFormData({ ...formData, [name]: value });
         }
     };
-
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        
         const token = document.cookie.split('; ')
-            .find(row => row.startsWith('token='))
-            ?.split('=')[1];
+        .find(row => row.startsWith('token='))
+        ?.split('=')[1];
         const res = await fetch('/api/pegawai', {
             method: 'POST',
             headers: {
@@ -105,7 +99,7 @@ export default function AdminPegawaiPage() {
             },
             body: JSON.stringify(formData),
         });
-
+        
         const data = await res.json();
         if (res.ok) {
             setPegawaiList(prev => [...prev, { ...formData, id_pegawai: data.id_pegawai }]);
@@ -116,17 +110,17 @@ export default function AdminPegawaiPage() {
             alert(data.error || 'Gagal menambahkan pegawai');
         }
     };
-
+    
     const handleDelete = async (id_pegawai) => {
         const confirm = window.confirm('Apakah Anda yakin ingin menghapus data ini?');
         if (!confirm) return;
-
+        
         const res = await fetch('/api/pegawai', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_pegawai })
         });
-
+        
         if (res.ok) {
             setPegawaiList(prev => prev.filter(pegawai => pegawai.id_pegawai !== id_pegawai));
             alert('Data berhasil dihapus');
@@ -134,10 +128,27 @@ export default function AdminPegawaiPage() {
             alert('Gagal menghapus data');
         }
     };
+    
+    // DROPDOWN
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (!event.target.closest(".dropdown-action")) {
+                setActiveDropdown(null);
+            }
+        }
+        
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+    
+    if (loading) return <div className="p-6">Loading...</div>;
+    if (error) return <div className="p-6 text-red-600">{error}</div>;
 
     return (
         <div className="p-6">
-            <WithRole allowed={["Admin"]}>
+            <WithRole allowed={["Admin", "Superuser"]}>
                 <h1 className="text-2xl font-bold mb-4 text-indigo-700">Data Pegawai</h1>
                 <input
                     type="text"
@@ -180,12 +191,16 @@ export default function AdminPegawaiPage() {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Rp{parseInt(pegawai.komisi || 0).toLocaleString('id-ID')}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{pegawai.nama_jabatan}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-
-                                        <div className="relative" ref={dropdownRef}>
-                                            <button onClick={() => setActiveDropdown(activeDropdown === pegawai.id_pegawai ? null : pegawai.id_pegawai)} className="text-gray-400 hover:text-indigo-600">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
-                                                </svg>
+                                        <div className="relative dropdown-action flex justify-center items-center">
+                                            <button 
+                                                onClick={() => setActiveDropdown(
+                                                    activeDropdown === pegawai.id_pegawai 
+                                                        ? null 
+                                                        : pegawai.id_pegawai)
+                                                    } 
+                                                    className="text-gray-400 hover:text-indigo-600"
+                                                >
+                                                <EllipsisVertical />
                                             </button>
                                             {activeDropdown === pegawai.id_pegawai && (
                                                 <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">

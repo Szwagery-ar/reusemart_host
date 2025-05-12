@@ -6,7 +6,7 @@ import { ForbiddenError, UnauthorizedError } from '@/lib/errors';
 
 export async function GET(request) {
     try {
-        await verifyUserRole(["CS"]);
+        await verifyUserRole(["CS", "Superuser"]);
 
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");
