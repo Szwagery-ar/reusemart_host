@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { EllipsisVertical } from 'lucide-react';
 import WithRole from "@/components/WithRole/WithRole";
 import { EllipsisVertical } from "lucide-react";
 
@@ -40,7 +41,7 @@ export default function AdminPenitipPage() {
                 setLoading(false);
             }
         };
-
+      
         fetchPenitip();
     }, [searchQuery]);
 
@@ -135,12 +136,29 @@ export default function AdminPenitipPage() {
                 setActiveDropdown(null);
             }
         }
-
-        document.addEventListener("mousedown", handleClickOutside);
+      
+      document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    const data = await res.json();
+    if (res.ok) {
+      setPenitipList((prev) => [...prev, data.penitipBaru]); // PAKAI DATA DARI BACKEND
+      setShowModal(false);
+      setFormData({
+        nama: "",
+        email: "",
+        no_ktp: "",
+        no_telepon: "",
+        password: "",
+      });
+      alert("Penitip berhasil ditambahkan");
+    } else {
+      alert(data.error || "Gagal menambahkan penitip");
+    }
+  };
     
     if (loading) return <div className="p-6">Loading...</div>;
     if (error) return <div className="p-6 text-red-600">{error}</div>;
@@ -235,6 +253,144 @@ export default function AdminPenitipPage() {
                                                 <EllipsisVertical />
                                             </button>
 
+  return (
+    <div className="p-6 relative">
+      <WithRole allowed={["CS"]}>
+        <h1 className="text-2xl font-bold mb-4 text-indigo-700">
+          Data Penitip
+        </h1>
+        <div className="flex justify-between mb-4">
+          <input
+            type="text"
+            placeholder="Cari nama/email..."
+            className="px-4 py-2 border border-gray-300 rounded-md w-full max-w-md"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button
+            onClick={() => setShowModal(true)}
+            className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+          >
+            Tambah Penitip
+          </button>
+        </div>
+        <div className="overflow-x-auto flex flex-col">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
+                {['Action', 'ID', 'Nama', 'Email', 'KTP', 'Telepon', 'Badge', 'Total Barang'].map((col) => (
+                  <th key={col} className="px-5 py-3 text-white text-left">{col}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {penitipList.map((p, index) => (
+                <tr key={index} className="odd:bg-white even:bg-gray-100 hover:bg-gray-200">
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    <div className="relative dropdown-action flex justify-center items-center" ref={dropdownRef}>
+                      <button
+                        onClick={() =>
+                          setActiveDropdown(
+                            activeDropdown === p.id_penitip
+                              ? null
+                              : p.id_penitip
+                          )
+                        }
+                        className="text-gray-400 hover:text-indigo-600"
+                      >
+                        <EllipsisVertical />
+                      </button>
+                      {activeDropdown === p.id_penitip && (
+                        <div className="absolute left-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
+                          <button
+                            className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                            onClick={() => handleEdit(p)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                            onClick={() => handleDelete(p.id_penitip)}
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      )}
+                    </div></td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.nama}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.no_ktp}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">+62{p.no_telepon}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.badge_level}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.total_barang}</td>
+
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {showModal && (
+          <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg w-full max-w-lg">
+              <h2 className="text-lg font-bold mb-4">Tambah Penitip</h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <input
+                  name="nama"
+                  onChange={handleChange}
+                  value={formData.nama}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Nama"
+                />
+                <input
+                  name="email"
+                  onChange={handleChange}
+                  value={formData.email}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Email"
+                />
+                <input
+                  name="no_ktp"
+                  onChange={handleChange}
+                  value={formData.no_ktp}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="No. KTP"
+                />
+                <input
+                  name="no_telepon"
+                  onChange={handleChange}
+                  value={formData.no_telepon}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="No. Telepon"
+                />
+                <input
+                  name="password"
+                  type="password"
+                  onChange={handleChange}
+                  value={formData.password}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Password"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 bg-gray-200 rounded"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded"
+                  >
+                    Simpan
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
                                             {activeDropdown === p.id_penitip && (
                                                 <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
                                                     <button

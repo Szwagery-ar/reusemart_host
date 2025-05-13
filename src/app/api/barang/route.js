@@ -48,7 +48,7 @@ export async function GET(request) {
             if (item.id_gambar) {
                 acc[item.id_barang].gambar_barang.push({
                     id_gambar: item.id_gambar,
-                    src_img: item.src_img,
+                    src_img: item.src_img,  
                 });
             }
             if (item.nama_kategori) {

@@ -93,8 +93,9 @@ export async function POST(request) {
         const id = `T${id_penitip}`;
 
         await pool.query("UPDATE penitip SET id = ? WHERE id_penitip = ?", [id, id_penitip]);
-
-        return NextResponse.json({ message: "Penitip added successfully!", id }, { status: 201 });
+        const [newPenitipRows] = await pool.query("SELECT * FROM penitip WHERE id_penitip = ?", [id_penitip]);
+        const newPenitip = newPenitipRows[0];
+        return NextResponse.json({ message: "Penitip added successfully!", penitipBaru: newPenitip }, { status: 201 });
 
     } catch (error) {
         if (error instanceof ForbiddenError) {

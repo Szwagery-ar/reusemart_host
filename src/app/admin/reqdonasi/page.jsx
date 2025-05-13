@@ -14,6 +14,24 @@ export default function AdminRequestDonasiPage() {
   const [editData, setEditData] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
+  const formatTanggal = (tanggalString) => {
+    const tanggal = new Date(tanggalString);
+
+    const namaBulan = [
+      "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+      "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+    ];
+
+    const hari = tanggal.getDate().toString().padStart(2, '0');
+    const bulan = namaBulan[tanggal.getMonth()];
+    const tahun = tanggal.getFullYear();
+
+    const jam = tanggal.getHours().toString().padStart(2, '0');
+    const menit = tanggal.getMinutes().toString().padStart(2, '0');
+
+    return `${hari} ${bulan} ${tahun}, ${jam}:${menit}`;
+  };
+
   useEffect(() => {
     const fetchRequestDonasi = async () => {
       try {
