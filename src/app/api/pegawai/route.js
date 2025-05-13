@@ -49,10 +49,10 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const { nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan } = await request.json();
+        const { nama, email, password, no_telepon, tanggal_lahir, komisi, nama_jabatan } = await request.json();
 
         // Validasi input
-        if (!nama || !email || !password || !no_telepon || !tanggal_lahir || !id_jabatan) {
+        if (!nama || !email || !password || !no_telepon || !tanggal_lahir || !nama_jabatan) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
@@ -77,6 +77,14 @@ export async function POST(request) {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Cari id_jabatan dari nama_jabatan
+        const [[jabatanRow]] = await pool.query("SELECT id_jabatan FROM jabatan WHERE nama_jabatan = ?", [nama_jabatan]);
+        if (!jabatanRow) {
+            return NextResponse.json({ error: "Jabatan tidak ditemukan di database." }, { status: 404 });
+        }
+
+        const id_jabatan = jabatanRow.id_jabatan;
+
         // Insert pegawai baru
         const [result] = await pool.query(
             "INSERT INTO pegawai (nama, email, password, no_telepon, tanggal_lahir, komisi, id_jabatan) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -98,33 +106,35 @@ export async function POST(request) {
 
 export async function PUT(request) {
     try {
-        const { id_pegawai, nama, email, no_telepon, tanggal_lahir, komisi, id_jabatan } = await request.json();
+        const { id_pegawai, nama, email, no_telepon, tanggal_lahir, komisi, nama_jabatan } = await request.json();
 
-        if (!id_pegawai || !nama || !email || !no_telepon || !tanggal_lahir || !id_jabatan) {
-            console.log("Missing fields:", { id_pegawai, nama, email, no_telepon, tanggal_lahir, komisi, id_jabatan });
+        if (!id_pegawai || !nama || !email || !no_telepon || !tanggal_lahir || !nama_jabatan) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
         const [existingPegawai] = await pool.query("SELECT * FROM pegawai WHERE id_pegawai = ?", [id_pegawai]);
-
         if (existingPegawai.length === 0) {
             return NextResponse.json({ error: "Pegawai not found!" }, { status: 404 });
         }
 
-        const [existingEmail] = await pool.query("SELECT email FROM pegawai WHERE email = ?", [email]);
-
+        const [existingEmail] = await pool.query(
+            "SELECT email FROM pegawai WHERE email = ? AND id_pegawai != ?",
+            [email, id_pegawai]
+        );
         if (existingEmail.length > 0) {
             return NextResponse.json({ error: "Email already exists! Please use a different email." }, { status: 400 });
         }
+
+        const [[jabatanRow]] = await pool.query("SELECT id_jabatan FROM jabatan WHERE nama_jabatan = ?", [nama_jabatan]);
+        if (!jabatanRow) {
+            return NextResponse.json({ error: "Jabatan tidak ditemukan di database." }, { status: 404 });
+        }
+        const id_jabatan = jabatanRow.id_jabatan;
 
         await pool.query(
             "UPDATE pegawai SET nama = ?, email = ?, no_telepon = ?, tanggal_lahir = ?, komisi = ?, id_jabatan = ? WHERE id_pegawai = ?",
             [nama, email, no_telepon, tanggal_lahir, komisi, id_jabatan, id_pegawai]
         );
-        // await pool.query(
-        //     "UPDATE pegawai SET p.nama = ?, p.email = ?, p.no_telepon = ?, p.tanggal_lahir = ?, p.komisi = ?, j.nama_jabatan = ? JOIN jabatan ON pegawai.id_jabatan = jabatan.id_jabatan WHERE id_pegawai = ?",
-        //     [nama, email, no_telepon, tanggal_lahir, komisi, id_jabatan, id_pegawai]
-        // );
 
         return NextResponse.json({ message: "Pegawai updated successfully!" }, { status: 200 });
 

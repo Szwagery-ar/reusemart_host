@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { EllipsisVertical } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export default function AdminDonasiPage() {
   const [donasiList, setDonasiList] = useState([]);
@@ -89,6 +91,17 @@ export default function AdminDonasiPage() {
     }
   };
 
+   function formatDate(dateString) {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('id-ID', {
+      day: '2-digit',
+      month: 'short', 
+      year: 'numeric'
+    })
+      .format(date)
+      .replace('.', ''); 
+  }
+
   if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
@@ -146,8 +159,8 @@ export default function AdminDonasiPage() {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.id_donasi}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.status_donasi}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{item.tanggal_acc}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{item.tanggal_donasi}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{formatDate(item.tanggal_acc)}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{formatDate(item.tanggal_donasi)}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.nama_penerima}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.id_request}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.deskripsi}</td>
@@ -174,18 +187,41 @@ export default function AdminDonasiPage() {
                   readOnly
                 />
               </div>
-              {['status_donasi', 'tanggal_acc', 'tanggal_donasi', 'nama_penerima'].map((field) => (
-                <div key={field}>
-                  <label className="block mb-2 font-semibold text-sm capitalize">{field.replace('_', ' ')}</label>
-                  <input
-                    name={field}
-                    onChange={handleChange}
-                    value={editData[field] || ''}
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder={`Masukkan ${field}`}
-                  />
-                </div>
-              ))}
+              <div>
+                <label className="block mb-2 font-semibold text-sm">Status Donasi</label>
+                <input name="status_donasi" onChange={handleChange} value={editData.status_donasi || ''} className="w-full border px-3 py-2 rounded" placeholder="Masukkan status donasi"/>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-sm">Tanggal ACC</label>
+                <DatePicker selected={editData.tanggal_acc ? new Date(editData.tanggal_acc) : null}
+                  onChange={(date) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      tanggal_acc: date.toISOString().split('T')[0],
+                    }))
+                  }
+                  dateFormat="yyyy-MM-dd" className="w-full border px-3 py-2 rounded" placeholderText="Pilih tanggal ACC" showMonthDropdown showYearDropdown dropdownMode="select"/>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-sm">Tanggal Donasi</label>
+                <DatePicker selected={editData.tanggal_donasi ? new Date(editData.tanggal_donasi) : null}
+                  onChange={(date) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      tanggal_donasi: date.toISOString().split('T')[0],
+                    }))
+                  }
+                  dateFormat="yyyy-MM-dd"className="w-full border px-3 py-2 rounded"
+                  placeholderText="Pilih tanggal donasi" showMonthDropdown showYearDropdown dropdownMode="select"/>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-sm">Nama Penerima</label>
+                <input name="nama_penerima" onChange={handleChange} value={editData.nama_penerima || ''} className="w-full border px-3 py-2 rounded" placeholder="Masukkan nama penerima"/>
+              </div>
+
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={() => setShowSidebar(false)} className="px-4 py-2 bg-gray-200 rounded">
                   Batal
