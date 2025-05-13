@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { EllipsisVertical } from 'lucide-react';
 import WithRole from "@/components/WithRole/WithRole";
 
 export default function AdminPenitipPage() {
@@ -25,6 +26,7 @@ export default function AdminPenitipPage() {
     no_telepon: "",
     password: "",
   });
+
 
   // useEffect(() => {
   //     const fetchUser = async () => {
@@ -159,10 +161,7 @@ export default function AdminPenitipPage() {
 
     const data = await res.json();
     if (res.ok) {
-      setPenitipList((prev) => [
-        ...prev,
-        { ...formData, id_penitip: data.id_penitip },
-      ]);
+      setPenitipList((prev) => [...prev, data.penitipBaru]); // PAKAI DATA DARI BACKEND
       setShowModal(false);
       setFormData({
         nama: "",
@@ -176,6 +175,7 @@ export default function AdminPenitipPage() {
       alert(data.error || "Gagal menambahkan penitip");
     }
   };
+
 
   if (loading) return <div className="p-6">Loading...</div>;
   if (error)
@@ -206,62 +206,20 @@ export default function AdminPenitipPage() {
             Tambah Penitip
           </button>
         </div>
-        <div className="overflow-x-auto rounded-lg shadow">
+        <div className="overflow-x-auto flex flex-col">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                  Nama
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                  KTP
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                  Telepon
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                  Badge
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                  Total Barang
-                </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-600">
-                  Action
-                </th>
+              <tr className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
+                {['Action', 'ID', 'Nama', 'Email', 'KTP', 'Telepon', 'Badge', 'Total Barang'].map((col) => (
+                  <th key={col} className="px-5 py-3 text-white text-left">{col}</th>
+                ))}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {penitipList.map((p) => (
-                <tr key={p.id_penitip} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {p.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {p.nama}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {p.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {p.no_ktp}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    +62{p.no_telepon}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {p.badge_level}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {p.total_barang}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="relative" ref={dropdownRef}>
+              {penitipList.map((p, index) => (
+                <tr key={index} className="odd:bg-white even:bg-gray-100 hover:bg-gray-200">
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    <div className="relative dropdown-action flex justify-center items-center" ref={dropdownRef}>
                       <button
                         onClick={() =>
                           setActiveDropdown(
@@ -272,17 +230,10 @@ export default function AdminPenitipPage() {
                         }
                         className="text-gray-400 hover:text-indigo-600"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
-                        </svg>
+                        <EllipsisVertical />
                       </button>
                       {activeDropdown === p.id_penitip && (
-                        <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
+                        <div className="absolute left-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
                           <button
                             className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
                             onClick={() => handleEdit(p)}
@@ -297,8 +248,15 @@ export default function AdminPenitipPage() {
                           </button>
                         </div>
                       )}
-                    </div>
-                  </td>
+                    </div></td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.nama}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.no_ktp}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">+62{p.no_telepon}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.badge_level}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.total_barang}</td>
+
                 </tr>
               ))}
             </tbody>

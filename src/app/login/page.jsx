@@ -88,7 +88,7 @@ export default function Login() {
         if (data.userType === 'penitip') router.push('/penitip');
         else if (data.userType === 'pembeli') router.push('/home');
         else if (data.userType === 'organisasi') router.push('/organisasi');
-        
+
       } else {
         alert(data.message);
       }
