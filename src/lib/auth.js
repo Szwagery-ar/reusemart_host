@@ -30,7 +30,6 @@ export async function verifyUserRole(allowedRoles = []) {
       }
 
       jabatan = result[0].nama_jabatan;
-
     } else {
       throw new ForbiddenError("You do not have permission");
     }

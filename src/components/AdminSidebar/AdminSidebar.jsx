@@ -4,31 +4,36 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LogoutButton from '../LogoutButton/LogoutButton';
 
-import { LayoutDashboard, Package, Gift, LogOut, ContactRound, ShoppingBag, HeartHandshake  } from 'lucide-react';
+import { LayoutDashboard, Package, Gift, LogOut, ContactRound, ShoppingBag, HeartHandshake, HandCoins } from 'lucide-react';
 import { UserRound, Handshake, Ribbon } from 'lucide-react';
 
 import './AdminSidebar.css';
 const menuByRole = {
-    OWNER: [
+    SUPERUSER: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Barang', path: '/admin/barang', icon: Package },
         { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
+        { name: 'Klaim Merchandise', path: '/admin/klaim-merch', icon: HandCoins },
         { name: 'Data Pegawai', path: '/admin/pegawai', icon: ContactRound },
         { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
         { name: 'Data Organisasi', path: '/admin/organisasi', icon: Ribbon },
         { name: 'Request Donasi', path: '/admin/reqdonasi', icon: ShoppingBag },
         { name: 'Donasi', path: '/admin/donasi', icon: HeartHandshake },
+    ],
+    OWNER: [
+        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Request Donasi', path: '/admin/reqdonasi', icon: ShoppingBag },
+        { name: 'Donasi', path: '/admin/donasi', icon: HeartHandshake },
 
     ],
     ADMIN: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-        { name: 'Barang', path: '/admin/barang', icon: Package },
         { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
         { name: 'Data Pegawai', path: '/admin/pegawai', icon: ContactRound},
         { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
-        { name: 'Data Organisasi', path: '/admin/organisasi', icon: ShoppingBag },
+        { name: 'Data Organisasi', path: '/admin/organisasi', icon: Ribbon },
     ],
     PEGAWAIGUDANG: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },

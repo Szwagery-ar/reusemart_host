@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import WithRole from '@/components/WithRole/WithRole';
+import { EllipsisVertical } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -12,14 +13,15 @@ export default function AdminPegawaiPage() {
     const [searchQuery, setSearchQuery] = useState('');
 
     const [activeDropdown, setActiveDropdown] = useState(null);
-    const dropdownRef = useRef(null);
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [selectedPegawaiId, setSelectedPegawaiId] = useState(null);
+    const [selectedPegawai, setSelectedPegawai] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [editData, setEditData] = useState(null);
     const [passwordError, setPasswordError] = useState('');
 
-
-
     const [showEditSidebar, setShowEditSidebar] = useState(false);
+    const [editData, setEditData] = useState(null);
 
     const [formData, setFormData] = useState({
         nama: '',
@@ -30,8 +32,6 @@ export default function AdminPegawaiPage() {
         nama_jabatan: '',
         password: '',
       });
-      
-
 
     useEffect(() => {
         const fetchPegawai = async () => {
@@ -44,6 +44,7 @@ export default function AdminPegawaiPage() {
                     setError(data.error || 'Gagal mengambil data pegawai');
                 }
             } catch (err) {
+                console.error("Error fetching pegawai:", err);
                 setError('Terjadi kesalahan saat mengambil data');
             } finally {
                 setLoading(false);
@@ -52,9 +53,6 @@ export default function AdminPegawaiPage() {
 
         fetchPegawai();
     }, [searchQuery]);
-
-    if (loading) return <div className="p-6">Loading...</div>;
-    if (error) return <div className="p-6 text-red-600">{error}</div>;
 
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
@@ -66,7 +64,6 @@ export default function AdminPegawaiPage() {
         setShowEditSidebar(true);
     };
 
-    
     const handleUpdate = async (e) => {
         e.preventDefault();
         const res = await fetch('/api/pegawai', {
@@ -76,12 +73,12 @@ export default function AdminPegawaiPage() {
         });
 
         if (res.ok) {
-            setPegawaiList(prev => prev.map(pegawai => pegawai.id_pegawai === editData.id_pegawai ? editData : pegawai));
+            setPegawaiList((prev) => prev.map(pegawai => pegawai.id_pegawai === editData.id_pegawai ? editData : pegawai));
             setShowEditSidebar(false);
             alert('Data berhasil diperbarui');
         } else {
             alert('Gagal memperbarui data');
-            
+
         }
     };
 
@@ -157,12 +154,51 @@ export default function AdminPegawaiPage() {
         }
     };
 
+    const handleResetPassword = (pegawai) => {
+        setSelectedPegawai(pegawai);
+        setShowResetModal(true);
+    };
 
+    const confirmResetPassword = async () => {
+        try {
+            const res = await fetch('/api/pegawai', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_pegawai: selectedPegawai.id_pegawai })
+            });
 
+            const data = await res.json();
+            if (res.ok) {
+                alert('Password berhasil direset ke tanggal lahir (dd/mm/yyyy)');
+                setShowResetModal(false);
+            } else {
+                alert(data.error || 'Gagal mereset password');
+            }
+        } catch (err) {
+            alert('Terjadi kesalahan saat mereset password');
+        }
+    };
+
+    // DROPDOWN
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (!event.target.closest(".dropdown-action")) {
+                setActiveDropdown(null);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    if (loading) return <div className="p-6">Loading...</div>;
+    if (error) return <div className="p-6 text-red-600">{error}</div>;
 
     return (
         <div className="p-6">
-            <WithRole allowed={["Admin"]}>
+            <WithRole allowed={["Admin", "Superuser"]}>
                 <h1 className="text-2xl font-bold mb-4 text-indigo-700">Data Pegawai</h1>
                 <input
                     type="text"
@@ -177,8 +213,6 @@ export default function AdminPegawaiPage() {
                 >
                     Tambah Pegawai
                 </button>
-
-
 
                 <div className="overflow-x-auto rounded-lg shadow">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -205,17 +239,38 @@ export default function AdminPegawaiPage() {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">Rp{parseInt(pegawai.komisi || 0).toLocaleString('id-ID')}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{pegawai.nama_jabatan}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-
-                                        <div className="relative" ref={dropdownRef}>
-                                            <button onClick={() => setActiveDropdown(activeDropdown === pegawai.id_pegawai ? null : pegawai.id_pegawai)} className="text-gray-400 hover:text-indigo-600">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
-                                                </svg>
+                                        <div className="relative dropdown-action flex justify-center items-center">
+                                            <button
+                                                onClick={() => setActiveDropdown(
+                                                    activeDropdown === pegawai.id_pegawai
+                                                        ? null
+                                                        : pegawai.id_pegawai)
+                                                }
+                                                className="text-gray-400 hover:text-indigo-600"
+                                            >
+                                                <EllipsisVertical />
                                             </button>
                                             {activeDropdown === pegawai.id_pegawai && (
-                                                <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
-                                                    <button className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100" onClick={() => handleEdit(pegawai)}>Edit</button>
-                                                    <button className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100" onClick={() => handleDelete(pegawai.id_pegawai)}>Hapus</button>
+                                                <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded shadow-md z-10">
+                                                    <button
+                                                        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                                                        onClick={() => handleEdit(pegawai)}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        className="block w-full text-blue-950 px-4 py-2 text-left text-sm hover:bg-gray-100"
+                                                        onClick={() => handleResetPassword(pegawai)}
+                                                    >
+                                                        Reset Password
+                                                    </button>
+
+                                                    <button
+                                                        className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                                                        onClick={() => handleDelete(pegawai.id_pegawai)}
+                                                    >
+                                                        Hapus
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>
@@ -225,7 +280,7 @@ export default function AdminPegawaiPage() {
                         </tbody>
                     </table>
                 </div>
-                
+
                 {showModal && (
                     <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
                         <div className="bg-white p-6 rounded-lg w-full max-w-lg">
@@ -270,7 +325,8 @@ export default function AdminPegawaiPage() {
                                 <DatePicker selected={editData.tanggal_lahir ? new Date(editData.tanggal_lahir) : null}onChange={(date) =>setEditData(prev => ({ ...prev, tanggal_lahir: date.toISOString().split("T")[0] }))}
                                  placeholderText="Tgl. Lahir" dateFormat="yyyy-MM-dd" className="w-full border px-3 py-2 rounded" showMonthDropdown showYearDropdown dropdownMode="select"/>
                                 <input name="komisi" onChange={handleChange} value={editData.komisi} className="w-full border px-3 py-2 rounded" placeholder="Komisi" />
-                                {/* <input name="id_jabatan" onChange={handleChange}value={editData.id_jabatan} className="w-full border px-3 py-2 rounded" placeholder="ID Jabatan"/> */}
+
+                                  {/* <input name="id_jabatan" onChange={handleChange}value={editData.id_jabatan} className="w-full border px-3 py-2 rounded" placeholder="ID Jabatan"/> */}
                                 <select name="nama_jabatan" onChange={handleChange} value={editData.nama_jabatan} className="w-full border px-3 py-2 rounded">
                                     <option value="">Pilih Jabatan</option>
                                     <option value="Owner">Owner</option>
@@ -281,6 +337,7 @@ export default function AdminPegawaiPage() {
                                     <option value="Kurir">Kurir</option>
                                     <option value="Hunter">Hunter</option>
                                 </select>
+
                                 <div className="flex justify-end gap-2">
                                     <button type="button" onClick={() => setShowEditSidebar(false)} className="px-4 py-2 bg-gray-200 rounded">Batal</button>
                                     <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded">Simpan</button>
@@ -288,6 +345,26 @@ export default function AdminPegawaiPage() {
                             </form>
                         </div>
                     </>
+                )}
+
+                {showResetModal && selectedPegawai && (
+                    <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
+                        <div className="bg-white p-6 rounded-lg max-w-md">
+                            <h2 className="text-lg font-bold mb-4">Reset Password</h2>
+                            <p>
+                                Apakah Anda yakin ingin mereset password pegawai{' '}
+                                <strong>{selectedPegawai.nama}</strong> (ID: {selectedPegawai.id_pegawai})?
+                            </p>
+                            <div className="mt-4 flex justify-end gap-2">
+                                <button onClick={() => setShowResetModal(false)} className="px-4 py-2 bg-gray-200 rounded">
+                                    Batal
+                                </button>
+                                <button onClick={confirmResetPassword} className="px-4 py-2 bg-red-600 text-white rounded">
+                                    Ya, Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </WithRole>
         </div>
