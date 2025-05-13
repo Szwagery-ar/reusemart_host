@@ -5,7 +5,7 @@ import { verifyUserRole } from '@/lib/auth';
 
 export async function GET(request) {
     try {
-        await verifyUserRole(["Owner"]);
+        await verifyUserRole(["Owner", "Superuser"]);
 
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { EllipsisVertical } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export default function AdminRequestDonasiPage() {
   const [requestDonasiList, setRequestDonasiList] = useState([]);
@@ -106,6 +108,17 @@ export default function AdminRequestDonasiPage() {
     }
   };
 
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('id-ID', {
+      day: '2-digit',
+      month: 'short', 
+      year: 'numeric'
+    })
+      .format(date)
+      .replace('.', ''); 
+  }
+
   if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
@@ -162,7 +175,7 @@ export default function AdminRequestDonasiPage() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.id_request}</td>
-                <td className="px-6 py-4 text-sm text-gray-900">{formatTanggal(item.tanggal_request)}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">{formatDate(item.tanggal_request)}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.deskripsi}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.status_request}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.id_organisasi}</td>
@@ -180,18 +193,31 @@ export default function AdminRequestDonasiPage() {
               <h2 className="text-lg font-semibold">Edit Request Donasi</h2>
             </div>
             <form onSubmit={handleUpdate} className="flex flex-col gap-6 p-6">
-              {['tanggal_request', 'deskripsi', 'status_request'].map((field) => (
-                <div key={field}>
-                  <label className="block mb-2 font-semibold text-sm capitalize">{field.replace('_', ' ')}</label>
-                  <input
-                    name={field}
-                    onChange={handleChange}
-                    value={editData[field] || ''}
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder={`Masukkan ${field}`}
-                  />
-                </div>
-              ))}
+              <div>
+                <label className="block mb-2 font-semibold text-sm capitalize">Tanggal Request</label>
+                <DatePicker
+                  selected={editData.tanggal_request ? new Date(editData.tanggal_request) : null}
+                  onChange={(date) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      tanggal_request: date.toISOString().split('T')[0],
+                    }))
+                  }
+                  dateFormat="yyyy-MM-dd" placeholderText="Pilih tanggal" className="w-full border px-3 py-2 rounded"/>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-sm capitalize">Deskripsi</label>
+                <input name="deskripsi" onChange={handleChange} value={editData.deskripsi || ''} className="w-full border px-3 py-2 rounded" placeholder="Masukkan deskripsi" />
+              </div>
+
+              <div>
+                <label className="block mb-2 font-semibold text-sm capitalize">Status Request</label>
+                <input name="status_request"
+                  onChange={handleChange}
+                  value={editData.status_request || ''} className="w-full border px-3 py-2 rounded" placeholder="Masukkan status request"/>
+              </div>
+
               <div className="flex justify-end gap-2">
                 <button type="button" onClick={() => setShowSidebar(false)} className="px-4 py-2 bg-gray-200 rounded">
                   Batal
