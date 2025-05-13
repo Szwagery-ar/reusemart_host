@@ -165,6 +165,12 @@ export default function AdminRequestDonasiPage() {
                           Edit
                         </button>
                         <button
+                          className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                          onClick={() => handleEdit(item)}
+                        >
+                          Atur Donasi
+                        </button>
+                        <button
                           className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
                           onClick={() => handleDelete(item.id_request)}
                         >

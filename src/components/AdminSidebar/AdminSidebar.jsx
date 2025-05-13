@@ -35,8 +35,9 @@ const menuByRole = {
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
         { name: 'Data Organisasi', path: '/admin/organisasi', icon: Ribbon },
     ],
-    PEGAWAIGUDANG: [
+    GUDANG: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Barang', path: '/admin/barang', icon: Package },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
     ],
     CS: [
