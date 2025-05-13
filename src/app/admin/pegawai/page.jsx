@@ -11,7 +11,6 @@ export default function AdminPegawaiPage() {
     const [searchQuery, setSearchQuery] = useState('');
 
     const [activeDropdown, setActiveDropdown] = useState(null);
-    const dropdownRef = useRef(null);
     const [showResetModal, setShowResetModal] = useState(false);
     const [selectedPegawaiId, setSelectedPegawaiId] = useState(null);
     const [selectedPegawai, setSelectedPegawai] = useState(null);
@@ -191,8 +190,6 @@ export default function AdminPegawaiPage() {
                 >
                     Tambah Pegawai
                 </button>
-
-
 
                 <div className="overflow-x-auto rounded-lg shadow">
                     <table className="min-w-full divide-y divide-gray-200">
