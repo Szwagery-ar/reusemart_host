@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import WithRole from '@/components/WithRole/WithRole';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 export default function AdminPegawaiPage() {
     const [pegawaiList, setPegawaiList] = useState([]);
@@ -13,6 +15,8 @@ export default function AdminPegawaiPage() {
     const dropdownRef = useRef(null);
     const [showModal, setShowModal] = useState(false);
     const [editData, setEditData] = useState(null);
+    const [passwordError, setPasswordError] = useState('');
+
 
 
     const [showEditSidebar, setShowEditSidebar] = useState(false);
@@ -25,7 +29,6 @@ export default function AdminPegawaiPage() {
         komisi: '',
         nama_jabatan: '',
         password: '',
-        id_jabatan: ''
       });
       
 
@@ -91,12 +94,30 @@ export default function AdminPegawaiPage() {
         }
     };
 
+    const isValidPassword = (password) => {
+        const lowercaseRegex = /[a-z]/;
+        const numberRegex = /[0-9]/;
+        const symbolRegex = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
+
+        return lowercaseRegex.test(password) &&
+            numberRegex.test(password) &&
+            symbolRegex.test(password);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!isValidPassword(formData.password)) {
+            setPasswordError('Password harus mengandung huruf kecil, angka, dan simbol.');
+            return;
+        } else {
+            setPasswordError('');
+        }
 
         const token = document.cookie.split('; ')
             .find(row => row.startsWith('token='))
             ?.split('=')[1];
+            
         const res = await fetch('/api/pegawai', {
             method: 'POST',
             headers: {
@@ -110,12 +131,13 @@ export default function AdminPegawaiPage() {
         if (res.ok) {
             setPegawaiList(prev => [...prev, { ...formData, id_pegawai: data.id_pegawai }]);
             setShowModal(false);
-            setFormData({ nama: '', email: '', no_telepon: '', tanggal_lahir: '', komisi: '', nama_jabatan: '' });
+            setFormData({ nama: '', email: '', no_telepon: '', tanggal_lahir: '', komisi: '', nama_jabatan: '', password: ''});
             alert('Pegawai berhasil ditambahkan');
         } else {
             alert(data.error || 'Gagal menambahkan pegawai');
         }
     };
+
 
     const handleDelete = async (id_pegawai) => {
         const confirm = window.confirm('Apakah Anda yakin ingin menghapus data ini?');
@@ -134,6 +156,9 @@ export default function AdminPegawaiPage() {
             alert('Gagal menghapus data');
         }
     };
+
+
+
 
     return (
         <div className="p-6">
@@ -209,11 +234,21 @@ export default function AdminPegawaiPage() {
                                 <input name="nama" onChange={handleChange} value={formData.nama} className="w-full border px-3 py-2 rounded" placeholder="Nama" />
                                 <input name="email" onChange={handleChange} value={formData.email} className="w-full border px-3 py-2 rounded" placeholder="Email" />
                                 <input name="no_telepon" onChange={handleChange} value={formData.no_telepon} className="w-full border px-3 py-2 rounded" placeholder="No. Telepon" />
-                                <input name="tanggal_lahir" onChange={handleChange} value={formData.tanggal_lahir} className="w-full border px-3 py-2 rounded" placeholder="Tgl. Lahir" />
-                                <input name="password" onChange={handleChange} value={formData.password} className="w-full border px-3 py-2 rounded" placeholder="Password" type="password" />
+                                <DatePicker selected={formData.tanggal_lahir ? new Date(formData.tanggal_lahir) : null} onChange={(date) => setFormData({ ...formData, tanggal_lahir: date.toISOString().split("T")[0] })}
+                                placeholderText="Tgl. Lahir" dateFormat="yyyy-MM-dd" className="w-full border px-3 py-2 rounded" showMonthDropdown showYearDropdown dropdownMode="select"/>
+                                <input name="password" onChange={handleChange} value={formData.password} className="w-full border px-3 py-2 rounded" placeholder="Password" type="password" />{passwordError && (<p className="text-sm text-red-600 mt-1">{passwordError}</p>)}
                                 <input name="komisi" onChange={handleChange} value={formData.komisi} className="w-full border px-3 py-2 rounded" placeholder="Komisi" />
-                                <input name="nama_jabatan" onChange={handleChange} value={formData.nama_jabatan} className="w-full border px-3 py-2 rounded" placeholder="Jabatan" />
-                                <input name="id_jabatan" onChange={handleChange} value={formData.id_jabatan} className="w-full border px-3 py-2 rounded" placeholder="ID Jabatan" />
+                                <select name="nama_jabatan" onChange={handleChange} value={formData.nama_jabatan} className="w-full border px-3 py-2 rounded">
+                                    <option value="">Pilih Jabatan</option>
+                                    <option value="Owner">Owner</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Pegawai Gudang">Pegawai Gudang</option>
+                                    <option value="CS">CS</option>
+                                    <option value="QS">QS</option>
+                                    <option value="Kurir">Kurir</option>
+                                    <option value="Hunter">Hunter</option>
+                                </select>
+                                {/* <input name="id_jabatan" onChange={handleChange} value={formData.id_jabatan} className="w-full border px-3 py-2 rounded" placeholder="ID Jabatan" /> */}
                                 <div className="flex justify-end gap-2">
                                     <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-200 rounded">Batal</button>
                                     <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded">Simpan</button>
@@ -232,10 +267,20 @@ export default function AdminPegawaiPage() {
                                 <input name="nama" onChange={handleChange} value={editData.nama} className="w-full border px-3 py-2 rounded" placeholder="Nama" />
                                 <input name="email" onChange={handleChange} value={editData.email} className="w-full border px-3 py-2 rounded" placeholder="Email" />
                                 <input name="no_telepon" onChange={handleChange} value={editData.no_telepon} className="w-full border px-3 py-2 rounded" placeholder="No. Telepon" />
-                                <input name="tanggal_lahir" onChange={handleChange} value={editData.tanggal_lahir} className="w-full border px-3 py-2 rounded" placeholder="Tgl. Lahir" />
+                                <DatePicker selected={editData.tanggal_lahir ? new Date(editData.tanggal_lahir) : null}onChange={(date) =>setEditData(prev => ({ ...prev, tanggal_lahir: date.toISOString().split("T")[0] }))}
+                                 placeholderText="Tgl. Lahir" dateFormat="yyyy-MM-dd" className="w-full border px-3 py-2 rounded" showMonthDropdown showYearDropdown dropdownMode="select"/>
                                 <input name="komisi" onChange={handleChange} value={editData.komisi} className="w-full border px-3 py-2 rounded" placeholder="Komisi" />
-                                <input name="id_jabatan" onChange={handleChange}value={editData.id_jabatan} className="w-full border px-3 py-2 rounded" placeholder="ID Jabatan"/>
-                                <input name="nama_jabatan" onChange={handleChange} value={editData.nama_jabatan} className="w-full border px-3 py-2 rounded" placeholder="Jabatan" />
+                                {/* <input name="id_jabatan" onChange={handleChange}value={editData.id_jabatan} className="w-full border px-3 py-2 rounded" placeholder="ID Jabatan"/> */}
+                                <select name="nama_jabatan" onChange={handleChange} value={editData.nama_jabatan} className="w-full border px-3 py-2 rounded">
+                                    <option value="">Pilih Jabatan</option>
+                                    <option value="Owner">Owner</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Pegawai Gudang">Pegawai Gudang</option>
+                                    <option value="CS">CS</option>
+                                    <option value="QS">QS</option>
+                                    <option value="Kurir">Kurir</option>
+                                    <option value="Hunter">Hunter</option>
+                                </select>
                                 <div className="flex justify-end gap-2">
                                     <button type="button" onClick={() => setShowEditSidebar(false)} className="px-4 py-2 bg-gray-200 rounded">Batal</button>
                                     <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded">Simpan</button>
