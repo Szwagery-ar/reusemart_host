@@ -14,7 +14,8 @@ export default function AdminPegawaiPage() {
 
     const [activeDropdown, setActiveDropdown] = useState(null);
     const [showResetModal, setShowResetModal] = useState(false);
-    const [selectedPegawaiId, setSelectedPegawaiId] = useState(null);
+    const [jabatanOptions, setJabatanOptions] = useState([]);
+
     const [selectedPegawai, setSelectedPegawai] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [passwordError, setPasswordError] = useState('');
@@ -177,6 +178,23 @@ export default function AdminPegawaiPage() {
         }
     };
 
+    // JABATAN
+    useEffect(() => {
+        const fetchJabatan = async () => {
+            try {
+                const res = await fetch('/api/jabatan');
+                const data = await res.json();
+                if (res.ok) {
+                    setJabatanOptions(data.jabatan);
+                }
+            } catch (error) {
+                console.error('Gagal memuat data jabatan:', error);
+            }
+        };
+
+        fetchJabatan();
+    }, []);
+
     // DROPDOWN
     useEffect(() => {
         function handleClickOutside(event) {
@@ -291,16 +309,20 @@ export default function AdminPegawaiPage() {
                                     placeholderText="Tgl. Lahir" dateFormat="yyyy-MM-dd" className="w-full border px-3 py-2 rounded" showMonthDropdown showYearDropdown dropdownMode="select" />
                                 <input name="password" onChange={handleChange} value={formData.password} className="w-full border px-3 py-2 rounded" placeholder="Password" type="password" />{passwordError && (<p className="text-sm text-red-600 mt-1">{passwordError}</p>)}
                                 <input name="komisi" onChange={handleChange} value={formData.komisi} className="w-full border px-3 py-2 rounded" placeholder="Komisi" />
-                                <select name="nama_jabatan" onChange={handleChange} value={formData.nama_jabatan} className="w-full border px-3 py-2 rounded">
+                                <select
+                                    name="nama_jabatan"
+                                    onChange={handleChange}
+                                    value={formData.nama_jabatan}
+                                    className="w-full border px-3 py-2 rounded"
+                                >
                                     <option value="">Pilih Jabatan</option>
-                                    <option value="Owner">Owner</option>
-                                    <option value="Admin">Admin</option>
-                                    <option value="Pegawai Gudang">Pegawai Gudang</option>
-                                    <option value="CS">CS</option>
-                                    <option value="QS">QS</option>
-                                    <option value="Kurir">Kurir</option>
-                                    <option value="Hunter">Hunter</option>
+                                    {jabatanOptions.map((jabatan) => (
+                                        <option key={jabatan.id_jabatan} value={jabatan.nama_jabatan}>
+                                            {jabatan.nama_jabatan}
+                                        </option>
+                                    ))}
                                 </select>
+
                                 {/* <input name="id_jabatan" onChange={handleChange} value={formData.id_jabatan} className="w-full border px-3 py-2 rounded" placeholder="ID Jabatan" /> */}
                                 <div className="flex justify-end gap-2">
                                     <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-200 rounded">Batal</button>
@@ -325,15 +347,18 @@ export default function AdminPegawaiPage() {
                                 <input name="komisi" onChange={handleChange} value={editData.komisi} className="w-full border px-3 py-2 rounded" placeholder="Komisi" />
 
                                 {/* <input name="id_jabatan" onChange={handleChange}value={editData.id_jabatan} className="w-full border px-3 py-2 rounded" placeholder="ID Jabatan"/> */}
-                                <select name="nama_jabatan" onChange={handleChange} value={editData.nama_jabatan} className="w-full border px-3 py-2 rounded">
+                                <select
+                                    name="nama_jabatan"
+                                    onChange={handleChange}
+                                    value={editData.nama_jabatan}
+                                    className="w-full border px-3 py-2 rounded"
+                                >
                                     <option value="">Pilih Jabatan</option>
-                                    <option value="Owner">Owner</option>
-                                    <option value="Admin">Admin</option>
-                                    <option value="Pegawai Gudang">Pegawai Gudang</option>
-                                    <option value="CS">CS</option>
-                                    <option value="QS">QS</option>
-                                    <option value="Kurir">Kurir</option>
-                                    <option value="Hunter">Hunter</option>
+                                    {jabatanOptions.map((jabatan) => (
+                                        <option key={jabatan.id_jabatan} value={jabatan.nama_jabatan}>
+                                            {jabatan.nama_jabatan}
+                                        </option>
+                                    ))}
                                 </select>
 
                                 <div className="flex justify-end gap-2">

@@ -19,6 +19,7 @@ export default function OrgRequestPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [editData, setEditData] = useState(null);
+    const [createData, setCreateData] = useState(null);
 
     const [activeDropdown, setActiveDropdown] = useState(null);
 
@@ -364,7 +365,7 @@ export default function OrgRequestPage() {
                                 placeholder="Jelaskan apa yang organisasi Anda butuhkan"
                             />
                             <div className="flex justify-end gap-2">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-200 rounded">Batal</button>
+                                <button type="button" onClick={() => {setShowModal(false); setEditData(false)}} className="px-4 py-2 bg-gray-200 rounded">Batal</button>
                                 <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded">Simpan</button>
                             </div>
                         </form>

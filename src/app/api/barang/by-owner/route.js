@@ -26,7 +26,7 @@ export async function GET(request) {
             LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
             LEFT JOIN bridgekategoribarang bkb ON b.id_barang = bkb.id_barang
             LEFT JOIN kategoribarang kb ON bkb.id_kategori = kb.id_kategori
-            WHERE b.status_titip IN ('AVAILABLE', 'EXTENDED')
+            WHERE b.status_titip IN ('DONATABLE')
         `;
 
         let values = [];
@@ -67,7 +67,6 @@ export async function GET(request) {
         return NextResponse.json({ error: "Failed to fetch Barang" }, { status: 500 });
     }
 }
-
 
 export async function POST(request) {
     try {

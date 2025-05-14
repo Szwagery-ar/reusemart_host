@@ -237,6 +237,59 @@ export async function PUT(request) {
 //     }
 // }
 
+// export async function DELETE(request) {
+//   try {
+//     const { id_donasi } = await request.json();
+
+//     if (!id_donasi) {
+//       return NextResponse.json({ error: "id_donasi is required!" }, { status: 400 });
+//     }
+
+//     // Cek apakah donasi ada dan ambil id_request-nya
+//     const [donasiData] = await pool.query(
+//       "SELECT * FROM donasi WHERE id_donasi = ?",
+//       [id_donasi]
+//     );
+
+//     if (donasiData.length === 0) {
+//       return NextResponse.json({ error: "Donasi not found!" }, { status: 404 });
+//     }
+
+//     const donasi = donasiData[0];
+
+//     // Hanya boleh hapus jika status_donasi = APPROVED
+//     if (donasi.status_donasi !== 'APPROVED') {
+//       return NextResponse.json({ error: "Hanya donasi dengan status APPROVED yang bisa dihapus." }, { status: 403 });
+//     }
+
+//     // 1. Set id_donasi di tabel barang menjadi NULL
+//     await pool.query("UPDATE barang SET id_donasi = NULL WHERE id_donasi = ?", [id_donasi]);
+
+//     // 2. Hapus donasi
+//     await pool.query("DELETE FROM donasi WHERE id_donasi = ?", [id_donasi]);
+
+//     // 3. Cek apakah masih ada donasi lain untuk id_request ini
+//     const [remaining] = await pool.query(
+//       "SELECT * FROM donasi WHERE id_request = ?",
+//       [donasi.id_request]
+//     );
+
+//     // Jika tidak ada, ubah status requestdonasi menjadi 'PENDING'
+//     if (remaining.length === 0) {
+//       await pool.query(
+//         "UPDATE requestdonasi SET status_request = 'PENDING' WHERE id_request = ?",
+//         [donasi.id_request]
+//       );
+//     }
+
+//     return NextResponse.json({ message: "Donasi berhasil dihapus dan data terkait diperbarui." }, { status: 200 });
+
+//   } catch (error) {
+//     console.error(error);
+//     return NextResponse.json({ error: "Failed to delete Donasi" }, { status: 500 });
+//   }
+// }
+
 export async function DELETE(request) {
   try {
     const { id_donasi } = await request.json();
@@ -245,7 +298,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "id_donasi is required!" }, { status: 400 });
     }
 
-    // Cek apakah donasi ada dan ambil id_request-nya
+    // Ambil donasi
     const [donasiData] = await pool.query(
       "SELECT * FROM donasi WHERE id_donasi = ?",
       [id_donasi]
@@ -257,24 +310,26 @@ export async function DELETE(request) {
 
     const donasi = donasiData[0];
 
-    // Hanya boleh hapus jika status_donasi = APPROVED
     if (donasi.status_donasi !== 'APPROVED') {
       return NextResponse.json({ error: "Hanya donasi dengan status APPROVED yang bisa dihapus." }, { status: 403 });
     }
 
-    // 1. Set id_donasi di tabel barang menjadi NULL
-    await pool.query("UPDATE barang SET id_donasi = NULL WHERE id_donasi = ?", [id_donasi]);
+    // 1. Update barang: putuskan relasi & ubah status_titip ke DONATABLE
+    await pool.query(`
+      UPDATE barang 
+      SET id_donasi = NULL, status_titip = 'DONATABLE' 
+      WHERE id_donasi = ?
+    `, [id_donasi]);
 
     // 2. Hapus donasi
     await pool.query("DELETE FROM donasi WHERE id_donasi = ?", [id_donasi]);
 
-    // 3. Cek apakah masih ada donasi lain untuk id_request ini
+    // 3. Cek apakah masih ada donasi lain untuk request ini
     const [remaining] = await pool.query(
       "SELECT * FROM donasi WHERE id_request = ?",
       [donasi.id_request]
     );
 
-    // Jika tidak ada, ubah status requestdonasi menjadi 'PENDING'
     if (remaining.length === 0) {
       await pool.query(
         "UPDATE requestdonasi SET status_request = 'PENDING' WHERE id_request = ?",
@@ -282,11 +337,12 @@ export async function DELETE(request) {
       );
     }
 
-    return NextResponse.json({ message: "Donasi berhasil dihapus dan data terkait diperbarui." }, { status: 200 });
+    return NextResponse.json({ message: "Donasi berhasil dihapus dan barang dikembalikan ke status DONATABLE." }, { status: 200 });
 
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to delete Donasi" }, { status: 500 });
   }
 }
+
 
