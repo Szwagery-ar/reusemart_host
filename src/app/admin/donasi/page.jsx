@@ -69,19 +69,19 @@ export default function AdminDonasiPage() {
 
     const updated = { ...editData };
 
-    if (editData.tanggal_donasi) {
+    if (updated.tanggal_donasi) {
         updated.status_donasi = 'DONE'; 
     }
 
     const res = await fetch('/api/donasi', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editData),
+      body: JSON.stringify(updated),
     });
 
     if (res.ok) {
       setDonasiList((prev) =>
-        prev.map((item) => (item.id_donasi === editData.id_donasi ? editData : item))
+        prev.map((item) => (item.id_donasi === updated.id_donasi ? updated : item))
       );
       setShowSidebar(false);
       alert('Data berhasil diperbarui');
@@ -185,7 +185,7 @@ export default function AdminDonasiPage() {
                 <td className="px-6 py-4 text-sm text-gray-700">{item.id_donasi}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.status_donasi}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{formatDate(item.tanggal_acc)}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">{formatDate(item.tanggal_donasi)}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{item.tanggal_donasi ? formatDate(item.tanggal_donasi) : '-'}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.nama_penerima}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.id_request}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.deskripsi}</td>
