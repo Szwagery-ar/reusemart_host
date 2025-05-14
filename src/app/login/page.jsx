@@ -10,6 +10,8 @@ import GoogleButton from '@/components/GoogleButton/GoogleButton';
 const GOOGLE_CLIENT_ID = '627202337032-4llrgl8hajk2bnna4n0s5tja5rffs0oq.apps.googleusercontent.com';
 const REDIRECT_URI = 'http://localhost:3000/api/auth/callback/google';
 
+
+
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
