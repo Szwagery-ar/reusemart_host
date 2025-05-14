@@ -51,7 +51,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        await verifyUserRole(["CS"]);
+        await verifyUserRole(["CS", "Superuser"]);
 
         const formData = await request.formData();
         const nama = formData.get("nama");
@@ -107,7 +107,7 @@ export async function POST(request) {
 
 export async function PUT(request) {
     try {
-        await verifyUserRole(["CS"]);
+        await verifyUserRole(["CS", "Superuser"]);
 
         const {
             id_penitip,
@@ -201,7 +201,7 @@ export async function PUT(request) {
 
 export async function DELETE(request) {
     try {
-        await verifyUserRole(["CS"]);
+        await verifyUserRole(["CS", "Superuser"]);
 
         const { id_penitip } = await request.json();
 

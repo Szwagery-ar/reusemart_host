@@ -31,7 +31,6 @@ export default async function AdminDashboard() {
 
     return (
         <div className="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-xl shadow-md">
-
             <h2 className="text-2xl font-bold text-indigo-700 mb-4">Profil Pegawai</h2>
             <div className="flex items-center gap-4 mb-6">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-indigo-600">

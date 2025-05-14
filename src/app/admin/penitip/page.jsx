@@ -180,7 +180,7 @@ export default function AdminPenitipPage() {
 
     return (
         <div className="p-6 relative">
-            <WithRole allowed={["CS"]}>
+            <WithRole allowed={["CS", "Superuser"]}>
                 <h1 className="text-2xl font-bold mb-4 text-indigo-700">
                     Data Penitip
                 </h1>
