@@ -68,7 +68,7 @@ export default function AdminBarangPage() {
                             <p className="text-sm text-gray-600">Kode: {barang.kode_produk}</p>
                             <p className="text-sm text-gray-600">Harga: Rp{parseInt(barang.harga_barang).toLocaleString('id-ID')}</p>
                             <p className="text-sm text-gray-600">Status Titip: {barang.status_titip}</p>
-                            <p className="text-sm text-gray-600">Garansi: {barang.status_garansi}</p>
+                            <p className="text-sm text-gray-600">Garansi: {barang.tanggal_garansi}</p>
                             <p className="text-sm text-gray-600">Tanggal Masuk: {barang.tanggal_masuk?.split('T')[0]}</p>
                             <p className="text-sm text-gray-600">Tanggal Keluar: {barang.tanggal_keluar?.split('T')[0] || '-'}</p>
                             <p className="text-sm text-gray-600">Penitip: {barang.penitip_name || '-'}</p>

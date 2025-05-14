@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import Footer from '../../components/Footer/Footer';
 import Link from 'next/link';
 
 export default function Belanja() {
@@ -68,6 +69,7 @@ export default function Belanja() {
 
     const filteredBarang = barang.filter((item) => {
         if (selectedFilters.length === 0) return true;
+
         // Pastikan item.kategori_barang tidak undefined atau null
         const kategoriList = Array.isArray(item.kategori_barang)
             ? item.kategori_barang
@@ -81,8 +83,6 @@ export default function Belanja() {
         );
     });
 
-
-
     // Ini buat sort                               
     const sortedBarang = [...filteredBarang].sort((a, b) => {
         if (selectedSort === 'Harga Terendah') {
@@ -90,9 +90,9 @@ export default function Belanja() {
         } else if (selectedSort === 'Harga Tertinggi') {
             return b.harga_barang - a.harga_barang; // ini sort harga tertinggi
         } else if (selectedSort === 'Paling Baru') { // ini sort paling baru pakai tanggal_masuk
-            const dateA = new Date(a.tanggal_masuk); 
+            const dateA = new Date(a.tanggal_masuk);
             const dateB = new Date(b.tanggal_masuk);
-            return dateB - dateA;  
+            return dateB - dateA;
         }
         return 0;
     });

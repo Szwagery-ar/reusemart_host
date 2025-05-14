@@ -16,7 +16,7 @@ export async function GET(request) {
                 b.status_titip, 
                 b.tanggal_masuk, 
                 b.tanggal_keluar, 
-                b.status_garansi, 
+                b.tanggal_garansi, 
                 p.nama AS penitip_name,
                 gb.id_gambar, 
                 gb.src_img,
@@ -26,13 +26,14 @@ export async function GET(request) {
             LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
             LEFT JOIN bridgekategoribarang bkb ON b.id_barang = bkb.id_barang
             LEFT JOIN kategoribarang kb ON bkb.id_kategori = kb.id_kategori
+            WHERE b.status_titip IN ('AVAILABLE', 'EXTENDED')
         `;
 
         let values = [];
 
         if (search) {
-            query += ` WHERE b.nama_barang LIKE ? OR b.kode_produk LIKE ?`;
-            values = [`%${search}%`, `%${search}%`];
+            query += ` AND (b.nama_barang LIKE ? OR b.kode_produk LIKE ?)`;
+            values.push(`%${search}%`, `%${search}%`);
         }
 
         const [barang] = await pool.query(query, values);
@@ -70,9 +71,9 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const { id_penitip, nama_barang, deskripsi_barang, berat_barang, harga_barang, status_garansi, status_titip, tanggal_masuk } = await request.json();
+        const { id_penitip, nama_barang, deskripsi_barang, berat_barang, harga_barang, tanggal_garansi, status_titip, tanggal_masuk } = await request.json();
 
-        if (!id_penitip || !nama_barang || !deskripsi_barang || !berat_barang || !harga_barang || !status_garansi || !status_titip || !tanggal_masuk) {
+        if (!id_penitip || !nama_barang || !deskripsi_barang || !berat_barang || !harga_barang || !tanggal_garansi || !status_titip || !tanggal_masuk) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
@@ -82,8 +83,8 @@ export async function POST(request) {
         const kode_produk = firstLetter + nextId;
 
         await pool.query(
-            "INSERT INTO barang (id_penitip, kode_produk, nama_barang, deskripsi_barang, berat_barang, harga_barang, status_garansi, status_titip, tanggal_masuk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [id_penitip, kode_produk, nama_barang, deskripsi_barang, berat_barang, harga_barang, status_garansi, status_titip, tanggal_masuk] // Urutan harus sesuai dengan kolom
+            "INSERT INTO barang (id_penitip, kode_produk, nama_barang, deskripsi_barang, berat_barang, harga_barang, tanggal_garansi, status_titip, tanggal_masuk) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [id_penitip, kode_produk, nama_barang, deskripsi_barang, berat_barang, harga_barang, tanggal_garansi, status_titip, tanggal_masuk] // Urutan harus sesuai dengan kolom
         );
 
         return NextResponse.json({ message: "Barang added successfully!", nama_barang, kode_produk }, { status: 201 });
@@ -97,15 +98,15 @@ export async function POST(request) {
 
 export async function PUT(request) {
     try {
-        const { id_barang, deskripsi_barang, berat_barang, harga_barang, status_garansi, status_titip } = await request.json();
+        const { id_barang, deskripsi_barang, berat_barang, harga_barang, tanggal_garansi, status_titip } = await request.json();
 
-        if (!id_barang || !deskripsi_barang || !berat_barang || !harga_barang || !status_garansi || !status_titip) {
+        if (!id_barang || !deskripsi_barang || !berat_barang || !harga_barang || !tanggal_garansi || !status_titip) {
             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
         }
 
         await pool.query(
-            `UPDATE barang SET deskripsi_barang = ?, berat_barang = ?, harga_barang = ?, status_garansi = ?, status_titip = ? WHERE id_barang = ?`,
-            [deskripsi_barang, berat_barang, harga_barang, status_garansi, status_titip, id_barang]
+            `UPDATE barang SET deskripsi_barang = ?, berat_barang = ?, harga_barang = ?, tanggal_garansi = ?, status_titip = ? WHERE id_barang = ?`,
+            [deskripsi_barang, berat_barang, harga_barang, tanggal_garansi, status_titip, id_barang]
         );
 
         return NextResponse.json({ message: "Barang updated successfully!", id_barang }, { status: 200 });

@@ -27,7 +27,7 @@ export async function GET(request) {
         b.status_titip, 
         b.tanggal_masuk, 
         b.tanggal_keluar, 
-        b.status_garansi, 
+        b.tanggal_garansi, 
         p.nama AS penitip_name,
         gb.id_gambar, 
         gb.src_img
