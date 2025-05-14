@@ -19,14 +19,17 @@ export default function AdminPenitipPage() {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  const [formData, setFormData] = useState({
+  const defaultFormData = {
     nama: "",
     email: "",
     no_ktp: "",
     no_telepon: "",
     password: "",
-  });
+    foto_ktp: null,
+  }
 
+  const [formData, setFormData] = useState(defaultFormData);
+  const [previewKTP, setPreviewKTP] = useState(null);
 
   // useEffect(() => {
   //     const fetchUser = async () => {
@@ -111,7 +114,7 @@ export default function AdminPenitipPage() {
   };
 
   const handleEdit = (penitip) => {
-    setEditData(penitip);
+    setEditData({ ...penitip, password: ""});
     setShowEditSidebar(true);
   };
 
@@ -150,18 +153,26 @@ export default function AdminPenitipPage() {
       .split("; ")
       .find((row) => row.startsWith("token="))
       ?.split("=")[1];
+
+    const form = new FormData();
+    form.append("nama", formData.nama);
+    form.append("email", formData.email);
+    form.append("no_ktp", formData.no_ktp);
+    form.append("no_telepon", formData.no_telepon);
+    form.append("password", formData.password);
+    form.append("foto_ktp", formData.foto_ktp);
+
     const res = await fetch("/api/penitip", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(formData),
+      body: form,
     });
 
     const data = await res.json();
     if (res.ok) {
-      setPenitipList((prev) => [...prev, data.penitipBaru]); // PAKAI DATA DARI BACKEND
+      setPenitipList((prev) => [...prev, data.penitipBaru]);
       setShowModal(false);
       setFormData({
         nama: "",
@@ -169,6 +180,7 @@ export default function AdminPenitipPage() {
         no_ktp: "",
         no_telepon: "",
         password: "",
+        foro_ktp: null,
       });
       alert("Penitip berhasil ditambahkan");
     } else {
@@ -265,9 +277,9 @@ export default function AdminPenitipPage() {
 
         {showModal && (
           <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg w-full max-w-lg">
+            <div className="bg-white p-6 rounded-lg w-full max-w-lg h-120 max-h-screen overflow-y-auto">
               <h2 className="text-lg font-bold mb-4">Tambah Penitip</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
                 <input
                   name="nama"
                   onChange={handleChange}
@@ -281,13 +293,6 @@ export default function AdminPenitipPage() {
                   value={formData.email}
                   className="w-full border px-3 py-2 rounded"
                   placeholder="Email"
-                />
-                <input
-                  name="no_ktp"
-                  onChange={handleChange}
-                  value={formData.no_ktp}
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="No. KTP"
                 />
                 <input
                   name="no_telepon"
@@ -304,10 +309,63 @@ export default function AdminPenitipPage() {
                   className="w-full border px-3 py-2 rounded"
                   placeholder="Password"
                 />
+                <div>
+                  <label
+                    htmlFor="foto_ktp"
+                    className="inline-block w-full px-4 py-2 border-1 border-gray-200 text-GR rounded cursor-pointer hover:bg-gray-200 transition"
+                  >
+                    Pilih Foto KTP
+                  </label>
+
+                  <input
+                    id="foto_ktp"
+                    type="file"
+                    accept="image/*"
+                    name="foto_ktp"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      setFormData({ ...formData, foto_ktp: file });
+
+                      if (file) {
+                        const previewUrl = URL.createObjectURL(file);
+                        setPreviewKTP(previewUrl);
+                      } else {
+                        setPreviewKTP(null);
+                      }
+                    }}
+                    className="hidden"
+                  />
+
+                  {formData.foto_ktp && (
+                    <p className="text-sm mt-2 text-gray-600">File terpilih: {formData.foto_ktp.name}</p>
+                  )}
+                </div>
+                {previewKTP && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 mb-1">Preview KTP:</p>
+                    <img
+                      src={previewKTP}
+                      alt="Preview KTP"
+                      className="w-full max-h-64 object-contain rounded border"
+                    />
+                  </div>
+                )}
+                <input
+                  name="no_ktp"
+                  onChange={handleChange}
+                  value={formData.no_ktp}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="No. KTP"
+                />
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowModal(false)}
+                    onClick={() => {
+                      setShowModal(false);
+                      setPreviewKTP(null);
+                      setFormData(defaultFormData);
+                    }
+                    }
                     className="px-4 py-2 bg-gray-200 rounded"
                   >
                     Batal
@@ -332,7 +390,8 @@ export default function AdminPenitipPage() {
             />
             <div className="fixed inset-y-0 right-0 z-50 bg-white w-full max-w-md h-full p-6 shadow-xl transition-transform duration-300">
               <h2 className="text-lg font-bold mb-4">Edit Penitip</h2>
-              <form onSubmit={handleUpdate} className="space-y-4">
+              <form onSubmit={handleUpdate} className="space-y-4 overflow-y-auto max-h-[90vh]">
+                <label className="font-semibold text-gray-500">Nama</label>
                 <input
                   name="nama"
                   onChange={handleChange}
@@ -340,6 +399,8 @@ export default function AdminPenitipPage() {
                   className="w-full border px-3 py-2 rounded"
                   placeholder="Nama"
                 />
+
+                <label className="font-semibold text-gray-500">Email</label>
                 <input
                   name="email"
                   onChange={handleChange}
@@ -347,13 +408,8 @@ export default function AdminPenitipPage() {
                   className="w-full border px-3 py-2 rounded"
                   placeholder="Email"
                 />
-                <input
-                  name="no_ktp"
-                  onChange={handleChange}
-                  value={editData.no_ktp}
-                  className="w-full border px-3 py-2 rounded"
-                  placeholder="No. KTP"
-                />
+
+                <label className="font-semibold text-gray-500">No. Telepon</label>
                 <input
                   name="no_telepon"
                   onChange={handleChange}
@@ -361,14 +417,56 @@ export default function AdminPenitipPage() {
                   className="w-full border px-3 py-2 rounded"
                   placeholder="No. Telepon"
                 />
+
+                <label className="font-semibold text-gray-500">NIK</label>
                 <input
-                  name="badge_level"
+                  name="no_ktp"
                   onChange={handleChange}
-                  value={editData.badge_level}
+                  value={editData.no_ktp}
                   className="w-full border px-3 py-2 rounded"
-                  placeholder="Badge Level"
+                  placeholder="No. KTP"
                 />
-                <div className="flex justify-end gap-2">
+
+                <label className="font-semibold text-gray-500">Password Baru (opsional)</label>
+                <input
+                  type="password"
+                  name="password"
+                  onChange={handleChange}
+                  value={editData.password || ""}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Kosongkan jika tidak ingin mengganti"
+                />
+
+                <label className="font-semibold text-gray-500">Foto KTP</label>
+                {editData.foto_ktp ? (
+                  <img
+                    src={editData.foto_ktp}
+                    alt="Foto KTP"
+                    className="w-full max-h-64 object-contain border rounded"
+                  />
+                ) : (
+                  <p className="text-sm text-gray-400 italic">Tidak ada foto KTP</p>
+                )}
+
+                <label className="font-semibold text-gray-500">Badge Level</label>
+                <input
+                  value={editData.badge_level}
+                  disabled
+                  className="w-full border px-3 py-2 rounded bg-gray-100 text-gray-700 cursor-not-allowed"
+                />
+
+                <label className="font-semibold text-gray-500">Status Verifikasi</label>
+                <select
+                  name="is_verified"
+                  onChange={handleChange}
+                  value={editData.is_verified}
+                  className="w-full border px-3 py-2 rounded"
+                >
+                  <option value={0}>Belum Terverifikasi</option>
+                  <option value={1}>Terverifikasi</option>
+                </select>
+
+                <div className="flex justify-end gap-2 pt-4">
                   <button
                     type="button"
                     onClick={() => setShowEditSidebar(false)}
@@ -384,6 +482,7 @@ export default function AdminPenitipPage() {
                   </button>
                 </div>
               </form>
+
             </div>
           </>
         )}
@@ -391,3 +490,5 @@ export default function AdminPenitipPage() {
     </div>
   );
 }
+
+

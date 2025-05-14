@@ -18,7 +18,7 @@ export async function GET() {
 
     if (decoded.role === 'penitip') {
       const [result] = await pool.query(`
-        SELECT id_penitip, nama, email, no_ktp, no_telepon, src_image_profile, jml_barang_terjual, badge_level, komisi, poin_reward
+        SELECT id_penitip, nama, email, no_ktp, no_telepon, src_img_profile, jml_barang_terjual, badge_level, komisi, poin_reward
         FROM Penitip 
         WHERE id_penitip = ?
       `, [decoded.id]);
