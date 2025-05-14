@@ -55,12 +55,18 @@ export default function PenitipRiwayatPage() {
         fetchUserData();
     }, [router]);
 
+    useEffect(() => {
+        if (user) {
+            fetchTransaksiPenitip();
+        }
+    }, [searchQuery]);
+
     // TRANSAKSI
     const fetchTransaksiPenitip = async () => {
         try {
             setTransaksiLoading(true);
 
-            const res = await fetch("/api/transaksi/by-penitip", {
+            const res = await fetch(`/api/transaksi/by-penitip?q=${encodeURIComponent(searchQuery)}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -76,7 +82,7 @@ export default function PenitipRiwayatPage() {
             }
 
             const data = await res.json();
-            console.log("Transaksi data:", data); // Debug
+            console.log("Transaksi data:", data);
             setTransaksiList(data.transaksi);
         } catch (err) {
             setError("Gagal mengambil transaksi penitip");
@@ -179,9 +185,12 @@ export default function PenitipRiwayatPage() {
 
             {/* Search and Filters */}
             <div className="flex gap-4 items-center mb-6">
-                <Input
-                    placeholder="Cari kode transaksi, nama barang, atau pembeli"
-                    className="w-1/3"
+                <input
+                    type="text"
+                    placeholder="Cari nomor nota, nama barang, atau nama pembeli"
+                    className="text-base px-4 py-2 border border-gray-300 rounded-md w-full max-w-lg"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <label htmlFor="tanggal-pemesanan" className="text-sm  ml-5 block">
                     Tanggal Pemesanan

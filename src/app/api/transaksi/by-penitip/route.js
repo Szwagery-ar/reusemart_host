@@ -20,8 +20,11 @@ export async function GET(request) {
     const decoded = jwt.verify(token, JWT_SECRET);
     const id_penitip = decoded.id;
 
-    const [rows] = await pool.query(
-      `SELECT 
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("q");
+
+    let query = `
+      SELECT 
         t.id_transaksi,
         t.no_nota,
         t.tanggal_pesan,
@@ -38,11 +41,25 @@ export async function GET(request) {
         FROM komisi
       ) k ON t.id_transaksi = k.id_transaksi
       WHERE b.id_penitip = ?
-      ORDER BY t.tanggal_pesan DESC`,
-      [id_penitip]
-    );
+    `;
 
-    // Grouping berdasarkan id_transaksi
+    let values = [id_penitip];
+
+    if (search) {
+      query += `
+        AND (
+          t.no_nota LIKE ?
+          OR b.nama_barang LIKE ?
+          OR p.nama LIKE ?
+        )
+      `;
+      values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    query += ` ORDER BY t.tanggal_pesan DESC`;
+
+    const [rows] = await pool.query(query, values);
+
     const transaksiMap = new Map();
 
     for (const row of rows) {
