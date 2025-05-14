@@ -3,21 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { EllipsisVertical } from 'lucide-react';
 import WithRole from "@/components/WithRole/WithRole";
+import { EllipsisVertical } from "lucide-react";
 
 export default function AdminPenitipPage() {
-  const [penitipList, setPenitipList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [showEditSidebar, setShowEditSidebar] = useState(false);
-  const [editData, setEditData] = useState(null);
-  const [activeDropdown, setActiveDropdown] = useState(null);
+    const [penitipList, setPenitipList] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
-  const dropdownRef = useRef(null);
-
-  const [user, setUser] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+    const [activeDropdown, setActiveDropdown] = useState(null);
+    const [showModal, setShowModal] = useState(false);
+    const [showEditSidebar, setShowEditSidebar] = useState(false);
+    const [editData, setEditData] = useState(null);
 
   const defaultFormData = {
     nama: "",
@@ -53,37 +50,26 @@ export default function AdminPenitipPage() {
   //     fetchUser();
   // }, []);
 
-  useEffect(() => {
-    const fetchPenitip = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        const res = await fetch(
-          `/api/penitip?q=${encodeURIComponent(searchQuery)}`,
-          {
-            headers: {
-              authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
-        if (res.ok) {
-          setPenitipList(data.penitip);
-        } else if (res.status === 403) {
-          setError("Anda tidak memiliki akses ke halaman ini.");
-        } else {
-          setError(data.error || "Gagal mengambil data penitip");
-        }
-      } catch (err) {
-        console.error("Error fetching penitip:", err);
-        setError("Terjadi kesalahan saat mengambil data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPenitip();
-  }, [searchQuery]);
+    useEffect(() => {
+        const fetchPenitip = async () => {
+            try {
+                const res = await fetch(`/api/penitip?q=${encodeURIComponent(searchQuery)}`);
+                const data = await res.json();
+                if (res.ok) {
+                    setPenitipList(data.penitip);
+                } else {
+                    setError(data.error || "Gagal mengambil data penitip");
+                }
+            } catch (err) {
+                console.error("Error fetching penitip:", err);
+                setError("Terjadi kesalahan saat mengambil data");
+            } finally {
+                setLoading(false);
+            }
+        };
+      
+        fetchPenitip();
+    }, [searchQuery]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -118,36 +104,35 @@ export default function AdminPenitipPage() {
     setShowEditSidebar(true);
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (editData) {
-      setEditData((prev) => ({ ...prev, [name]: value }));
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    const res = await fetch("/api/penitip", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editData),
-    });
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        const res = await fetch("/api/penitip", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(editData),
+        });
 
-    if (res.ok) {
-      setPenitipList((prev) =>
-        prev.map((p) => (p.id_penitip === editData.id_penitip ? editData : p))
-      );
-      setShowEditSidebar(false);
-      alert("Data berhasil diperbarui");
-    } else {
-      alert("Gagal memperbarui data");
-    }
-  };
+        if (res.ok) {
+            setPenitipList((prev) => prev.map((p) => (p.id_penitip === editData.id_penitip ? editData : p)));
+            setShowEditSidebar(false);
+            alert("Data berhasil diperbarui");
+        } else {
+            alert("Gagal memperbarui data");
+        }
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        if (editData) {
+            setEditData((prev) => ({ ...prev, [name]: value }));
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
     const token = document.cookie
       .split("; ")
@@ -187,17 +172,11 @@ export default function AdminPenitipPage() {
       alert(data.error || "Gagal menambahkan penitip");
     }
   };
+    
+    if (loading) return <div className="p-6">Loading...</div>;
+    if (error) return <div className="p-6 text-red-600">{error}</div>;
 
-
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (error)
     return (
-      <div className="p-6 text-blue-600 text-center align-text text-3xl font-bold">
-        {error}
-      </div>
-    );
-
-  return (
     <div className="p-6 relative">
       <WithRole allowed={["CS"]}>
         <h1 className="text-2xl font-bold mb-4 text-indigo-700">
@@ -268,6 +247,7 @@ export default function AdminPenitipPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">+62{p.no_telepon}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.badge_level}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.total_barang}</td>
+
 
                 </tr>
               ))}
