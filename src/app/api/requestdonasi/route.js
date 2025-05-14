@@ -60,30 +60,224 @@ export async function POST(request) {
 }
 
 export async function PUT(request) {
-    try {
-        const { id_request, tanggal_request, deskripsi, status_request } = await request.json();
+  try {
+    const {
+      id_request,
+      tanggal_request,
+      deskripsi,
+      status_request,
+      mode,
+      daftarBarang = [] // ✅ TERIMA daftarBarang dari body (default kosong)
+    } = await request.json();
 
-        if (!id_request || !tanggal_request || !deskripsi || !status_request) {
-            return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
-        }
-
-        const [requestExists] = await pool.query("SELECT * FROM requestdonasi WHERE id_request = ?", [id_request]);
-
-        if (requestExists.length === 0) {
-            return NextResponse.json({ error: "RequestDonasi not found!" }, { status: 404 });
-        }
-
-        await pool.query(
-            "UPDATE requestdonasi SET tanggal_request = ?, deskripsi = ?, status_request = ? WHERE id_request = ?",
-            [tanggal_request, deskripsi, status_request, id_request]
-        );
-
-        return NextResponse.json({ message: "RequestDonasi updated successfully!" }, { status: 200 });
-
-    } catch (error) {
-        return NextResponse.json({ error: "Failed to update RequestDonasi" }, { status: 500 });
+    if (!id_request || !status_request) {
+      return NextResponse.json({ error: "id_request dan status_request wajib diisi!" }, { status: 400 });
     }
+
+    const [requestExists] = await pool.query(
+      "SELECT * FROM requestdonasi WHERE id_request = ?",
+      [id_request]
+    );
+
+    if (requestExists.length === 0) {
+      return NextResponse.json({ error: "RequestDonasi not found!" }, { status: 404 });
+    }
+
+    // 🔧 Update kolom yang dikirim
+    let updateFields = [];
+    let updateValues = [];
+
+    if (tanggal_request) {
+      updateFields.push("tanggal_request = ?");
+      updateValues.push(tanggal_request);
+    }
+    if (deskripsi) {
+      updateFields.push("deskripsi = ?");
+      updateValues.push(deskripsi);
+    }
+    if (status_request) {
+      updateFields.push("status_request = ?");
+      updateValues.push(status_request);
+    }
+
+    updateValues.push(id_request);
+
+    const updateQuery = `UPDATE requestdonasi SET ${updateFields.join(", ")} WHERE id_request = ?`;
+    await pool.query(updateQuery, updateValues);
+
+    // 🚀 Jika status APPROVED dan mode atur_barang, tambahkan donasi + relasikan barang
+    if (mode === 'atur_barang' && status_request === 'APPROVED') {
+      const [requestDetail] = await pool.query(`
+        SELECT r.id_request, r.id_organisasi, o.nama AS nama_organisasi
+        FROM requestdonasi r
+        JOIN organisasi o ON r.id_organisasi = o.id_organisasi
+        WHERE r.id_request = ?
+      `, [id_request]);
+
+      if (requestDetail.length > 0) {
+        const { nama_organisasi } = requestDetail[0];
+
+        // ✅ Insert donasi baru
+        const [result] = await pool.query(`
+          INSERT INTO donasi (id_request, status_donasi, tanggal_acc, nama_penerima)
+          VALUES (?, 'APPROVED', NOW(), ?)
+        `, [id_request, nama_organisasi]);
+
+        const id_donasi_baru = result.insertId;
+
+        // ✅ Update setiap barang terpilih agar dikaitkan dengan donasi
+        if (Array.isArray(daftarBarang)) {
+          for (const id_barang of daftarBarang) {
+            await pool.query(
+              "UPDATE barang SET id_donasi = ?, status_titip = 'DONATED' WHERE id_barang = ?",
+              [id_donasi_baru, id_barang]
+            );
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({ message: "RequestDonasi updated successfully!" }, { status: 200 });
+
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Failed to update RequestDonasi" }, { status: 500 });
+  }
 }
+
+
+
+// export async function PUT(request) {
+//     try {
+//         const { id_request, tanggal_request, deskripsi, status_request, mode } = await request.json();
+
+//         if (!id_request || !status_request) {
+//             return NextResponse.json({ error: "id_request dan status_request wajib diisi!" }, { status: 400 });
+//         }
+
+//         const [requestExists] = await pool.query("SELECT * FROM requestdonasi WHERE id_request = ?", [id_request]);
+
+//         if (requestExists.length === 0) {
+//             return NextResponse.json({ error: "RequestDonasi not found!" }, { status: 404 });
+//         }
+
+//         let updateFields = [];
+//         let updateValues = [];
+
+//         if (tanggal_request) {
+//             updateFields.push("tanggal_request = ?");
+//             updateValues.push(tanggal_request);
+//         }
+//         if (deskripsi) {
+//             updateFields.push("deskripsi = ?");
+//             updateValues.push(deskripsi);
+//         }
+//         if (status_request) {
+//             updateFields.push("status_request = ?");
+//             updateValues.push(status_request);
+//         }
+
+//         updateValues.push(id_request);
+
+//         const updateQuery = `UPDATE requestdonasi SET ${updateFields.join(", ")} WHERE id_request = ?`;
+//         await pool.query(updateQuery, updateValues);
+
+//         // 💡 Tambah ke tabel donasi jika disetujui dan mode atur_barang
+//         if (mode === 'atur_barang' && status_request === 'APPROVED') {
+//             const [requestDetail] = await pool.query(`
+//                 SELECT r.id_request, r.id_organisasi, o.nama AS nama_organisasi
+//                 FROM requestdonasi r
+//                 JOIN organisasi o ON r.id_organisasi = o.id_organisasi
+//                 WHERE r.id_request = ?
+//             `, [id_request]);
+
+//             if (requestDetail.length > 0) {
+//                 const { id_request, nama_organisasi } = requestDetail[0];
+
+//                 await pool.query(`
+//                     INSERT INTO donasi (id_request, status_donasi, tanggal_acc, nama_penerima)
+//                     VALUES (?, 'APPROVED', NOW(), ?)
+//                 `, [id_request, nama_organisasi]);
+//             }
+//         }
+
+//         return NextResponse.json({ message: "RequestDonasi updated successfully!" }, { status: 200 });
+
+//     } catch (error) {
+//         console.error(error);
+//         return NextResponse.json({ error: "Failed to update RequestDonasi" }, { status: 500 });
+//     }
+// }
+
+
+// export async function PUT(request) {
+//     try {
+//         const { id_request, tanggal_request, deskripsi, status_request } = await request.json();
+
+//         if (!id_request || !status_request) {
+//             return NextResponse.json({ error: "id_request dan status_request wajib diisi!" }, { status: 400 });
+//         }
+
+//         const [requestExists] = await pool.query("SELECT * FROM requestdonasi WHERE id_request = ?", [id_request]);
+
+//         if (requestExists.length === 0) {
+//             return NextResponse.json({ error: "RequestDonasi not found!" }, { status: 404 });
+//         }
+
+//         let updateFields = [];
+//         let updateValues = [];
+
+//         if (tanggal_request) {
+//             updateFields.push("tanggal_request = ?");
+//             updateValues.push(tanggal_request);
+//         }
+//         if (deskripsi) {
+//             updateFields.push("deskripsi = ?");
+//             updateValues.push(deskripsi);
+//         }
+//         if (status_request) {
+//             updateFields.push("status_request = ?");
+//             updateValues.push(status_request);
+//         }
+
+//         updateValues.push(id_request);
+
+//         const updateQuery = `UPDATE requestdonasi SET ${updateFields.join(", ")} WHERE id_request = ?`;
+//         await pool.query(updateQuery, updateValues);
+
+//         return NextResponse.json({ message: "RequestDonasi updated successfully!" }, { status: 200 });
+
+//     } catch (error) {
+//         return NextResponse.json({ error: "Failed to update RequestDonasi" }, { status: 500 });
+//     }
+// }
+
+
+// export async function PUT(request) {
+//     try {
+//         const { id_request, tanggal_request, deskripsi, status_request } = await request.json();
+
+//         if (!id_request || !tanggal_request || !deskripsi || !status_request) {
+//             return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
+//         }
+
+//         const [requestExists] = await pool.query("SELECT * FROM requestdonasi WHERE id_request = ?", [id_request]);
+
+//         if (requestExists.length === 0) {
+//             return NextResponse.json({ error: "RequestDonasi not found!" }, { status: 404 });
+//         }
+
+//         await pool.query(
+//             "UPDATE requestdonasi SET tanggal_request = ?, deskripsi = ?, status_request = ? WHERE id_request = ?",
+//             [tanggal_request, deskripsi, status_request, id_request]
+//         );
+
+//         return NextResponse.json({ message: "RequestDonasi updated successfully!" }, { status: 200 });
+
+//     } catch (error) {
+//         return NextResponse.json({ error: "Failed to update RequestDonasi" }, { status: 500 });
+//     }
+// }
 
 export async function DELETE(request) {
     try {

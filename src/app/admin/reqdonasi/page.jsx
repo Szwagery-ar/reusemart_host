@@ -13,6 +13,11 @@ export default function AdminRequestDonasiPage() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [editData, setEditData] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [searchBarang, setSearchBarang] = useState('');
+  const [hasilPencarian, setHasilPencarian] = useState([]);
+  const [barangDonasiList, setBarangDonasiList] = useState([]);
+
+
 
   const formatTanggal = (tanggalString) => {
     const tanggal = new Date(tanggalString);
@@ -62,34 +67,98 @@ export default function AdminRequestDonasiPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleEdit = (item) => {
+    useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchBarang();
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchBarang]);
+
+    const handleEdit = (item) => {
+    if (item.status_request === 'REJECTED') {
+        alert('Request dengan status REJECTED tidak dapat diatur.');
+        return;
+    }
     setEditData(item);
     setShowSidebar(true);
-  };
+    };
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEditData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    const res = await fetch('/api/requestdonasi', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editData),
-    });
+//   const handleUpdate = async (e) => {
+//     e.preventDefault();
+//     const res = await fetch('/api/requestdonasi', {
+//       method: 'PUT',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify(editData),
+//     });
 
-    if (res.ok) {
-      setRequestDonasiList((prev) =>
-        prev.map((item) => (item.id_request === editData.id_request ? editData : item))
-      );
-      setShowSidebar(false);
-      alert('Data berhasil diperbarui');
-    } else {
-      alert('Gagal memperbarui data');
-    }
-  };
+//     if (res.ok) {
+//       setRequestDonasiList((prev) =>
+//         prev.map((item) => (item.id_request === editData.id_request ? editData : item))
+//       );
+//       setShowSidebar(false);
+//       alert('Data berhasil diperbarui');
+//     } else {
+//       alert('Gagal memperbarui data');
+//     }
+//   };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+
+        const updateData = {
+            id_request: editData.id_request,
+            tanggal_request: editData.tanggal_request,
+            deskripsi: editData.deskripsi,
+            // status_request: mode === 'reject' ? 'REJECTED' : editData.status_request,
+            status_request: mode === 'reject' ? 'REJECTED' : 'APPROVED',
+            mode,
+            daftarBarang: barangDonasiList.map(b => b.id_barang)
+        };
+
+        const res = await fetch('/api/requestdonasi', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData),
+        });
+
+        if (res.ok) {
+            setRequestDonasiList((prev) =>
+            prev.map((item) =>
+                item.id_request === editData.id_request ? { ...item, ...updateData } : item
+            )
+            );
+            setShowSidebar(false);
+            setMode(null);
+            alert('Data berhasil diperbarui');
+        } else {
+            alert('Gagal memperbarui data');
+        }
+    };
+
+    const fetchBarang = async () => {
+        if (searchBarang.trim() === '') return;
+        try {
+            const res = await fetch(`/api/barang?q=${encodeURIComponent(searchBarang)}`);
+            const data = await res.json();
+            if (res.ok) {
+                const filtered = (data.barang || []).filter(
+                    (barang) => barang.status_titip === 'DONATABLE'
+                );
+                setHasilPencarian(filtered);
+            }
+        } catch (err) {
+            console.error('Gagal mencari barang:', err);
+        }
+    };
+
+
 
   const handleDelete = async (id_request) => {
     if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) return;
@@ -118,6 +187,23 @@ export default function AdminRequestDonasiPage() {
       .format(date)
       .replace('.', ''); 
   }
+
+    const [mode, setMode] = useState(null); // 'reject' | 'atur_barang'
+    const [barangDonasi, setBarangDonasi] = useState({
+        kode_barang: '',
+        nama_barang: '',
+        kategori_barang: '',
+    });
+
+    // Tambahkan fungsi handleChange untuk barang
+    const handleBarangChange = (e) => {
+        const { name, value } = e.target;
+        setBarangDonasi((prev) => ({ ...prev, [name]: value }));
+    };
+
+    
+
+    
 
   if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
@@ -156,22 +242,24 @@ export default function AdminRequestDonasiPage() {
                     >
                       <EllipsisVertical />
                     </button>
-                    {activeDropdown === item.id_request && (
-                      <div className="absolute left-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
-                        <button
-                          className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
-                          onClick={() => handleEdit(item)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
-                          onClick={() => handleDelete(item.id_request)}
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    )}
+                        {activeDropdown === item.id_request && (
+                        <div className="absolute left-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
+                            {(item.status_request === 'APPROVED' || item.status_request === 'PENDING') && (
+                            <button
+                                className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                                onClick={() => handleEdit(item)}
+                            >
+                                Atur Donasi
+                            </button>
+                            )}
+                            <button
+                            className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                            onClick={() => handleDelete(item.id_request)}
+                            >
+                            Hapus
+                            </button>
+                        </div>
+                        )}
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.id_request}</td>
@@ -185,51 +273,192 @@ export default function AdminRequestDonasiPage() {
         </table>
       </div>
 
-      {showSidebar && editData && (
+    {showSidebar && editData && (
         <>
-          <div className="fixed inset-0 z-40 bg-black opacity-20" onClick={() => setShowSidebar(false)} />
-          <div className="fixed inset-y-0 right-0 z-50 bg-white w-full max-w-md h-full shadow-xl transition-transform duration-300">
+            <div className="fixed inset-0 z-40 bg-black opacity-20" onClick={() => {setShowSidebar(false); setMode(null);}} />
+            <div className="fixed inset-y-0 right-0 z-50 bg-white w-3/5 h-full shadow-xl transition-transform duration-300">
             <div className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
-              <h2 className="text-lg font-semibold">Edit Request Donasi</h2>
+                <h2 className="text-lg font-semibold">Atur Request Donasi</h2>
             </div>
+
             <form onSubmit={handleUpdate} className="flex flex-col gap-6 p-6">
-              <div>
+                <div>
                 <label className="block mb-2 font-semibold text-sm capitalize">Tanggal Request</label>
                 <DatePicker
-                  selected={editData.tanggal_request ? new Date(editData.tanggal_request) : null}
-                  onChange={(date) =>
+                    selected={editData.tanggal_request ? new Date(editData.tanggal_request) : null}
+                    onChange={(date) =>
                     setEditData((prev) => ({
-                      ...prev,
-                      tanggal_request: date.toISOString().split('T')[0],
+                        ...prev,
+                        tanggal_request: date.toISOString().split('T')[0],
                     }))
-                  }
-                  dateFormat="yyyy-MM-dd" placeholderText="Pilih tanggal" className="w-full border px-3 py-2 rounded"/>
-              </div>
+                    }
+                    dateFormat="yyyy-MM-dd"
+                    placeholderText="Pilih tanggal"
+                    className="w-full border px-3 py-2 rounded"
+                />
+                </div>
 
-              <div>
+                <div>
                 <label className="block mb-2 font-semibold text-sm capitalize">Deskripsi</label>
-                <input name="deskripsi" onChange={handleChange} value={editData.deskripsi || ''} className="w-full border px-3 py-2 rounded" placeholder="Masukkan deskripsi" />
-              </div>
+                    <input
+                        name="deskripsi"
+                        onChange={handleChange}
+                        value={editData.deskripsi || ''}
+                        disabled={mode === 'reject'}
+                        className="w-full border px-3 py-2 rounded bg-white"
+                        placeholder="Masukkan deskripsi"
+                    />
+                </div>
 
-              <div>
-                <label className="block mb-2 font-semibold text-sm capitalize">Status Request</label>
-                <input name="status_request"
-                  onChange={handleChange}
-                  value={editData.status_request || ''} className="w-full border px-3 py-2 rounded" placeholder="Masukkan status request"/>
-              </div>
 
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setShowSidebar(false)} className="px-4 py-2 bg-gray-200 rounded">
-                  Batal
+                <div className="flex justify-between gap-2">
+                <button
+                type="button"
+                onClick={() => {
+                    setMode('reject');
+                    setEditData((prev) => ({
+                    ...prev,
+                    status_request: 'REJECTED',
+                    }));
+                }}
+                className={`w-full px-4 py-2 border rounded-full transition-colors duration-200 ${
+                    mode === 'reject'
+                    ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
+                    : 'text-red-600 border-red-600 hover:bg-red-100'
+                }`}
+                >
+                Tolak Donasi
+                </button>
+
+
+                <button
+                    type="button"
+                    onClick={() => setMode('atur_barang')}
+                    className="w-full px-4 py-2 text-white rounded-full bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]"
+                >
+                    Atur Barang Donasi
+                </button>
+                </div>
+
+                {/* <input
+                    type="text"
+                    className="w-full px-4 py-2 border text-black-600 border-blue-600 rounded-full hover:bg-red-50"
+
+                    placeholder="Search"
+                /> */}
+
+                {mode === 'atur_barang' && (
+                    <>
+                        {/* Input Search + Result */}
+                        <input
+                        type="text"
+                        placeholder="Cari Barang berdasarkan nama/kode"
+                        value={searchBarang}
+                        onChange={(e) => setSearchBarang(e.target.value)}
+                        className="w-full px-4 py-2 border text-black-600 border-blue-600 rounded-full hover:bg-red-50"
+                        />
+
+                        {hasilPencarian.length > 0 && (
+                        <ul className="border rounded mt-2 max-h-48 overflow-y-auto">
+                            {hasilPencarian.map((barang) => (
+                            <li
+                                key={barang.id_barang}
+                                onClick={() => {
+                                // Cek apakah barang sudah dipilih
+                                const alreadySelected = barangDonasiList.some(b => b.id_barang === barang.id_barang);
+                                if (alreadySelected) return;
+
+                                // Maksimal 3 barang
+                                if (barangDonasiList.length >= 3) {
+                                    alert('Maksimal 3 barang bisa dipilih');
+                                    return;
+                                }
+
+                                setBarangDonasiList(prev => [...prev, barang]);
+                                setSearchBarang('');
+                                setHasilPencarian([]);
+                                }}
+                                className="p-2 hover:bg-gray-100 cursor-pointer"
+                            >
+                                {barang.nama_barang} - {barang.kode_produk}
+                            </li>
+                            ))}
+                        </ul>
+                        )}
+
+                        {barangDonasiList.length > 0 && (
+                            <div className="mt-4">
+                                <h3 className="font-semibold mb-2 text-sm">Barang yang Dipilih:</h3>
+                                <ul className="space-y-2">
+                                {barangDonasiList.map((barang, idx) => (
+                                    <li key={idx} className="flex justify-between items-center border p-2 rounded">
+                                    <div>
+                                        <p className="text-sm font-medium">{barang.nama_barang}</p>
+                                        <p className="text-xs text-gray-500">{barang.kode_produk}</p>
+                                        <p className="text-xs text-gray-500">{barang.kategori_barang?.join(', ')}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setBarangDonasiList(barangDonasiList.filter(b => b.id_barang !== barang.id_barang))}
+                                        className="text-red-500 text-xs hover:underline"
+                                    >
+                                        Hapus
+                                    </button>
+                                    </li>
+                                ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Form Barang */}
+                        {/* <div className="mt-4 space-y-4">
+                            <div>
+                                <label className="block mb-2 font-semibold text-sm">Kode Barang</label>
+                                <input
+                                name="kode_barang"
+                                onChange={handleBarangChange}
+                                value={barangDonasi.kode_barang}
+                                className="w-full border px-3 py-2 rounded"
+                                />
+                            </div>
+                            <div>
+                                <label className="block mb-2 font-semibold text-sm">Nama Barang</label>
+                                <input
+                                name="nama_barang"
+                                onChange={handleBarangChange}
+                                value={barangDonasi.nama_barang}
+                                className="w-full border px-3 py-2 rounded"
+                                />
+                            </div>
+                            <div>
+                                <label className="block mb-2 font-semibold text-sm">Kategori Barang</label>
+                                <input
+                                name="kategori_barang"
+                                onChange={handleBarangChange}
+                                value={barangDonasi.kategori_barang}
+                                className="w-full border px-3 py-2 rounded"
+                                />
+                            </div>
+                        </div> */}
+                    </>
+                )}
+
+
+                <div className="flex justify-end gap-2">
+                <button
+                    type="button"
+                    onClick={() => {setShowSidebar(false); setMode(null);}}
+                    className="px-4 py-2 bg-gray-200 rounded"
+                >
+                    Batal
                 </button>
                 <button type="submit" className="px-4 py-2 bg-blue-700 text-white rounded">
-                  Simpan
+                    Simpan
                 </button>
-              </div>
+                </div>
             </form>
-          </div>
+            </div>
         </>
-      )}
+        )}
     </div>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+
 import 'react-toastify/dist/ReactToastify.css';
 
 import ReuseButton from '@/components/ReuseButton/ReuseButton';
@@ -163,7 +164,6 @@ export default function TukarPoin() {
             if (response.ok) {
                 setKlaim(klaim.filter((item) => item.id_klaim !== selectedKlaim));
                 toast.success('Klaim merch berhasil dihapus!', {
-                    position: "bottom-right",
                     autoClose: 3000,
                 });
             } else {
@@ -172,7 +172,7 @@ export default function TukarPoin() {
                     autoClose: 3000,
                 });
             }
-            closeModal();  // Tutup modal setelah berhasil
+            closeModal();
         } catch (error) {
             console.error('Error deleting klaim:', error);
             toast.error('Gagal menghapus klaim', {
@@ -327,6 +327,7 @@ export default function TukarPoin() {
                 </div>
             </div>
 
+            <ToastContainer position="bottom-right" autoClose={3000} />
         </div>
     );
 }

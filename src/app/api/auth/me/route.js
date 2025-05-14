@@ -32,7 +32,7 @@ export async function GET() {
           role: decoded.role,
           no_ktp: user.no_ktp,
           no_telepon: user.no_telepon,
-          src_img_profile: user.src_image_profile,
+          src_img_profile: user.src_img_profile,
           jml_barang_terjual: user.jml_barang_terjual,
           badge_level: user.badge_level,
           komisi: user.komisi,

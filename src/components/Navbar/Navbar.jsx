@@ -20,7 +20,7 @@ export default function Navbar() {
             fetch('/api/auth/me', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token.split('=')[1]}`, // Ambil token dari cookies
+                    'Authorization': `Bearer ${token.split('=')[1]}`, 
                 },
             })
                 .then(res => res.json())
@@ -80,7 +80,7 @@ export default function Navbar() {
     };
 
     const generateStableColor = (input) => {
-        const colors = ['#EF4444', '#F97316', '#10B981', '#8B5CF6', '#EAB308']; // merah, oranye, hijau, biru, kuning
+        const colors = ['#EF4444', '#F97316', '#10B981', '#8B5CF6', '#EAB308'];
         if (!input) return colors[0];
         const charCode = input.charCodeAt(0);
         const index = charCode % colors.length;

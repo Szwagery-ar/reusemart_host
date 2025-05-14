@@ -20,8 +20,12 @@ export default function AdminDonasiPage() {
       try {
         const res = await fetch(`/api/donasi?q=${encodeURIComponent(searchQuery)}`);
         const data = await res.json();
+        console.log("RESPON DONASI:", data);
         if (res.ok) {
-          setDonasiList(data.donasi);
+            const filtered = (data.donasi || []).filter(d =>
+                d.status_donasi === 'APPROVED' || d.status_donasi === 'DONE'
+            );
+                setDonasiList(filtered);
         } else {
           setError(data.error || 'Gagal mengambil data donasi');
         }
@@ -45,10 +49,15 @@ export default function AdminDonasiPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleEdit = (item) => {
+    const handleEdit = (item) => {
+    if (item.status_donasi === 'DONE') {
+        alert('Donasi dengan status DONE tidak bisa diedit.');
+        return;
+    }
     setEditData(item);
     setShowSidebar(true);
-  };
+    };
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,6 +66,13 @@ export default function AdminDonasiPage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+
+    const updated = { ...editData };
+
+    if (editData.tanggal_donasi) {
+        updated.status_donasi = 'DONE'; 
+    }
+
     const res = await fetch('/api/donasi', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -74,22 +90,29 @@ export default function AdminDonasiPage() {
     }
   };
 
-  const handleDelete = async (id_donasi) => {
+    const handleDelete = async (id_donasi) => {
+    const item = donasiList.find((d) => d.id_donasi === id_donasi);
+    if (item?.status_donasi === 'DONE') {
+        alert('Donasi dengan status DONE tidak bisa dihapus.');
+        return;
+    }
+
     if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) return;
 
     const res = await fetch('/api/donasi', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_donasi }),
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_donasi }),
     });
 
     if (res.ok) {
-      setDonasiList((prev) => prev.filter((item) => item.id_donasi !== id_donasi));
-      alert('Data berhasil dihapus');
+        setDonasiList((prev) => prev.filter((item) => item.id_donasi !== id_donasi));
+        alert('Data berhasil dihapus');
     } else {
-      alert('Gagal menghapus data');
+        alert('Gagal menghapus data');
     }
-  };
+    };
+
 
    function formatDate(dateString) {
     const date = new Date(dateString);
@@ -121,7 +144,7 @@ export default function AdminDonasiPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
-              {['Action', 'ID Donasi', 'Status', 'Tanggal ACC', 'Tanggal Donasi', 'Nama Penerima', 'ID Request', 'Deskripsi'].map((col) => (
+              {['Action', 'ID Donasi', 'Status', 'Tanggal ACC', 'Tanggal Donasi', 'Nama Penerima', 'ID Request', 'Deskripsi', 'Barang'].map((col) => (
                 <th key={col} className="px-5 py-3 text-white text-left">{col}</th>
               ))}
             </tr>
@@ -131,6 +154,8 @@ export default function AdminDonasiPage() {
               <tr key={item.id_donasi} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-right font-medium">
                   <div className="relative dropdown-action flex justify-center items-center">
+
+                    
                     <button
                       onClick={() =>
                         setActiveDropdown(activeDropdown === item.id_donasi ? null : item.id_donasi)
@@ -164,6 +189,11 @@ export default function AdminDonasiPage() {
                 <td className="px-6 py-4 text-sm text-gray-700">{item.nama_penerima}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.id_request}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{item.deskripsi}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">
+                {item.barang_donasi && item.barang_donasi.length > 0
+                    ? item.barang_donasi.map(b => b.nama_barang).join(', ')
+                    : <span className="italic text-gray-400">Barang: -</span>}
+                </td>
               </tr>
             ))}
           </tbody>
