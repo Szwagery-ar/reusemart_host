@@ -86,13 +86,17 @@ export default function Belanja() {
     // Ini buat sort                               
     const sortedBarang = [...filteredBarang].sort((a, b) => {
         if (selectedSort === 'Harga Terendah') {
-            return a.harga_barang - b.harga_barang; // ini sort harga terendah
+            return a.harga_barang - b.harga_barang; 
         } else if (selectedSort === 'Harga Tertinggi') {
             return b.harga_barang - a.harga_barang; // ini sort harga tertinggi
         } else if (selectedSort === 'Paling Baru') { // ini sort paling baru pakai tanggal_masuk
             const dateA = new Date(a.tanggal_masuk);
             const dateB = new Date(b.tanggal_masuk);
             return dateB - dateA;
+        } else {
+            const dateA = new Date(a.tanggal_masuk);
+            const dateB = new Date(b.tanggal_masuk);
+            return dateA - dateB;
         }
         return 0;
     });
