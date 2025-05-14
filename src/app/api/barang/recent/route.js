@@ -16,7 +16,7 @@ export async function GET(request) {
                 b.status_titip, 
                 b.tanggal_masuk, 
                 b.tanggal_keluar, 
-                b.status_garansi, 
+                b.tanggal_garansi, 
                 p.nama AS penitip_name
             FROM barang b
             LEFT JOIN penitip p ON b.id_penitip = p.id_penitip

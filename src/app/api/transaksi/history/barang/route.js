@@ -39,7 +39,7 @@ export async function GET(request) {
                 b.nama_barang, 
                 b.harga_barang, 
                 b.berat_barang, 
-                b.status_garansi, 
+                b.tanggal_garansi, 
                 gb.src_img
             FROM 
                 barang b

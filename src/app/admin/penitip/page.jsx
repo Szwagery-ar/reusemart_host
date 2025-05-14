@@ -16,9 +16,6 @@ export default function AdminPenitipPage() {
 
   const dropdownRef = useRef(null);
 
-  const [user, setUser] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
-
   const [formData, setFormData] = useState({
     nama: "",
     email: "",
