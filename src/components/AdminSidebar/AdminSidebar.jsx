@@ -43,6 +43,7 @@ const menuByRole = {
     CS: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake  },
+        { name: 'Penilaian', path: '/admin/penitip/penilaian', icon: Handshake  },
     ],
     QC: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },

@@ -213,11 +213,6 @@ export default function Riwayat() {
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="font-semibold ">Total Bayar: Rp {formatRupiah(item.harga_akhir)}</div>
-                                            <ReuseButton>
-                                                <div className="px-4 py-2">
-                                                    Lihat Detail Transaksi
-                                                </div>
-                                            </ReuseButton>
                                             <ReduseButton>
                                                 <div className="px-4 py-2">
                                                     Batalkan Pesanan
@@ -245,16 +240,16 @@ export default function Riwayat() {
                                         </div>
                                     ))}
 
-                                    {barangData[item.id_transaksi]?.length > 1 && (
-                                        <div className="flex flex-col justify-between">
+                                    <div className="flex flex-col justify-between">
+                                        {barangData[item.id_transaksi]?.length > 1 && (
                                             <p className="text-sm text-gray-500 text-right">
                                                 + {barangData[item.id_transaksi]?.length - 1} barang lainnya
                                             </p>
-                                            <ReuseButton>
-                                                <div className="px-4 py-2" onClick={() => openModal(item)}>Lihat Detail Transaksi</div>
-                                            </ReuseButton>
-                                        </div>
-                                    )}
+                                        )}
+                                        <ReuseButton>
+                                            <div className="px-4 py-2" onClick={() => openModal(item)}>Lihat Detail Transaksi</div>
+                                        </ReuseButton>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -314,29 +309,32 @@ export default function Riwayat() {
                                                     className={`px-4 py-2 rounded-full text-xs font-semibold 
                                                         ${item.status_transaksi === "PENDING" ? "bg-[#FFF2D5] text-[#B87A06]" :
                                                             item.status_transaksi === "DONE" ? "bg-[#D6FFDE] text-[#0A6810]" :
-                                                                item.status_transaksi === "ON_PROGRESS" ? item.jenis_pengiriman === "COURIER"
-                                                                    ? "bg-[#DDEDFC] text-[#1C274C]"
-                                                                    : item.jenis_pengiriman === "SELF_PICKUP"
+                                                                item.status_transaksi === "PAID" ? "bg-[#D6FFDE] text-[#0A6810]" :
+                                                                    item.status_transaksi === "ON_PROGRESS" ? item.jenis_pengiriman === "COURIER"
                                                                         ? "bg-[#DDEDFC] text-[#1C274C]"
-                                                                        : "bg-gray-200 text-gray-800"
-                                                                    : item.status_transaksi === "CANCELLED"
-                                                                        ? "bg-[#FFEAEF] text-[#F0144A]"
-                                                                        : "bg-gray-100 text-gray-500"
+                                                                        : item.jenis_pengiriman === "SELF_PICKUP"
+                                                                            ? "bg-[#DDEDFC] text-[#1C274C]"
+                                                                            : "bg-gray-200 text-gray-800"
+                                                                        : item.status_transaksi === "CANCELLED"
+                                                                            ? "bg-[#FFEAEF] text-[#F0144A]"
+                                                                            : "bg-gray-100 text-gray-500"
                                                         }`}
                                                 >
                                                     {item.status_transaksi === "PENDING"
                                                         ? "Menunggu Pembayaran"
                                                         : item.status_transaksi === "DONE"
                                                             ? "Selesai"
-                                                            : item.status_transaksi === "ON_PROGRESS"
-                                                                ? item.jenis_pengiriman === "COURIER"
-                                                                    ? "Dalam Pengiriman"
-                                                                    : item.jenis_pengiriman === "SELF_PICKUP"
-                                                                        ? "Dapat Diambil"
+                                                            : item.status_transaksi === "PAID"
+                                                                ? "Dalam Proses"
+                                                                : item.status_transaksi === "ON_PROGRESS"
+                                                                    ? item.jenis_pengiriman === "COURIER"
+                                                                        ? "Dalam Pengiriman"
+                                                                        : item.jenis_pengiriman === "SELF_PICKUP"
+                                                                            ? "Dapat Diambil"
+                                                                            : "Status Tidak Dikenal"
+                                                                    : item.status_transaksi === "CANCELLED"
+                                                                        ? "Dibatalkan"
                                                                         : "Status Tidak Dikenal"
-                                                                : item.status_transaksi === "CANCELLED"
-                                                                    ? "Dibatalkan"
-                                                                    : "Status Tidak Dikenal"
                                                     }
                                                 </div>
 
