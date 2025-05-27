@@ -8,39 +8,42 @@ export async function POST(req) {
   const { email, password } = await req.json();
 
   try {
-    // Cek semua role (penitip, pembeli, organisasi)
-    const userRoles = ['Penitip', 'Pembeli', 'Organisasi'];
+    // Semua role yang valid
+    const userRoles = ['Penitip', 'Pembeli', 'Pegawai'];
 
     for (const role of userRoles) {
-      const [result] = await pool.query(`SELECT * FROM ${role} WHERE email = ?`, [email]);
+      const [result] = await pool.query(
+        `SELECT * FROM ${role} WHERE email = ?`,
+        [email]
+      );
 
-      if (result.length > 0) {
-        const user = result[0];
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (result.length === 0) continue;
 
-        if (!isPasswordValid) continue;
+      const user = result[0];
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) continue;
 
-        if (role !== 'Organisasi' && !user.is_verified) {
-          return new Response(JSON.stringify({
-            success: false,
-            message: 'Akun belum terverifikasi.',
-          }), { status: 401 });
-        }
-
-        const payload = {
-          id: user[`id_${role.toLowerCase()}`],
-          role: role.toLowerCase(),
-        };
-
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
-
+      // Jika bukan pegawai, cek verifikasi
+      if (role !== 'Pegawai' && !user.is_verified) {
         return new Response(JSON.stringify({
-          success: true,
-          token,
-          role: payload.role,
-          nama: user.nama,
-        }), { status: 200 });
+          success: false,
+          message: 'Akun belum terverifikasi.',
+        }), { status: 401 });
       }
+
+      const payload = {
+        id: user[`id_${role.toLowerCase()}`],
+        role: role.toLowerCase(),
+      };
+
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+
+      return new Response(JSON.stringify({
+        success: true,
+        token,
+        role: payload.role,
+        nama: user.nama,
+      }), { status: 200 });
     }
 
     return new Response(JSON.stringify({
@@ -49,7 +52,10 @@ export async function POST(req) {
     }), { status: 401 });
 
   } catch (error) {
-    console.error('Login mobile error:', error);
-    return new Response(JSON.stringify({ success: false, message: 'Server error' }), { status: 500 });
+    console.error('Login error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      message: 'Server error',
+    }), { status: 500 });
   }
 }
