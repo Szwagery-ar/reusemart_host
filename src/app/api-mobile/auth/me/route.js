@@ -39,7 +39,7 @@ export async function GET(request) {
         [id]
       );
       userData = rows[0];
-    } else if (role === "pegawai") {
+    } else if (role === "kurir" || role === "hunter") {
       const [rows] = await pool.query(
         `
         SELECT 
@@ -58,7 +58,12 @@ export async function GET(request) {
         `,
         [id]
       );
-      userData = { ...rows[0], role };
+      if (rows.length > 0) {
+        userData = {
+          ...rows[0],
+          role: rows[0].nama_jabatan?.toLowerCase() || "pegawai",
+        };
+      }
     }
 
     if (!userData) {

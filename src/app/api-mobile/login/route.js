@@ -8,7 +8,6 @@ export async function POST(req) {
   const { email, password } = await req.json();
 
   try {
-    // Semua role yang valid
     const userRoles = ['Penitip', 'Pembeli', 'Pegawai'];
 
     for (const role of userRoles) {
@@ -31,9 +30,26 @@ export async function POST(req) {
         }), { status: 401 });
       }
 
+      let finalRole = role.toLowerCase();
+
+      // Jika pegawai, ambil nama_jabatan sebagai role
+      if (role === 'Pegawai') {
+        const [jabatanResult] = await pool.query(
+          `SELECT j.nama_jabatan 
+           FROM Pegawai p
+           LEFT JOIN Jabatan j ON p.id_jabatan = j.id_jabatan
+           WHERE p.id_pegawai = ?`,
+          [user.id_pegawai]
+        );
+
+        if (jabatanResult.length > 0) {
+          finalRole = jabatanResult[0].nama_jabatan.toLowerCase(); // e.g., 'admin', 'cs'
+        }
+      }
+
       const payload = {
         id: user[`id_${role.toLowerCase()}`],
-        role: role.toLowerCase(),
+        role: finalRole,
       };
 
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
