@@ -6,11 +6,12 @@ export async function GET(request) {
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");
 
-        let query = `SELECT bbc.*, p.nama AS pembeli_nama, brg.nama_barang 
+        let query = `SELECT bbc.*, p.nama AS pembeli_nama, brg.nama_barang, pen.nama AS nama_penitip
                         FROM bridgebarangcart bbc 
                     JOIN cart c ON bbc.id_cart = c.id_cart 
                     JOIN pembeli p ON c.id_pembeli = p.id_pembeli
-                    JOIN barang brg ON bbc.id_barang = brg.id_barang`;
+                    JOIN barang brg ON bbc.id_barang = brg.id_barang
+                    JOIN penitip pen ON brg.id_penitip = pen.id_penitip`;
         let values = [];
 
         if (search) {
@@ -56,6 +57,19 @@ export async function POST(request) {
                 error: `Cannot add barang to cart: status_titip is '${status}'`
             }, { status: 400 });
         }
+
+        const [duplicate] = await pool.query(
+            `SELECT * FROM bridgebarangcart WHERE id_cart = ? AND id_barang = ?`,
+            [id_cart, id_barang]
+        );
+
+        if (duplicate.length > 0) {
+            return NextResponse.json(
+                { error: "Barang ini sudah ada di keranjang." },
+                { status: 409 }
+            );
+        }
+
 
         await pool.query(
             `INSERT INTO bridgebarangcart (id_cart, id_barang) VALUES (?, ?)`,

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LogoutButton from '../LogoutButton/LogoutButton';
 
-import { LayoutDashboard, Package, Gift, LogOut, ContactRound, ShoppingBag, HeartHandshake, HandCoins } from 'lucide-react';
+import { LayoutDashboard, Package, Gift, LogOut, ContactRound, ShoppingBag, HeartHandshake, HandCoins, Banknote, Truck  } from 'lucide-react';
 import { UserRound, Handshake, Ribbon } from 'lucide-react';
 
 import './AdminSidebar.css';
@@ -38,11 +38,13 @@ const menuByRole = {
     GUDANG: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Barang', path: '/admin/barang', icon: Package },
-        { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
+        { name: 'Data Transaksi', path: '/admin/transaksi', icon: Handshake },
+        { name: 'Data Pengiriman', path: '/admin/pengiriman', icon: Truck },
     ],
     CS: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake  },
+        { name: 'Data Pembayaran', path: '/admin/konfirmasi-pembayaran', icon: Banknote  },
         { name: 'Penilaian', path: '/admin/penitip/penilaian', icon: Handshake  },
     ],
     QC: [

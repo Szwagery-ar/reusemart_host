@@ -12,7 +12,7 @@ export default function AdminBarangPage() {
     useEffect(() => {
         const fetchBarang = async () => {
             try {
-                const res = await fetch('/api/barang');
+                const res = await fetch('/api/barang/admin');
                 const data = await res.json();
                 if (res.ok) {
                     setBarangList(data.barang);
@@ -30,18 +30,18 @@ export default function AdminBarangPage() {
     }, []);
 
     // DROPDOWN
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (!event.target.closest(".dropdown-action")) {
-                setActiveDropdown(null);
-            }
-        }
+    // useEffect(() => {
+    //     function handleClickOutside(event) {
+    //         if (!event.target.closest(".dropdown-action")) {
+    //             setActiveDropdown(null);
+    //         }
+    //     }
 
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
+    //     document.addEventListener("mousedown", handleClickOutside);
+    //     return () => {
+    //         document.removeEventListener("mousedown", handleClickOutside);
+    //     };
+    // }, []);
 
     if (loading) return <div className="p-6">Loading...</div>;
     if (error) return <div className="p-6 text-red-600">{error}</div>;

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Footer from '../../components/Footer/Footer';
 import Link from 'next/link';
+import { Search } from "lucide-react";
 
 export default function Belanja() {
     const [barang, setBarang] = useState([]);
@@ -11,10 +12,12 @@ export default function Belanja() {
     const [selectedSort, setSelectedSort] = useState('Paling Baru');
     const [showCategoryFilter, setShowCategoryFilter] = useState(false);
 
+    const [searchQuery, setSearchQuery] = useState('');
+
     useEffect(() => {
         const fetchBarang = async () => {
             try {
-                const response = await fetch('/api/barang');
+                const response = await fetch(`/api/barang?q=${encodeURIComponent(searchQuery)}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
@@ -40,7 +43,7 @@ export default function Belanja() {
 
         fetchBarang();
         fetchKategori();
-    }, []);
+    }, [searchQuery]);
 
 
     const formatPrice = (price) => {
@@ -52,9 +55,11 @@ export default function Belanja() {
     };
 
     const handleFilterClick = (category) => {
-        if (!selectedFilters.includes(category)) {
-            setSelectedFilters((prevFilters) => [...prevFilters, category]);
-        }
+        setSelectedFilters((prevFilters) =>
+            prevFilters.includes(category)
+                ? prevFilters.filter((filter) => filter !== category)
+                : [...prevFilters, category]
+        );
     };
 
     const handleRemoveFilter = (category) => {
@@ -86,7 +91,7 @@ export default function Belanja() {
     // Ini buat sort                               
     const sortedBarang = [...filteredBarang].sort((a, b) => {
         if (selectedSort === 'Harga Terendah') {
-            return a.harga_barang - b.harga_barang; 
+            return a.harga_barang - b.harga_barang;
         } else if (selectedSort === 'Harga Tertinggi') {
             return b.harga_barang - a.harga_barang; // ini sort harga tertinggi
         } else if (selectedSort === 'Paling Baru') { // ini sort paling baru pakai tanggal_masuk
@@ -105,77 +110,135 @@ export default function Belanja() {
         <div>
             <div className="px-6 md:px-20 mt-24">
                 <img
-                    src="/images/Home/promo 1.png"
+                    src="/images/Home/promo-1.png"
                     alt="Banner Promo"
                     className="rounded-3xl w-full max-h-[300px] object-cover"
                 />
 
-                <div className="flex items-center justify-between mt-6 mb-6">
-                    <button
-                        onClick={() => setShowCategoryFilter(!showCategoryFilter)}
-                        className="bg-blue-500 text-white py-2 px-4 rounded-full"
-                    >
-                        {showCategoryFilter ? 'Sembunyikan Filter' : 'Tampilkan Filter Kategori'}
-                    </button>
+                <div className="flex items-center justify-between flex-wrap mt-6 mb-6">
+                    <div className="flex gap-1 items-center">
 
-                    <button className="bg-blue-500 text-white py-2 px-4 rounded-full">
-                        Hapus Filter
-                    </button>
-
-                    {selectedFilters.map((filter, index) => (
-                        <div key={index} className="bg-blue-100 text-blue-600 px-4 py-2 rounded-full flex items-center gap-2">
-                            <span>{filter}</span>
-                            <button
-                                onClick={() => handleRemoveFilter(filter)}
-                                className="text-xl"
-                            >
-                                ×
-                            </button>
-                        </div>
-                    ))}
-
-                    <div className="mb-6">
-                        <label htmlFor="sort" className="text-lg font-medium">Urutkan:</label>
-                        <select
-                            id="sort"
-                            value={selectedSort}
-                            onChange={handleSortChange}
-                            className="ml-4 py-2 px-4 border rounded-md"
+                        <button
+                            onClick={() => setShowCategoryFilter(!showCategoryFilter)}
+                            className="bg-[radial-gradient(ellipse_130.87%_130.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)] text-white p-2 rounded-full"
                         >
-                            <option value="Paling Baru">Paling Baru</option>
-                            <option value="Harga Terendah">Harga Terendah</option>
-                            <option value="Harga Tertinggi">Harga Tertinggi</option>
-                        </select>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                <path strokeLinecap="round" strokeLinejoin="round"
+                                    d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                            </svg>
+                        </button>
+
+                        {selectedFilters.length > 0 && (
+                            <button
+                                className="text-indigo-700 font-bold text-sm py-2 px-4 rounded-full cursor-pointer"
+                                onClick={() => setSelectedFilters([])}
+                            >
+                                Hapus Filter
+                            </button>
+                        )}
+
+                        <div className="flex gap-2 overflow-x-auto max-w-115 hide-scrollbar" >
+                            {selectedFilters.map((filter, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-blue-100 text-blue-600 text-sm px-4 py-2 rounded-full flex items-center gap-2 shrink-0"
+                                >
+                                    <span>{filter}</span>
+                                    <button
+                                        onClick={() => handleRemoveFilter(filter)}
+                                        className="text-xl leading-none cursor-pointer"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
+                    <div className="flex gap-2">
+                        <div className="relative inline-block">
+                            <span className="text-lg font-medium">Urutkan:</span>
+                            <select
+                                id="sort"
+                                value={selectedSort}
+                                onChange={handleSortChange}
+                                className="ml-4 py-2 px-4 border rounded-full"
+                            >
+                                <option value="Paling Baru">Paling Baru</option>
+                                <option value="Harga Terendah">Harga Terendah</option>
+                                <option value="Harga Tertinggi">Harga Tertinggi</option>
+                            </select>
+                        </div>
 
 
+                        <div className="w-100">
+                            <input
+                                type="text"
+                                placeholder="Cari apa hari ini?"
+                                className="px-4 py-2 border border-indigo-500 rounded-full w-full"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)} />
+                        </div>
+                    </div>
                 </div>
+
 
                 <div className="flex flex-rows-2 gap-5">
                     {showCategoryFilter && (
-                        <div className="w-60 h-100 bg-gray-200 p-4 rounded-xl shadow-md">
-                            <div className="flex flex-col gap-2 ">
-                                {kategoriList.map((kategori) => (
-                                    <div key={kategori.id_kategori} className="flex items-center gap-2 ">
-                                        <input
-                                            type="checkbox"
-                                            onChange={() => handleFilterClick(kategori.nama_kategori)}
-                                            checked={selectedFilters.includes(kategori.nama_kategori)}
-                                            className="w-4 h-4"
-                                        />
-                                        <label className="truncate">{kategori.nama_kategori}</label>
+                        <div className="w-60 h-100 bg-[#EEF1FF] p-7 rounded-3xl">
+                            <div className="flex flex-col gap-3">
+                                {kategoriList.map((kategori) => {
+                                    const isChecked = selectedFilters.includes(kategori.nama_kategori);
+
+                                    return (
+                                        <label
+                                            key={kategori.id_kategori}
+                                            className="flex items-center gap-3 cursor-pointer"
+                                        >
+                                            <div className="relative">
+                                                <input
+                                                    type="checkbox"
+                                                    onChange={() => handleFilterClick(kategori.nama_kategori)}
+                                                    checked={isChecked}
+                                                    className="sr-only"
+                                                />
+                                                <div
+                                                    className={`w-5 h-5 rounded-sm border-2 border-black flex items-center justify-center transition p-1
+                                                    ${isChecked ? 'bg-[radial-gradient(ellipse_130.87%_130.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-none' : 'border-black bg-white'}`}
+                                                >
+                                                    {isChecked && (
+                                                        // <div className="w-2 h-2 bg-white rounded-full" />
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="white">
+                                                            <path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" />
+                                                        </svg>
+
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className="truncate text-sm text-gray-800">
+                                                {kategori.nama_kategori}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+
+                                {selectedFilters.length > 0 && (
+                                    <div
+                                        onClick={() => setSelectedFilters([])}
+                                        className="underline text-sm cursor-pointer mt-1 font-semibold"
+                                    >
+                                        Hapus Semua Filter
                                     </div>
-                                ))}
-                                <div className="underline cursor-pointer">Hapus Semua Filter</div>
+                                )}
                             </div>
                         </div>
                     )}
-                    <div className="flex flex-wrap gap-5">
+                    <div className={`grid ${showCategoryFilter ? 'grid-cols-4' : 'grid-cols-5'} gap-3`}>
                         {sortedBarang.map((item) => (
                             <Link
                                 key={item.id_barang}
                                 href={`/belanja/${item.id_barang}`}
-                                className="border rounded-2xl p-4 w-60"
+                                className="rounded-2xl"
                             >
                                 <img
                                     src={
@@ -186,11 +249,13 @@ export default function Belanja() {
                                     alt={item.nama_barang}
                                     className="w-full h-65 object-cover rounded-4xl mb-3 bg-gray-100"
                                 />
-                                <div className="text-base font-medium text-gray-900 truncate mb-2">
-                                    {item.nama_barang}
-                                </div>
-                                <div className="text-sm text-gray-600 mb-2">
-                                    {formatPrice(item.harga_barang)}
+                                <div className="px-2">
+                                    <div className="text-base font-medium text-gray-900 truncate mb-2">
+                                        {item.nama_barang}
+                                    </div>
+                                    <div className="text-sm text-gray-600 mb-2">
+                                        {formatPrice(item.harga_barang)}
+                                    </div>
                                 </div>
                             </Link>
                         ))}

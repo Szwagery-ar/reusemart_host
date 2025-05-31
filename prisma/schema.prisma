@@ -261,6 +261,8 @@ model Transaksi {
   komisi                Komisi[]
 }
 
+
+
 model Komisi {
   id_komisi             Int @id @default(autoincrement())
   id_transaksi          Int //Foreign Key

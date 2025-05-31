@@ -4,10 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import RippleButton from "@/components/RippleButton/RippleButton";
 import ReuseButton from "@/components/ReuseButton/ReuseButton";
 import { ShoppingCart } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 
 export default function DetailBarangPage() {
+    const router = useRouter();
     const { id_barang } = useParams();
     const [barang, setBarang] = useState(null);
     const [previewImg, setPreviewImg] = useState("");
@@ -15,8 +16,13 @@ export default function DetailBarangPage() {
 
     const [diskusi, setDiskusi] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [showCartPopup, setShowCartPopup] = useState(false);
 
     const [isExpanded, setIsExpanded] = useState(false);
+
+    const [user, setUser] = useState(null);
+
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     const [formData, setFormData] = useState({
         isi_diskusi: '',
@@ -30,7 +36,6 @@ export default function DetailBarangPage() {
             if (data.barang && data.barang.gambar_barang.length > 0) {
                 setPreviewImg(data.barang.gambar_barang[0].src_img);
 
-                // Filter gambar unik setelah barang dimuat
                 const uniqueImgs = Array.from(
                     new Set(data.barang.gambar_barang.map((item) => item.src_img))
                 ).map((src_img) =>
@@ -42,34 +47,28 @@ export default function DetailBarangPage() {
         fetchBarang();
     }, [id_barang]);
 
-    const fetchUserData = async () => {
-        try {
-            const res = await fetch('/api/auth/me');
-
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success) {
-                    setUser(data.user);
-                    fetchRequestOrg();
+    useEffect(() => {
+        const checkLogin = async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        setUser(data.user);
+                    } else {
+                        setUser(null);
+                    }
                 } else {
                     setUser(null);
-                    setError(userData.message || 'User not authenticated');
-                    router.push('/login');
                 }
-            } else {
+            } catch (err) {
+                console.error('Error checking login:', err);
                 setUser(null);
-                setError(userData.message || 'User not authenticated');
-                if (res.status === 401) {
-                    router.push('/login');
-                }
             }
-        } catch (err) {
-            console.error('Error fetching user data:', err);
-            setError('Terjadi kesalahan');
-        } finally {
-            setUserLoading(false);
-        }
-    };
+        };
+        checkLogin();
+    }, []);
+
 
     const fetchDiskusi = useCallback(async () => {
         if (!id_barang) return;
@@ -119,6 +118,64 @@ export default function DetailBarangPage() {
             alert(data.error || "Gagal menambahkan diskusi");
         }
     };
+
+    const handleBuyNow = () => {
+        if (!user) {
+            setShowLoginPrompt(true);
+            return;
+        }
+        router.push(`/cart/checkout?id_barang=${id_barang}`);
+    };
+
+    const handleAddToCart = async () => {
+        if (!user) {
+            setShowLoginPrompt(true);
+            return;
+        }
+
+        const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+
+        try {
+            const resCart = await fetch("/api/cart");
+            const { cart } = await resCart.json();
+
+            let userCart = cart.find((c) => c.id_pembeli === user.id);
+
+            if (!userCart) {
+                const resCreate = await fetch("/api/cart", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id_pembeli: user.id }),
+                });
+                const dataCreate = await resCreate.json();
+                if (resCreate.ok) {
+                    userCart = { id_cart: dataCreate.id_cart };
+                } else {
+                    alert(dataCreate.error);
+                    return;
+                }
+            }
+
+            const resBridge = await fetch("/api/bridgebarangcart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_cart: userCart.id_cart, id_barang }),
+            });
+
+            const bridgeData = await resBridge.json();
+            if (resBridge.ok) {
+                setShowCartPopup(true);
+                setTimeout(() => setShowCartPopup(false), 3000);
+            } else {
+                alert(bridgeData.error);
+            }
+
+        } catch (err) {
+            console.error("Gagal tambah ke cart:", err);
+        }
+    };
+
+
 
     const getFirstLetter = (name) => {
         return name ? name.charAt(0).toUpperCase() : "";
@@ -203,22 +260,70 @@ export default function DetailBarangPage() {
                 </div>
                 <div>
                     <div className="gap-2 mb-4">
-                        <h2 className="text-2xl font-bold">Profil</h2>
+                        <h2 className="text-2xl font-bold">{barang.nama}</h2>
                     </div>
                     <h1 className="text-4xl font-bold mb-3">{barang.nama_barang}</h1>
                     <p className="text-2xl font-semibold mb-4">
                         {formatPrice(barang.harga_barang)}
                     </p>
                     <div className="flex gap-4 mb-4">
-                        <RippleButton className="text-white px-6 py-2 w-full rounded-4xl bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0%,_#26C2FF_0%,_#220593_90%)]">
+                        <RippleButton onClick={handleBuyNow} className="text-white px-6 py-2 w-full rounded-4xl bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0%,_#26C2FF_0%,_#220593_90%)]">
                             Beli Sekarang
                         </RippleButton>
-                        <ReuseButton>
-                            <div className="text-black px-4 py-4 rounded-full text-indigo-700 hover:text-white">
+                        <ReuseButton onClick={handleAddToCart}>
+                            <div className="px-4 py-4 rounded-full text-indigo-700 hover:text-white">
                                 <ShoppingCart className="w-5 h-5" />
                             </div>
                         </ReuseButton>
                     </div>
+
+                    {showLoginPrompt && (
+                        <div className="fixed inset-0 z-99 bg-black/40 flex justify-center items-center">
+                            <div className="bg-white p-6 rounded-lg max-w-sm w-full">
+                                <h2 className="text-xl font-semibold mb-4">Silakan Login</h2>
+                                <p className="mb-4 text-sm text-gray-700">Anda harus login terlebih dahulu untuk melanjutkan pembelian.</p>
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setShowLoginPrompt(false)}
+                                        className="px-4 py-2 bg-gray-300 rounded"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={() => router.push("/login")}
+                                        className="px-4 py-2 bg-indigo-600 text-white rounded"
+                                    >
+                                        Login / Daftar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+
+
+                    {showCartPopup && (
+                        <div className="fixed top-24 right-4 bg-white shadow-lg border rounded-lg p-4 z-50">
+                            <div className="flex gap-4 items-center">
+                                <img
+                                    src={previewImg || "/images/default-image.jpg"}
+                                    alt="Preview"
+                                    className="w-16 h-16 object-cover rounded-lg"
+                                />
+                                <div>
+                                    <p className="font-semibold">{barang.nama_barang}</p>
+                                    <p className="text-sm text-gray-600">Berhasil ditambahkan ke keranjang</p>
+                                    <button
+                                        onClick={() => router.push("/cart")}
+                                        className="mt-2 text-indigo-600 font-semibold text-sm hover:underline"
+                                    >
+                                        Lihat Keranjang
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="mb-4">
                         <div
                             className={`mt-4 text-ellipsis overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "" : "h-[350px]"
@@ -286,7 +391,7 @@ export default function DetailBarangPage() {
                     <ReuseButton
                         onClick={() => setShowModal(true)}
                     >
-                        <div className="text-black px-6 py-3 rounded-full text-indigo-700 hover:text-white">
+                        <div className="px-6 py-3 rounded-full text-indigo-700 hover:text-white">
                             Tanya seputar produk ini
                         </div>
                     </ReuseButton>

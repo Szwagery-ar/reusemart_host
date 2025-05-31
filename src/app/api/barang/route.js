@@ -17,7 +17,7 @@ export async function GET(request) {
                 b.tanggal_masuk, 
                 b.tanggal_keluar, 
                 b.tanggal_garansi, 
-                p.nama AS penitip_name,
+                p.nama AS nama_penitip,
                 gb.id_gambar, 
                 gb.src_img,
                 kb.nama_kategori
@@ -32,7 +32,7 @@ export async function GET(request) {
         let values = [];
 
         if (search) {
-            query += ` AND (b.nama_barang LIKE ? OR b.kode_produk LIKE ?)`;
+            query += ` AND (b.nama_barang LIKE ? OR kb.nama_kategori LIKE ?)`;
             values.push(`%${search}%`, `%${search}%`);
         }
 

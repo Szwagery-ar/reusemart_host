@@ -118,6 +118,8 @@ export async function POST(request) {
                     ) VALUES (?, ?, ?, ?)
                 `, [id_transaksi, id_penitip, komisi_penitip, komisi_reusemart]);
             }
+
+            
         }
 
         return NextResponse.json({ message: "Komisi berhasil dihitung dan disimpan!" }, { status: 201 });

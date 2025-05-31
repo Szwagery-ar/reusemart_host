@@ -48,7 +48,6 @@ export default function AdminPenitipPage() {
     //             setLoadingUser(false);
     //         }
     //     };
-
     //     fetchUser();
     // }, []);
 
