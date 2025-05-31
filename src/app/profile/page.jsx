@@ -81,7 +81,7 @@ export default function ProfilePage() {
 
             if (res.ok) {
                 const data = await res.json();
-                setUser(data.user); 
+                setUser(data.user);
                 setIsEditingProfile(false);
             } else {
                 console.error('Gagal memperbarui profil');
@@ -101,7 +101,7 @@ export default function ProfilePage() {
 
             const res = await fetch(`/api/alamat?q=${encodeURIComponent(searchQuery)}`);
             const data = await res.json();
-            
+
             if (res.ok) {
                 setAlamatList(data.alamat || []);
             } else {
@@ -117,7 +117,7 @@ export default function ProfilePage() {
     useEffect(() => {
         if (!user) return;
         fetchAlamat();
-    }, [user, searchQuery]); 
+    }, [user, searchQuery]);
 
     const tambahAlamat = async () => {
         const res = await fetch('/api/alamat', {
@@ -174,7 +174,7 @@ export default function ProfilePage() {
 
     const generateStableColor = (input) => {
         const colors = ['#EF4444', '#F97316', '#10B981', '#8B5CF6', '#EAB308']; // merah, oranye, hijau, biru, kuning
-        if (!input) return colors[0]; 
+        if (!input) return colors[0];
 
         const charCode = input.charCodeAt(0);
         const index = charCode % colors.length;
@@ -276,7 +276,7 @@ export default function ProfilePage() {
                             </div>
                         </div>
                         {isEditingProfile && (
-                            
+
                             <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
                                 <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg relative">
                                     <h2 className="text-xl font-bold mb-4">Edit Profil</h2>
@@ -334,10 +334,7 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                         )}
-
                     </div>
-
-
 
                     <div className="mt-4 border-1 border-[#220593] rounded-3xl p-6">
                         <div className="text-2xl font-bold mb-6">Alamat Tersimpan</div>
@@ -357,10 +354,31 @@ export default function ProfilePage() {
                                 ) : (
                                     alamatList.map((alamat) => (
                                         <div key={alamat.id_alamat} className="p-8 bg-[#F6F7FB] rounded-3xl text-wrap w-70 min-w-[280px] max-w-[320px] flex-shrink-0">
-                                            <div className="text-lg font-semibold mb-3 truncate max-w-full">{alamat.nama_alamat}</div>
+                                            {/* Label alamat utama */}
+                                            {Boolean(alamat.is_primary) && (
+                                                <div className="text-xs font-bold text-green-600 mb-1">Alamat Utama</div>
+                                            )}
+
+                                            {/* Info utama alamat */}
+                                            <div className="text-lg font-semibold mb-2 truncate max-w-full">{alamat.nama_alamat}</div>
                                             <div className="text-sm font-extralight mb-3 line-clamp-4 break-words max-w-full">{alamat.lokasi}</div>
                                             <div className="text-sm font-semibold truncate max-w-full">"{alamat.note}"</div>
-                                            <div className="flex justify-between mt-4">
+
+                                            {/* Tombol aksi */}
+                                            <div className="flex flex-wrap gap-2 mt-4">
+                                                {!alamat.is_primary && (
+                                                    <ReuseButton onClick={async () => {
+                                                        await fetch('/api/alamat', {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ id_alamat: alamat.id_alamat }),
+                                                        });
+                                                        fetchAlamat();
+                                                    }}>
+                                                        <div className="px-3 py-1 text-sm">Jadikan Utama</div>
+                                                    </ReuseButton>
+                                                )}
+
                                                 <ReuseButton onClick={() => {
                                                     setFormAlamat({
                                                         id_alamat: alamat.id_alamat,
@@ -371,26 +389,18 @@ export default function ProfilePage() {
                                                     setIsEditing(true);
                                                     setShowModal(true);
                                                 }}>
-                                                    <div className="px-3 py-1 flex items-center gap-2">Edit
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-5">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                                        </svg>
-                                                    </div>
+                                                    <div className="px-3 py-1 flex items-center gap-2">Edit</div>
                                                 </ReuseButton>
+
                                                 <ReduseButton onClick={() => {
                                                     setAlamatToDelete(alamat);
                                                     setShowDeleteModal(true);
-                                                }}
-                                                >
-                                                    <div className="px-3 py-1 flex items-center">Hapus
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-5">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                                        </svg>
-
-                                                    </div>
+                                                }}>
+                                                    <div className="px-3 py-1 flex items-center">Hapus</div>
                                                 </ReduseButton>
                                             </div>
                                         </div>
+
                                     ))
                                 )}
                             </div>

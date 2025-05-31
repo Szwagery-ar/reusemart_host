@@ -74,10 +74,15 @@ export default function AdminPenitipPage() {
 
     useEffect(() => {
         function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (!event.target.closest(".dropdown-action")) {
                 setActiveDropdown(null);
             }
         }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
     }, []);
 
     const handleDelete = async (id_penitip) => {
@@ -237,6 +242,7 @@ export default function AdminPenitipPage() {
                                             >
                                                 <EllipsisVertical />
                                             </button>
+
                                             {activeDropdown === p.id_penitip && (
                                                 <div className="absolute left-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
                                                     <button
@@ -255,7 +261,7 @@ export default function AdminPenitipPage() {
                                             )}
                                         </div></td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{p.nama}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.nama}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.email}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.no_ktp}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">+62{p.no_telepon}</td>
