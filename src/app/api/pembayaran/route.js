@@ -30,28 +30,46 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const { id_transaksi, img_bukti_transfer } = await request.json();
+        
+        const {
+            id_transaksi,
+            img_bukti_transfer,
+            jenis_pengiriman,
+            ongkos_kirim,
+            id_alamat
+        } = await request.json();
 
-        if (!id_transaksi || !img_bukti_transfer) {
-            return NextResponse.json({ error: "All fields are required!" }, { status: 400 });
+        if (!id_transaksi || !img_bukti_transfer || !jenis_pengiriman) {
+            return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
         }
 
-        // Set status_pembayaran ke PENDING dan tanggal_lunas ke null
-        const status_pembayaran = "PENDING";
-        const tanggal_lunas = null;
-
-        // Insert pembayaran dengan status PENDING
+        const deadline = new Date(Date.now() + 15 * 60 * 1000);
         await pool.query(
-            "INSERT INTO pembayaran (id_transaksi, status_pembayaran, img_bukti_transfer) VALUES (?, ?, ?)",
-            [id_transaksi, status_pembayaran, img_bukti_transfer]
+            `INSERT INTO pembayaran (id_transaksi, status_pembayaran, img_bukti_transfer, deadline)
+             VALUES (?, 'PENDING', ?, ?)`,
+            [id_transaksi, img_bukti_transfer, deadline]
         );
 
-        // Tidak perlu update transaksi untuk tanggal_lunas karena status masih PENDING
+        await pool.query(
+            `UPDATE transaksi SET ongkos_kirim = ?, 
+                harga_akhir = harga_awal - diskon + ? 
+                WHERE id_transaksi = ?`,
+            [ongkos_kirim, ongkos_kirim, id_transaksi]
+        );
 
-        return NextResponse.json({ message: "Pembayaran created successfully, status PENDING!" }, { status: 201 });
+        await pool.query(
+            `INSERT INTO pengiriman (id_transaksi, jenis_pengiriman, id_alamat, status_pengiriman)
+             VALUES (?, ?, ?, 'IN_PROGRESS')`,
+            [id_transaksi, jenis_pengiriman, id_alamat || null]
+        );
+
+        return NextResponse.json({
+            message: "Pembayaran berhasil dan data pengiriman disimpan.",
+        }, { status: 201 });
 
     } catch (error) {
-        return NextResponse.json({ error: "Failed to create Pembayaran" }, { status: 500 });
+        console.error("POST /api/pembayaran error:", error);
+        return NextResponse.json({ error: "Gagal memproses pembayaran." }, { status: 500 });
     }
 }
 
@@ -80,7 +98,6 @@ export async function PUT(request) {
         if (status_pembayaran === "CONFIRMED") {
             tanggal_lunas = new Date().toISOString();
 
-            // Ambil data harga_awal, diskon, dan id_pembeli dari transaksi
             const [transaksiResult] = await pool.query(
                 `SELECT harga_awal, diskon, id_pembeli FROM transaksi WHERE id_transaksi = ?`,
                 [id_transaksi]
@@ -93,28 +110,23 @@ export async function PUT(request) {
             const { harga_awal, diskon, id_pembeli } = transaksiResult[0];
             const total_belanja = harga_awal - diskon;
 
-            // Hitung poin
             let poin = Math.floor(total_belanja / 10000);
 
-            // Bonus 20% kalau belanja > 500k
             if (total_belanja > 500000) {
                 poin += Math.floor(poin * 0.2);
             }
 
-            // Update transaksi: tanggal_lunas, status_transaksi, tambahan_poin
             await pool.query(
                 "UPDATE transaksi SET tanggal_lunas = ?, status_transaksi = 'PAID', tambahan_poin = ? WHERE id_transaksi = ?",
                 [tanggal_lunas, poin, id_transaksi]
             );
 
-            // Tambahkan ke poin_loyalitas pembeli
             await pool.query(
                 "UPDATE pembeli SET poin_loyalitas = poin_loyalitas + ? WHERE id_pembeli = ?",
                 [poin, id_pembeli]
             );
         }
 
-        // Jika FAILED
         if (status_pembayaran === "FAILED") {
             await pool.query(
                 "UPDATE transaksi SET status_transaksi = 'CANCELLED' WHERE id_transaksi = ?",
@@ -139,7 +151,6 @@ export async function PUT(request) {
             `, [id_transaksi]);
         }
 
-        // Update status_pembayaran dan petugas CS
         await pool.query(
             "UPDATE pembayaran SET status_pembayaran = ?, id_petugas_cs = ? WHERE id_pembayaran = ?",
             [status_pembayaran, id_petugas_cs, id_pembayaran]

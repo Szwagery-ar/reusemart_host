@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 
 export async function GET(req, context) {
   try {
-    const { id_barang } = context.params;
+    const { id_barang } = await context.params;
 
     const [diskusi] = await pool.query(
       `SELECT 

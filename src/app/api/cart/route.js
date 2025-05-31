@@ -1,5 +1,9 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function GET(request) {
     try {
@@ -33,21 +37,19 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const { id_pembeli } = await request.json();
+        const cookieStore = cookies();
+        const token = cookieStore.get("token")?.value;
 
-        if (!id_pembeli) {
-            return NextResponse.json({ error: "id_pembeli is required!" }, { status: 400 });
+        if (!token) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const [pembeliExists] = await pool.query(
-            "SELECT * FROM pembeli WHERE id_pembeli = ?",
-            [id_pembeli]
-        );
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const id_pembeli = decoded.id;
+        const role = decoded.role;
 
-        if (pembeliExists.length === 0) {
-            return NextResponse.json({
-                error: "id_pembeli not found!"
-            }, { status: 404 });
+        if (role !== "pembeli") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         const [existingCart] = await pool.query(
@@ -57,8 +59,9 @@ export async function POST(request) {
 
         if (existingCart.length > 0) {
             return NextResponse.json({
-                error: "This pembeli already has a cart!"
-            }, { status: 409 });
+                message: "Cart already exists!",
+                id_cart: existingCart[0].id_cart,
+            }, { status: 200 });
         }
 
         const [result] = await pool.query(
@@ -72,6 +75,7 @@ export async function POST(request) {
         }, { status: 201 });
 
     } catch (error) {
+        console.error("POST /api/cart error:", error);
         return NextResponse.json({ error: "Failed to create cart" }, { status: 500 });
     }
 }

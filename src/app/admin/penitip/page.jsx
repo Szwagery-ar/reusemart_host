@@ -13,7 +13,7 @@ export default function AdminPenitipPage() {
     const [activeDropdown, setActiveDropdown] = useState(null);
 
     const dropdownRef = useRef(null);
-    
+
     const [showModal, setShowModal] = useState(false);
     const [showEditSidebar, setShowEditSidebar] = useState(false);
     const [editData, setEditData] = useState(null);
@@ -48,7 +48,6 @@ export default function AdminPenitipPage() {
     //             setLoadingUser(false);
     //         }
     //     };
-
     //     fetchUser();
     // }, []);
 
@@ -179,6 +178,19 @@ export default function AdminPenitipPage() {
             alert(data.error || "Gagal menambahkan penitip");
         }
     };
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (!event.target.closest(".dropdown-action")) {
+                setActiveDropdown(null);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     if (loading) return <div className="p-6">Loading...</div>;
     if (error) return <div className="p-6 text-red-600">{error}</div>;
