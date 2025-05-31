@@ -130,7 +130,7 @@ model Penitip {
   badge_level           String?
   foto_ktp              String
 
-  barang                Barang[]
+  penitipanbarang       PenitipanBarang[]
   komisiDiterima        Komisi[]
   diskusi               Diskusi[]
 }
@@ -146,35 +146,31 @@ enum StatusTitip {
   DONATED
 }
 
-//ENUM FOT STATUS GARANSI
-enum StatusGaransi {
-  ACTIVE
-  EXPIRED
-}
-
 model Barang {
   id_barang             Int @id @default(autoincrement())  //Primary Key
   id_penitip            Int //Foreign Key
   id_petugas_qc         Int? //Foreign Key Nullable (optional)
   id_petugas_hunter     Int? //Foreign Key Nullable (optional)
-  id_transaksi          Int? //Foreign Key Nullable (optional)
   id_donasi             Int? //Foreign Key Nullable (optional)
+  id_penitipan          Int? //Foreign Key
   kode_produk           String
   nama_barang           String
   deskripsi_barang      String
   berat_barang          Int
   harga_barang          Decimal
-  status_garansi        StatusGaransi
+  tanggal_garansi       DateTime?
   status_titip          StatusTitip
   tanggal_masuk         DateTime
   tanggal_keluar        DateTime?
+  tanggal_expire        DateTime
 
   // Relationships
-  penitip               Penitip @relation(fields: [id_penitip], references: [id_penitip], onDelete: Cascade)
   pegawaiqc             Pegawai? @relation(name: "PegawaiQC", fields: [id_petugas_qc], references: [id_pegawai], onDelete: SetNull)
   pegawaihunter         Pegawai? @relation(name: "PegawaiHunter", fields: [id_petugas_hunter], references: [id_pegawai], onDelete: SetNull)
-  transaksi             Transaksi? @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: SetNull)
+  penitipanbarang       PenitipanBarang? @relation(fields: [id_penitipan], references: [id_penitipan], onDelete: Cascade)
   donasi                Donasi? @relation(fields: [id_donasi], references: [id_donasi], onDelete: SetNull)
+
+  bridgebarangtransaksi BridgeBarangTransaksi[]
   bridgeKategori        BridgeKategoriBarang[]
   diskusi               Diskusi[]
   bridgeBarangCart      BridgeBarangCart[]
@@ -255,13 +251,31 @@ model Transaksi {
   tambahan_poin         Int
 
   pembeli               Pembeli @relation(fields: [id_pembeli], references: [id_pembeli], onDelete: Cascade)
-  barang                Barang[]
+  barangTransaksi       BridgeBarangTransaksi[]
   pengiriman            Pengiriman?
   pembayaran            Pembayaran?
   komisi                Komisi[]
 }
 
+model BridgeBarangTransaksi {
+    id_bridge_barang_transaksi Int @id @default(autoincrement())
+    id_barang           Int
+    id_transaksi        Int
 
+    barang              Barang    @relation(fields: [id_barang], references: [id_barang], onDelete: Cascade)
+    transaksi           Transaksi @relation(fields: [id_transaksi], references: [id_transaksi], onDelete: Cascade)
+}
+
+
+model PenitipanBarang {
+    id_penitipan        Int @id @default(autoincrement()) //Primary Key
+    id_penitip          Int //Foreign key
+    no_nota             String
+    tanggal_masuk       DateTime
+
+    penitip             Penitip @relation(fields: [id_penitip], references: [id_penitip], onDelete: Cascade)
+    barang              Barang[]
+}
 
 model Komisi {
   id_komisi             Int @id @default(autoincrement())

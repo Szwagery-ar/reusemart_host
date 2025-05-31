@@ -19,7 +19,7 @@ export async function GET() {
     if (decoded.role === 'penitip') {
       const [result] = await pool.query(`
         SELECT id_penitip, nama, email, no_ktp, no_telepon, src_img_profile, jml_barang_terjual, badge_level, komisi, poin_reward
-        FROM Penitip 
+        FROM penitip 
         WHERE id_penitip = ?
       `, [decoded.id]);
 
@@ -43,7 +43,7 @@ export async function GET() {
     } else if (decoded.role === 'pembeli') {
       const [result] = await pool.query(`
         SELECT id_pembeli, nama, email, no_telepon, poin_loyalitas, src_img_profile
-        FROM Pembeli 
+        FROM pembeli 
         WHERE id_pembeli = ?
       `, [decoded.id]);
 
@@ -101,7 +101,7 @@ export async function GET() {
           email, 
           no_telepon, 
           alamat
-        FROM Organisasi 
+        FROM organisasi 
         WHERE id_organisasi = ?
       `, [decoded.id]);
 
