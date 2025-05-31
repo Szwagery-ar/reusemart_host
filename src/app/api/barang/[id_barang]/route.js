@@ -9,7 +9,7 @@ export async function GET(_, { params }) {
             SELECT 
                 b.id_barang, b.kode_produk, b.nama_barang, b.deskripsi_barang,
                 b.harga_barang, b.status_titip, b.tanggal_masuk, b.tanggal_keluar,
-                b.tanggal_garansi, b.berat_barang, p.nama AS penitip_name,
+                b.tanggal_garansi, b.berat_barang, p.id_penitip, p.nama AS penitip_name,
                 gb.id_gambar, gb.src_img,
                 k.nama_kategori
             FROM barang b

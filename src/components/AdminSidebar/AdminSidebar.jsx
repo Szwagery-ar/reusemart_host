@@ -32,7 +32,6 @@ const menuByRole = {
         { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
         { name: 'Data Pegawai', path: '/admin/pegawai', icon: ContactRound},
         { name: 'Data Pembeli', path: '/admin/pembeli', icon: UserRound },
-        { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
         { name: 'Data Organisasi', path: '/admin/organisasi', icon: Ribbon },
     ],
     GUDANG: [
@@ -45,7 +44,7 @@ const menuByRole = {
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake  },
         { name: 'Data Pembayaran', path: '/admin/konfirmasi-pembayaran', icon: Banknote  },
-        { name: 'Penilaian', path: '/admin/penitip/penilaian', icon: Handshake  },
+        { name: 'Diskusi', path: '/admin/diskusi', icon: Handshake },
     ],
     QC: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
