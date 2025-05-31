@@ -41,7 +41,7 @@ export default function Login() {
           // Redirect user ke page sesuai role
           const role = data.user.role;
           if (role === 'penitip') router.push('/penitip');
-          else if (role === 'pembeli') router.push('/home');
+          else if (role === 'pembeli') router.push('/profile');
           else if (role === 'pegawai') router.push('/admin');
           else if (role === 'organisasi') router.push('/organisasi');
         } else {
@@ -88,7 +88,7 @@ export default function Login() {
 
       if (data.success) {
         if (data.userType === 'penitip') router.push('/penitip');
-        else if (data.userType === 'pembeli') router.push('/home');
+        else if (data.userType === 'pembeli') router.push('/profile');
         else if (data.userType === 'organisasi') router.push('/organisasi');
 
       } else {

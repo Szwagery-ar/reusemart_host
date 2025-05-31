@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import RippleButton from '../RippleButton/RippleButton';
+import { ShoppingCart } from "lucide-react";
 
 export default function Navbar() {
     const router = useRouter();
@@ -20,7 +21,7 @@ export default function Navbar() {
             fetch('/api/auth/me', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token.split('=')[1]}`, 
+                    'Authorization': `Bearer ${token.split('=')[1]}`,
                 },
             })
                 .then(res => res.json())
@@ -111,25 +112,31 @@ export default function Navbar() {
                         </div>
 
                     ) : user ? (
-                        <div
-                            className="p-1 rounded-full cursor-pointer flex items-center justify-center w-11 h-11"
-                            onClick={() => router.push('/profile')}
-                            style={{
-                                background: 'radial-gradient(ellipse 130.87% 392.78% at 121.67% 0%, #26C2FF 0%, #220593 90%)',
-                            }}
-                        >
-                            <div className=" w-9 h-9 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: generateStableColor(user.nama || user.email) }}>
-                                {user.src_img_profile ? (
-                                    <img
-                                        src={user.src_img_profile}
-                                        alt="Profile"
-                                        className="w-full h-full object-cover rounded-full "
-                                    />
-                                ) : (
-                                    <span className="text-white text-lg font-semibold">
-                                        {getFirstLetter(user.nama)}
-                                    </span>
-                                )}
+                        <div className="flex items-center gap-4">
+                            <div className="cursor-pointer" onClick={() => router.push('/cart')}>
+                                <ShoppingCart className="w-5 h-5" />
+                            </div>
+                            <div
+                                className="p-1 rounded-full cursor-pointer flex items-center justify-center w-11 h-11"
+                                onClick={() => router.push('/profile')}
+                                style={{
+                                    background: 'radial-gradient(ellipse 130.87% 392.78% at 121.67% 0%, #26C2FF 0%, #220593 90%)',
+                                }}
+                            >
+
+                                <div className=" w-9 h-9 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: generateStableColor(user.nama || user.email) }}>
+                                    {user.src_img_profile ? (
+                                        <img
+                                            src={user.src_img_profile}
+                                            alt="Profile"
+                                            className="w-full h-full object-cover rounded-full "
+                                        />
+                                    ) : (
+                                        <span className="text-white text-lg font-semibold">
+                                            {getFirstLetter(user.nama)}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ) : (

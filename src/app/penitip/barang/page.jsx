@@ -21,6 +21,10 @@ export default function PenitipBarangPage() {
     const [activeDropdown, setActiveDropdown] = useState(null);
     const dropdownRef = useRef(null);
 
+    const [showDetailModal, setShowDetailModal] = useState(false)
+    const [selectedBarang, setSelectedBarang] = useState(null);
+
+
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -30,7 +34,6 @@ export default function PenitipBarangPage() {
                     const data = await res.json();
                     if (data.success) {
                         setUser(data.user);
-                        fetchBarangPenitip();
                     } else {
                         setUser(null);
                         setError(userData.message || 'User not authenticated');
@@ -55,31 +58,22 @@ export default function PenitipBarangPage() {
     }, [router]);
 
     // BARANG
-    const fetchBarangPenitip = async () => {
-        try {
-            setBarangLoading(true);
-
-            const res = await fetch("/api/barang/by-penitip", {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            if (!res.ok) {
-                const errorData = await res.json();
-                console.error("Gagal mengambil barang:", errorData.error || res.status);
-                return;
+    useEffect(() => {
+        const fetchBarangPenitip = async () => {
+            try {
+                setBarangLoading(true);
+                const res = await fetch(`/api/barang/by-penitip?q=${encodeURIComponent(searchQuery)}`);
+                const data = await res.json();
+                setBarangList(data.barang || []);
+            } catch (err) {
+                console.error("Gagal mengambil barang:", err);
+            } finally {
+                setBarangLoading(false);
             }
+        };
 
-            const data = await res.json();
-            setBarangList(data.barang);
-        } catch (err) {
-            setError("Gagal mengambil barang penitip");
-            console.error("Error fetching barang penitip:", err);
-        } finally {
-            setBarangLoading(false);
-        }
-    }
+        fetchBarangPenitip();
+    }, [searchQuery]);
 
     // DROPDOWN
     useEffect(() => {
@@ -179,7 +173,13 @@ export default function PenitipBarangPage() {
 
             {/* Search and Filters */}
             <div className="flex gap-4 items-center mb-6">
-                <Input placeholder="Cari kode atau nama barang" className="w-1/3" />
+                <Input
+                    placeholder="Cari kode atau nama barang"
+                    className="w-1/3"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+
                 <div className="relative">
                     <Button variant="outline" className="flex items-center gap-2">
                         Tanggal Masuk <CalendarIcon size={16} />
@@ -233,7 +233,11 @@ export default function PenitipBarangPage() {
                                         <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-md z-10">
                                             <button
                                                 className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
-                                                onClick={() => handleEdit(item)}
+                                                onClick={() => {
+                                                    setSelectedBarang(item);
+                                                    setShowDetailModal(true);
+                                                }}
+
                                             >
                                                 Edit
                                             </button>
@@ -258,6 +262,57 @@ export default function PenitipBarangPage() {
                         <Button variant="ghost" size="sm">
                             ▶
                         </Button>
+                    </div>
+                </div>
+            )}
+
+            {showDetailModal && selectedBarang && (
+                <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
+                    <div className="bg-white fixed right-0 p-6 w-full max-w-3xl h-full overflow-y-auto shadow-lg">
+                        <h2 className="text-lg font-bold mb-4">Detail Barang Titipan</h2>
+
+                        <div className="space-y-3 text-sm text-gray-800">
+                            <p><strong>Kode Produk:</strong> {selectedBarang.kode_produk}</p>
+                            <p><strong>Nama Barang:</strong> {selectedBarang.nama_barang}</p>
+                            <p><strong>Deskripsi:</strong> {selectedBarang.deskripsi_barang}</p>
+                            <p><strong>Harga:</strong> {formatRupiah(selectedBarang.harga_barang)}</p>
+                            <p><strong>Status Titip:</strong> {selectedBarang.status_titip}</p>
+                            <p><strong>Tanggal Masuk:</strong> {formatDate(selectedBarang.tanggal_masuk)}</p>
+                            <p><strong>Tanggal Keluar:</strong> {selectedBarang.tanggal_keluar ? formatDate(selectedBarang.tanggal_keluar) : "-"}</p>
+                            <p><strong>Tanggal Garansi:</strong> {selectedBarang.tanggal_garansi ? formatDate(selectedBarang.tanggal_garansi) : "-"}</p>
+                            <p><strong>Penitip:</strong> {selectedBarang.penitip_name}</p>
+
+                            {selectedBarang.gambar_barang?.length > 0 && (
+                                <div className="grid grid-cols-2 gap-3 mt-2">
+                                    {selectedBarang.gambar_barang.map((img) => (
+                                        <img key={img.id_gambar} src={img.src_img} alt="gambar" className="w-full h-32 object-cover rounded" />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {new Date().getTime() - new Date(selectedBarang.tanggal_masuk).getTime() > 30 * 24 * 60 * 60 * 1000 && (
+                            <div className="mt-6">
+                                <button
+                                    onClick={() => handleAjukanPerpanjangan(selectedBarang.id_barang)}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                                >
+                                    Ajukan Perpanjangan
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="mt-4 text-right">
+                            <button
+                                onClick={() => {
+                                    setShowDetailModal(false);
+                                    setSelectedBarang(null);
+                                }}
+                                className="px-4 py-2 bg-gray-200 rounded"
+                            >
+                                Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

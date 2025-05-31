@@ -34,7 +34,7 @@ export async function GET(request) {
 
         // Ambil data barang berdasarkan id_transaksi
         let query = `
-            SELECT 
+           SELECT 
                 b.kode_produk, 
                 b.nama_barang, 
                 b.harga_barang, 
@@ -43,11 +43,15 @@ export async function GET(request) {
                 gb.src_img
             FROM 
                 barang b
-            LEFT JOIN 
-                (SELECT DISTINCT id_barang, src_img
-                FROM gambarbarang
-                ORDER BY id_gambar ASC) gb 
-                ON b.id_barang = gb.id_barang
+            LEFT JOIN (
+                SELECT g1.id_barang, g1.src_img
+                FROM gambarbarang g1
+                INNER JOIN (
+                    SELECT id_barang, MIN(id_gambar) AS min_id
+                    FROM gambarbarang
+                    GROUP BY id_barang
+                ) g2 ON g1.id_barang = g2.id_barang AND g1.id_gambar = g2.min_id
+            ) gb ON b.id_barang = gb.id_barang
             WHERE 
                 b.id_transaksi = ?
         `;
