@@ -299,7 +299,6 @@ const fetchBarang = async () => {
                                 >
                                     Edit
                                 </button>
-
                                 <button
                                     onClick={async (e) => {
                                     e.stopPropagation();
@@ -353,7 +352,7 @@ const fetchBarang = async () => {
                         <div className="fixed inset-y-0 right-0 z-50 bg-white w-3/5 h-full shadow-xl overflow-y-auto max-h-screen transition-transform duration-300">
                             {/* Header Sidebar */}
                             <div className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
-                                <h2 className="text-lg font-semibold">Tambah Barang</h2>
+                                <h2 className="text-lg font-semibold">Tambah Penitipan Barang</h2>
                             </div>
 
                             {/* Form */}
