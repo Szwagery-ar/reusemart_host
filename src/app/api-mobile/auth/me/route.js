@@ -32,7 +32,7 @@ export async function GET(request) {
     } else if (role === "pembeli") {
       const [rows] = await pool.query(
         `
-        SELECT id_pembeli, id, nama, email, no_telepon, poin_loyalitas, src_img_profile
+        SELECT id_pembeli, nama, email, no_telepon, poin_loyalitas, src_img_profile
         FROM Pembeli 
         WHERE id_pembeli = ?
       `,
