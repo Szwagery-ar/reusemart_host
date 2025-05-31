@@ -22,7 +22,7 @@ export async function GET(request) {
 
     if (role === "penitip") {
       const [rows] = await pool.query(
-        `SELECT id_penitip, nama, email, no_ktp, no_telepon, src_img_profile, jml_barang_terjual, badge_level, komisi, poin_reward
+        `SELECT id_penitip AS id, nama, email, no_ktp, no_telepon, src_img_profile, jml_barang_terjual, badge_level, komisi, poin_reward
         FROM Penitip 
         WHERE id_penitip = ?
         `,
@@ -32,14 +32,14 @@ export async function GET(request) {
     } else if (role === "pembeli") {
       const [rows] = await pool.query(
         `
-        SELECT id_pembeli, nama, email, no_telepon, poin_loyalitas, src_img_profile
+        SELECT id_pembeli, id, nama, email, no_telepon, poin_loyalitas, src_img_profile
         FROM Pembeli 
         WHERE id_pembeli = ?
       `,
         [id]
       );
       userData = rows[0];
-    } else if (role === "pegawai") {
+    } else if (role === "kurir" || role === "hunter") {
       const [rows] = await pool.query(
         `
         SELECT 
@@ -58,7 +58,12 @@ export async function GET(request) {
         `,
         [id]
       );
-      userData = { ...rows[0], role };
+      if (rows.length > 0) {
+        userData = {
+          ...rows[0],
+          role: rows[0].nama_jabatan?.toLowerCase() || "pegawai",
+        };
+      }
     }
 
     if (!userData) {
