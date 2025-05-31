@@ -7,7 +7,7 @@ import fs from 'fs';
 
 export async function GET(request) {
     try {
-        await verifyUserRole(["CS", "Superuser"]);
+        await verifyUserRole(["CS", "Superuser", "Gudang"]);
 
         const { searchParams } = new URL(request.url);
         const search = searchParams.get("q");
