@@ -1,12 +1,10 @@
 export async function sendPushNotification(token, title, body) {
-  console.log("📨 Mencoba kirim notifikasi barang titipan ke:", token);
-
   const message = {
     to: token,
     sound: "default",
     title,
     body,
-    data: {},
+    data: { sentBy: "server-cron" },
     android: {
       channelId: "default",
       color: "#FF5733",
@@ -18,15 +16,20 @@ export async function sendPushNotification(token, title, body) {
       method: "POST",
       headers: {
         Accept: "application/json",
-        "Accept-Encoding": "gzip, deflate",
+        "Accept-encoding": "gzip, deflate",
         "Content-Type": "application/json",
       },
       body: JSON.stringify(message),
     });
 
-    const data = await response.json();
-    console.log("✅ Notifikasi berhasil dikirim:", data);
-  } catch (err) {
-    console.error("❌ Gagal mengirim notifikasi:", err);
+    const result = await response.json();
+
+    if (result.errors) {
+      console.error("❌ Expo Push Error:", result.errors);
+    } else {
+      console.log("✅ Push sent successfully:", result);
+    }
+  } catch (error) {
+    console.error("❌ Gagal kirim notifikasi dari backend:", error);
   }
 }
