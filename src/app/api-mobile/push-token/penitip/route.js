@@ -60,8 +60,8 @@ export async function POST(req) {
 
   let id_penitip;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // gunakan SECRET kamu
-    id_penitip = decoded.id; // sesuaikan key ini sesuai tokenmu
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    id_penitip = decoded.id; 
     console.log("✅ ID Penitip dari token:", id_penitip);
   } catch (err) {
     return new Response(JSON.stringify({ error: "Token tidak valid" }), {
