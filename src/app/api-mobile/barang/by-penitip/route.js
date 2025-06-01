@@ -6,7 +6,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function GET(request) {
   try {
-    console.log("Tes fetching barang mobile");
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.split(" ")[1];
 
@@ -19,8 +18,6 @@ export async function GET(request) {
 
     const decoded = jwt.verify(token, JWT_SECRET);
     const id_penitip = decoded.id;
-
-    console.log("Tes fetching barang mobile");
 
     const [barang] = await pool.query(
       `SELECT 
