@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "full": "concurrently \"next dev\" \"node src/cron/cekExpired.js\"",
+    "full": "concurrently \"next dev\" \"node src/cron/cekTitipanExpired.js\"",
     "dev": "next dev",
     "cron": "node src/cron/cekExpired.js",
     "build": "next build",
