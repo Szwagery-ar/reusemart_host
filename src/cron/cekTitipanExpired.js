@@ -54,10 +54,12 @@ setTimeout(() => {
         await sendFirebasePushNotification(
           row.expo_push_token,
           "Barang Titipan Hampir Expire",
-            row.nama_barang +
-            " akan expire pada " +
-            formatDatetime(row.tanggal_expire.toISOString()) +
-            ". Mau diperpanjang?"
+          row.nama +
+          ", " +
+          row.nama_barang +
+          " akan expire pada " +
+          formatDatetime(row.tanggal_expire.toISOString()) +
+          ". Mau diperpanjang?"
         );
 
         // await sendPushNotification(
