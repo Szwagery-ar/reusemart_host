@@ -53,7 +53,7 @@ export async function POST(request) {
             return NextResponse.json({ error: "id_transaksi is required!" }, { status: 400 });
         }
 
-        // Ambil data transaksi
+        // Cek status transaksi
         const [transaksiResult] = await pool.query(
             "SELECT status_transaksi FROM transaksi WHERE id_transaksi = ?",
             [id_transaksi]
@@ -65,16 +65,21 @@ export async function POST(request) {
 
         const status_transaksi = transaksiResult[0].status_transaksi;
 
-        if (status_transaksi !== "PAID" && status_transaksi !== "DONE") {
+        if (!["PAID", "DONE"].includes(status_transaksi)) {
             return NextResponse.json({ error: "Komisi hanya bisa dihitung jika status transaksi sudah PAID atau DONE." }, { status: 400 });
         }
 
-        // Ambil daftar barang dalam transaksi
+        // Ambil daftar barang dari bridgebarangtransaksi
         const [barangList] = await pool.query(`
             SELECT 
-                id_barang, id_penitip, id_petugas_hunter, harga_barang, tanggal_masuk
-            FROM barang
-            WHERE id_transaksi = ?
+                b.id_barang,
+                b.id_penitip,
+                b.id_petugas_hunter,
+                b.harga_barang,
+                b.tanggal_masuk
+            FROM bridgebarangtransaksi bt
+            JOIN barang b ON bt.id_barang = b.id_barang
+            WHERE bt.id_transaksi = ?
         `, [id_transaksi]);
 
         for (const barang of barangList) {
@@ -84,23 +89,20 @@ export async function POST(request) {
             const now = new Date();
             const diffInDays = Math.floor((now - tanggal_masuk_date) / (1000 * 60 * 60 * 24));
 
-            // Komposisi persentase
             let persentase_reusemart = diffInDays >= 30 ? 0.30 : 0.20;
             let persentase_penitip = 1 - persentase_reusemart;
             let persentase_hunter = 0;
 
-            // Hitung nilai komisi dasar
             let komisi_reusemart = harga_barang * persentase_reusemart;
             let komisi_penitip = harga_barang * persentase_penitip;
 
-            // Cek apakah barang laku dalam 7 hari
+            // Bonus penitip jika laku dalam 7 hari
             if (diffInDays < 7) {
-                const bonus_penitip = komisi_reusemart * 0.10; // 10% dari komisi reusemart
-                komisi_penitip += bonus_penitip;
-                komisi_reusemart -= bonus_penitip;
+                const bonus = komisi_reusemart * 0.10;
+                komisi_penitip += bonus;
+                komisi_reusemart -= bonus;
             }
 
-            // Komisi hunter (jika ada)
             if (id_petugas_hunter) {
                 persentase_hunter = 0.01;
                 const komisi_hunter = komisi_reusemart * persentase_hunter;
@@ -108,27 +110,39 @@ export async function POST(request) {
 
                 await pool.query(`
                     INSERT INTO komisi (
-                        id_transaksi, id_penitip, id_petugas_hunter, komisi_penitip, komisi_reusemart, komisi_hunter
+                        id_transaksi, id_penitip, id_petugas_hunter,
+                        komisi_penitip, komisi_reusemart, komisi_hunter
                     ) VALUES (?, ?, ?, ?, ?, ?)
-                `, [id_transaksi, id_penitip, id_petugas_hunter, komisi_penitip, komisi_reusemart, komisi_hunter]);
+                `, [
+                    id_transaksi,
+                    id_penitip,
+                    id_petugas_hunter,
+                    komisi_penitip,
+                    komisi_reusemart,
+                    komisi_hunter
+                ]);
             } else {
                 await pool.query(`
                     INSERT INTO komisi (
                         id_transaksi, id_penitip, komisi_penitip, komisi_reusemart
                     ) VALUES (?, ?, ?, ?)
-                `, [id_transaksi, id_penitip, komisi_penitip, komisi_reusemart]);
+                `, [
+                    id_transaksi,
+                    id_penitip,
+                    komisi_penitip,
+                    komisi_reusemart
+                ]);
             }
-
-            
         }
 
         return NextResponse.json({ message: "Komisi berhasil dihitung dan disimpan!" }, { status: 201 });
 
     } catch (error) {
-        console.error(error);
+        console.error("POST /api/komisi error:", error);
         return NextResponse.json({ error: "Gagal menghitung komisi." }, { status: 500 });
     }
 }
+
 
 export async function PUT(request) {
     try {

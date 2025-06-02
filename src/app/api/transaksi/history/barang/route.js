@@ -34,7 +34,7 @@ export async function GET(request) {
 
         // Ambil data barang berdasarkan id_transaksi
         let query = `
-           SELECT 
+        SELECT 
                 b.kode_produk, 
                 b.nama_barang, 
                 b.harga_barang, 
@@ -42,7 +42,8 @@ export async function GET(request) {
                 b.tanggal_garansi, 
                 gb.src_img
             FROM 
-                barang b
+                bridgebarangtransaksi bt
+            JOIN barang b ON bt.id_barang = b.id_barang
             LEFT JOIN (
                 SELECT g1.id_barang, g1.src_img
                 FROM gambarbarang g1
@@ -52,9 +53,9 @@ export async function GET(request) {
                     GROUP BY id_barang
                 ) g2 ON g1.id_barang = g2.id_barang AND g1.id_gambar = g2.min_id
             ) gb ON b.id_barang = gb.id_barang
-            WHERE 
-                b.id_transaksi = ?
+            WHERE bt.id_transaksi = ?
         `;
+
 
         const [barang] = await pool.query(query, [id_transaksi]);
 
