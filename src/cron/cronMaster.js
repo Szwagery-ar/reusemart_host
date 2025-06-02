@@ -7,7 +7,6 @@ import { cronTitipanHariH } from "./barang/cekTitipanExpired.js";
 
 console.log("🚀 Cron Master dijalankan");
 
-// Jalankan semua setiap jam 00:00
 setTimeout(() => {
   cron.schedule("0 6 * * *", async () => { // Dikirim setiap hari jam 06:00
     console.log(`[${new Date().toISOString()}] ⏰ Menjalankan semua cron harian...`);

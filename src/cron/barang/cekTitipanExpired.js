@@ -7,6 +7,7 @@ export async function cronTitipanHariH() {
     FROM barang b
     JOIN penitip p ON b.id_penitip = p.id_penitip
     WHERE DATEDIFF(b.tanggal_expire, CURRENT_DATE()) = 0
+      AND b.status_titip IN ('AVAILABLE', 'EXTENDED')
       AND p.expo_push_token IS NOT NULL
   `);
 
