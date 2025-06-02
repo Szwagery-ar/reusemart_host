@@ -200,7 +200,7 @@ export default function AdminPengirimanPage() {
       if (kurirRes.ok) setKurirList(kurirData.kurir);
       if (detailRes.ok) {
         setTransaksiDetail(detailData.transaksi);
-        setShowModal(true); // Pindahkan ke sini setelah data siap
+        setShowModal(true);
       }
     } catch (err) {
       console.error("Gagal fetch kurir atau detail:", err);

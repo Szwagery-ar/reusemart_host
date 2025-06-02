@@ -25,7 +25,6 @@ export async function GET(request) {
         const [pengiriman] = await pool.query(query, values);
 
         return NextResponse.json({ pengiriman }, { status: 200 });
-
     } catch (error) {
         return NextResponse.json({ error: "Failed to fetch Pengiriman" }, { status: 500 });
     }
