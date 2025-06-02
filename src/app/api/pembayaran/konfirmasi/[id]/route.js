@@ -19,30 +19,33 @@ export async function PATCH(request, { params }) {
             return NextResponse.json({ error: "Pembayaran tidak ditemukan." }, { status: 404 });
         }
 
-        const id_transaksi = rows[0].id_transaksi;;
+        const id_transaksi = rows[0].id_transaksi;
 
         await pool.query(
             `UPDATE pembayaran 
-            SET status_pembayaran = ?, id_petugas_cs = ? 
-            WHERE id_pembayaran = ?`,
+             SET status_pembayaran = ?, id_petugas_cs = ? 
+             WHERE id_pembayaran = ?`,
             [status_pembayaran, id_petugas_cs, id_pembayaran]
         );
 
         if (status_pembayaran === "CONFIRMED") {
+            // ✅ Konfirmasi berhasil → transaksi PAID, barang SOLD
             await pool.query(
                 `UPDATE transaksi 
                  SET status_transaksi = 'PAID', tanggal_lunas = CURRENT_TIMESTAMP 
                  WHERE id_transaksi = ?`,
                 [id_transaksi]
             );
+
             await pool.query(
-                `UPDATE barang 
-                 SET status_titip = 'SOLD', tanggal_keluar = CURRENT_TIMESTAMP 
-                 WHERE id_transaksi = ?`,
+                `UPDATE barang b
+                 JOIN bridgebarangtransaksi bt ON bt.id_barang = b.id_barang
+                 SET b.status_titip = 'SOLD', b.tanggal_keluar = CURRENT_TIMESTAMP
+                 WHERE bt.id_transaksi = ?`,
                 [id_transaksi]
             );
 
-            // ini endpoint untuk menghitung komisi
+            // Hitung komisi
             const resKomisi = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/komisi`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -50,10 +53,27 @@ export async function PATCH(request, { params }) {
             });
 
             const resultKomisi = await resKomisi.json();
-
             if (!resKomisi.ok) {
                 console.warn("Komisi gagal dihitung:", resultKomisi.error);
             }
+        } 
+        
+        if (status_pembayaran === "FAILED") {
+            // ❌ Pembayaran gagal → transaksi CANCELLED, barang AVAILABLE
+            await pool.query(
+                `UPDATE transaksi 
+                 SET status_transaksi = 'CANCELLED' 
+                 WHERE id_transaksi = ?`,
+                [id_transaksi]
+            );
+
+            await pool.query(
+                `UPDATE barang b
+                 JOIN bridgebarangtransaksi bt ON bt.id_barang = b.id_barang
+                 SET b.status_titip = 'AVAILABLE'
+                 WHERE bt.id_transaksi = ?`,
+                [id_transaksi]
+            );
         }
 
         return NextResponse.json({ message: "Status pembayaran & transaksi berhasil diperbarui." });

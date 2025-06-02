@@ -10,7 +10,7 @@ export async function POST(req) {
 
   try {
     // Cek Penitip
-    const [penitipResults] = await pool.query('SELECT * FROM Penitip WHERE email = ?', [email]);
+    const [penitipResults] = await pool.query('SELECT * FROM penitip WHERE email = ?', [email]);
     if (penitipResults.length > 0) {
       const user = penitipResults[0];
       const isPasswordValid = await bcrypt.compare(password, user.password);

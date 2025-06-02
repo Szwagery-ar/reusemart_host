@@ -98,9 +98,7 @@ export default function Riwayat() {
                     const data = await res.json();
                     setHistory(data.transaksi);
 
-                    for (let item of data.transaksi) {
-                        await fetchBarang(item.id_transaksi);
-                    }
+                    await Promise.all(data.transaksi.map((item) => fetchBarang(item.id_transaksi)));
                 } else {
                     setError('Gagal mengambil riwayat transaksi');
                 }
@@ -205,7 +203,7 @@ export default function Riwayat() {
                                 className="rounded-2xl shadow-sm border border-gray-200 p-4 mb-4 text-sm"
                             >
                                 <div className="mb-3 p-2">
-                                    <div className="text-[#E49502] mb-3 font-semibold">Selesaikan pembayaran sebelum: {deadlineBayar(item.tanggal_pesan)}</div>
+                                    <div className="text-[#E49502] mb-3 font-semibold">Sedang Menunggu Konfirmasi CS</div>
                                     <div className="flex justify-between">
                                         <div>
                                             <p>No. Nota: {item.no_nota}</p>
