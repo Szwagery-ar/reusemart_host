@@ -61,9 +61,9 @@ export async function GET(request, { params }) {
     // Ambil detail produk
     const [produk] = await pool.query(
       `SELECT b.nama_barang, b.harga_barang
-     FROM barang b
-     JOIN detail_transaksi_pembelian dtp ON dtp.id_barang = b.id_barang
-     WHERE dtp.id_transaksi = ?`,
+      FROM barang b
+      JOIN bridgebarangtransaksi bbt ON bbt.id_barang = b.id_barang
+      WHERE bbt.id_transaksi = ?`,
       [transaksi.id_transaksi]
     );
 
