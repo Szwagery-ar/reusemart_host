@@ -1,135 +1,214 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
+import { v4 as uuidv4 } from 'uuid';
+import path from "path";
+import { writeFile } from "fs/promises";
+
+
+
+// POST multiple barang
+// export async function POST(request) {
+//   try {
+//     const formData = await request.formData();
+//     const itemsRaw = formData.get("items"); // items dikirim dalam bentuk JSON string
+//     const items = JSON.parse(itemsRaw);
+
+
+//     if (!Array.isArray(items) || items.length === 0) {
+//       return NextResponse.json({ error: "Minimal 1 barang harus diisi." }, { status: 400 });
+//     }
+
+//     const [lastBarang] = await pool.query("SELECT id_barang FROM barang ORDER BY id_barang DESC LIMIT 1");
+//     let nextId = lastBarang.length > 0 ? lastBarang[0].id_barang + 1 : 1;
+
+//     for (let i = 0; i < items.length; i++) {
+//       const item = items[i];
+//       const {
+//         id_penitip, nama_barang, deskripsi_barang,
+//         berat_barang, harga_barang, tanggal_garansi, tanggal_masuk
+//       } = item;
+
+//       if (!id_penitip || !nama_barang || !deskripsi_barang || !berat_barang || !harga_barang || !tanggal_garansi || !tanggal_masuk) {
+//         return NextResponse.json({ error: `Semua field wajib diisi untuk barang ke-${i + 1}` }, { status: 400 });
+//       }
+
+//       const kode_produk = `${nama_barang.charAt(0).toUpperCase()}${nextId}`;
+//       const status_titip = "AVAILABLE";
+
+//       const [insertResult] = await pool.query(
+//         `INSERT INTO barang (
+//           id_penitip, kode_produk, nama_barang, deskripsi_barang,
+//           berat_barang, harga_barang, tanggal_garansi, tanggal_masuk, status_titip
+//         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//         [id_penitip, kode_produk, nama_barang, deskripsi_barang, berat_barang, harga_barang, tanggal_garansi, tanggal_masuk, status_titip]
+//       );
+
+//       const id_barang = insertResult.insertId;
+
+//       const gambarKey = `gambar_barang_${i}`;
+//       const gambarFiles = formData.getAll(gambarKey).filter(f => f instanceof File);
+
+//       if (gambarFiles.length < 1) {
+//         return NextResponse.json({ error: `Minimal 1 gambar diperlukan untuk barang ke-${i + 1}` }, { status: 400 });
+//       }
+
+//       for (const file of gambarFiles) {
+//         const buffer = Buffer.from(await file.arrayBuffer());
+//         const filename = `${uuidv4()}-${file.name}`;
+//         const filePath = path.join(process.cwd(), "public/uploads", filename);
+//         await writeFile(filePath, buffer);
+//         await pool.query(
+//           `INSERT INTO gambarbarang (id_barang, src_img) VALUES (?, ?)`,
+//           [id_barang, `/uploads/${filename}`]
+//         );
+//       }
+
+//       nextId++;
+//     }
+
+//     return NextResponse.json({ message: "Semua barang berhasil ditambahkan." }, { status: 201 });
+
+//   } catch (error) {
+//     console.error("POST /api/transaksi-penitipan error:", error);
+//     return NextResponse.json({ error: "Gagal menyimpan barang titipan." }, { status: 500 });
+//   }
+// }
+
 
 export async function POST(request) {
     try {
-        const { id_pembeli, selectedItems, diskon: inputDiskon = 0, poin_digunakan = 0 } = await request.json();
+        const formData = await request.formData();
+        const itemsRaw = formData.get("items");
+        const items = JSON.parse(itemsRaw);
 
-
-        if (!id_pembeli || !Array.isArray(selectedItems) || selectedItems.length === 0) {
-            return NextResponse.json(
-                { error: "id_pembeli dan selectedItems wajib diisi!" },
-                { status: 400 }
-            );
+        if (!Array.isArray(items) || items.length === 0) {
+            return NextResponse.json({ error: "Minimal 1 barang harus diisi." }, { status: 400 });
         }
 
-        const [barangCheckout] = await pool.query(
-            `
-            SELECT b.id_barang, b.harga_barang
-            FROM bridgebarangcart bc
-            JOIN barang b ON bc.id_barang = b.id_barang
-            WHERE bc.id_bridge_barang IN (?)
-            `,
-            [selectedItems]
-        );
+        const [lastBarang] = await pool.query("SELECT id_barang FROM barang ORDER BY id_barang DESC LIMIT 1");
+        let nextId = lastBarang.length > 0 ? lastBarang[0].id_barang + 1 : 1;
 
-        if (!barangCheckout || barangCheckout.length === 0) {
-            return NextResponse.json(
-                { error: "Barang yang dipilih tidak ditemukan!" },
-                { status: 400 }
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const {
+                id_penitip, nama_barang, deskripsi_barang,
+                berat_barang, harga_barang, tanggal_garansi,
+                kategori_ids, id_petugas_qc
+            } = item;
+
+            if (!id_penitip || !nama_barang || !deskripsi_barang || !berat_barang || !harga_barang || !kategori_ids || !id_petugas_qc) {
+                return NextResponse.json({ error: `Semua field wajib diisi untuk barang ke-${i + 1}` }, { status: 400 });
+            }
+
+            if (kategori_ids.includes(1) && !tanggal_garansi) {
+                return NextResponse.json({ error: `Tanggal garansi wajib diisi untuk kategori Elektronik (barang ke-${i + 1})` }, { status: 400 });
+            }
+
+            const kode_produk = `${nama_barang.charAt(0).toUpperCase()}${nextId}`;
+            const status_titip = "AVAILABLE";
+            const tanggal_masuk = new Date();
+
+            const [insertResult] = await pool.query(
+                `INSERT INTO barang (
+                    id_penitip, kode_produk, nama_barang, deskripsi_barang,
+                    berat_barang, harga_barang, tanggal_garansi, tanggal_masuk, status_titip, id_petugas_qc
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    id_penitip, kode_produk, nama_barang, deskripsi_barang,
+                    berat_barang, harga_barang, tanggal_garansi || null, tanggal_masuk, status_titip, id_petugas_qc
+                ]
             );
+
+
+            const id_barang = insertResult.insertId;
+
+            // 🔁 Tambahkan kategori (opsional)
+            for (const id_kategori of kategori_ids) {
+                await pool.query(
+                    `INSERT INTO bridgekategoribarang (id_barang, id_kategori) VALUES (?, ?)`,
+                    [id_barang, id_kategori]
+                );
+            }
+
+            // 🔁 Tangani banyak file: gambar_barang_0, gambar_barang_1, ...
+            const gambarKey = `gambar_barang_${i}`;
+            const gambarFiles = formData.getAll(gambarKey).filter(f => f instanceof File);
+
+            if (gambarFiles.length === 0) {
+                return NextResponse.json({ error: `Barang ke-${i + 1} harus punya minimal 1 gambar.` }, { status: 400 });
+            }
+
+            for (const file of gambarFiles) {
+                const buffer = Buffer.from(await file.arrayBuffer());
+                const filename = `${uuidv4()}-${file.name}`;
+                const filePath = path.join(process.cwd(), "public/uploads", filename);
+
+                await writeFile(filePath, buffer);
+
+                await pool.query(
+                    `INSERT INTO gambarbarang (id_barang, src_img) VALUES (?, ?)`,
+                    [id_barang, `/uploads/${filename}`]
+                );
+            }
+
+            nextId++;
         }
 
-        const harga_awal = barangCheckout.reduce(
-            (total, item) => total + parseFloat(item.harga_barang),
-            0
-        );
-
-        const ongkos_kirim = 0;
-
-        const [pembeli] = await pool.query(
-            `SELECT poin_loyalitas FROM pembeli WHERE id_pembeli = ?`,
-            [id_pembeli]
-        );
-
-        if (!pembeli || pembeli.length === 0) {
-            return NextResponse.json(
-                { error: "Pembeli tidak ditemukan!" },
-                { status: 404 }
-            );
-        }
-
-        if (poin_digunakan > 0) {
-            await pool.query(
-                `UPDATE pembeli SET poin_loyalitas = poin_loyalitas - ? WHERE id_pembeli = ?`,
-                [poin_digunakan, id_pembeli]
-            );
-        }
-
-
-        const poinTersedia = pembeli[0].poin_loyalitas;
-        const maxDiskon = Math.floor(poinTersedia) * 10000;
-        const diskon = Math.min(inputDiskon, maxDiskon, harga_awal);
-        const harga_akhir = (harga_awal + ongkos_kirim - diskon).toFixed(2);
-
-        let poinBaru = Math.floor(harga_akhir / 10000);
-
-        const dapatBonus = harga_akhir > 500000;
-        const bonusPoin = dapatBonus ? Math.floor(poinBaru * 0.2) : 0;
-
-        const totalPoinTambahan = poinBaru + bonusPoin;
-
-
-        const year = new Date().getFullYear().toString().slice(-2);
-        const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
-        const [lastTransaksi] = await pool.query(
-            "SELECT MAX(id_transaksi) AS last_id FROM transaksi"
-        );
-        const id_transaksi = (lastTransaksi[0].last_id || 0) + 1;
-        const no_nota = `${year}.${month}.${id_transaksi}`;
-
-        await pool.query(
-            `
-            INSERT INTO transaksi (
-                id_transaksi, id_pembeli, status_transaksi, no_nota,
-                harga_awal, ongkos_kirim, diskon, harga_akhir, tanggal_pesan, tanggal_lunas, tambahan_poin
-            )
-            VALUES (?, ?, 'PENDING', ?, ?, ?, ?, ?, NOW(), NULL, ?)
-            `,
-            [
-                id_transaksi,
-                id_pembeli,
-                no_nota,
-                harga_awal,
-                ongkos_kirim,
-                diskon,
-                harga_akhir,
-                totalPoinTambahan
-            ]
-        );
-
-        await pool.query(
-            `
-            UPDATE barang
-            SET id_transaksi = ?, status_titip = 'HOLD'
-            WHERE id_barang IN (?)
-            `,
-            [id_transaksi, barangCheckout.map((b) => b.id_barang)]
-        );
-
-        await pool.query(
-            `UPDATE pembeli SET poin_loyalitas = poin_loyalitas + ? WHERE id_pembeli = ?`,
-            [totalPoinTambahan, id_pembeli]
-        );
-
-        await pool.query(
-            `
-            UPDATE bridgebarangcart
-            SET is_checkout = 1
-            WHERE id_bridge_barang IN (?)
-            `,
-            [selectedItems]
-        );
-
-        return NextResponse.json(
-            { message: "Transaksi berhasil dibuat!", id_transaksi },
-            { status: 201 }
-        );
+        return NextResponse.json({ message: "Semua barang berhasil ditambahkan!" }, { status: 201 });
     } catch (error) {
-        console.error("POST /api/transaksi error:", error);
-        return NextResponse.json(
-            { error: error.message || "Gagal membuat transaksi." },
-            { status: 500 }
-        );
+        console.error("POST /api/transaksi-penitipan error:", error);
+        return NextResponse.json({ error: "Gagal menyimpan barang titipan." }, { status: 500 });
     }
 }
+
+export async function GET(request) {
+    try {
+        await pool.query("SET SESSION group_concat_max_len = 10000");
+
+        const { searchParams } = new URL(request.url);
+        const q = searchParams.get("q")?.toLowerCase() || "";
+
+        const [rows] = await pool.query(
+            `
+            SELECT 
+                b.id_barang,
+                b.kode_produk,
+                b.nama_barang,
+                b.deskripsi_barang,
+                b.harga_barang,
+                b.status_titip,
+                b.tanggal_masuk,
+                b.tanggal_keluar,
+                b.tanggal_garansi,
+                p.id_penitip,
+                p.nama AS penitip_name,
+                GROUP_CONCAT(
+                    JSON_OBJECT(
+                        'id_gambar', g.id_gambar,
+                        'src_img', g.src_img
+                    )
+                ) AS gambar_barang
+            FROM barang b
+            LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+            LEFT JOIN gambarbarang g ON b.id_barang = g.id_barang
+            WHERE LOWER(b.nama_barang) LIKE ? OR LOWER(b.kode_produk) LIKE ?
+            GROUP BY b.id_barang
+            ORDER BY b.tanggal_masuk DESC
+            `,
+            [`%${q}%`, `%${q}%`]
+        );
+
+        const parsed = rows.map(row => ({
+            ...row,
+            gambar_barang: row.gambar_barang
+                ? JSON.parse(`[${row.gambar_barang}]`)
+                : []
+        }));
+
+        return NextResponse.json({ barang: parsed }, { status: 200 });
+    } catch (error) {
+        console.error("GET /api/transaksi-penitipan error:", error);
+        return NextResponse.json({ error: "Gagal mengambil data barang penitipan." }, { status: 500 });
+    }
+}
+
