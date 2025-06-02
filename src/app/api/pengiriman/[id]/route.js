@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 
 export async function GET(request, { params }) {
-    const { id } = params;
+  const { id } = params;
 
-    try {
-        const [result] = await pool.query(
-            `SELECT 
+  try {
+    const [result] = await pool.query(
+      `SELECT 
                 t.id_transaksi,
                 t.no_nota,
                 t.tanggal_pesan,
@@ -46,27 +46,33 @@ export async function GET(request, { params }) {
                 LEFT JOIN pegawai cs ON pb.id_petugas_cs = cs.id_pegawai
 
                 WHERE pg.id_pengiriman = ?`,
-            [id]
-        );
+      [id]
+    );
 
-        if (result.length === 0) {
-            return NextResponse.json({ error: "Data tidak ditemukan" }, { status: 404 });
-        }
-
-        const transaksi = result[0];
-
-        // Ambil detail produk
-        const [produk] = await pool.query(
-            `SELECT nama_barang, harga_barang
-                FROM barang
-                WHERE id_transaksi = ?`,
-            [transaksi.id_transaksi]
-        );
-
-        return NextResponse.json({ transaksi: { ...result[0], produk } }, { status: 200 });
-
-    } catch (error) {
-        console.error("Gagal ambil data nota:", error);
-        return NextResponse.json({ error: "Gagal ambil data" }, { status: 500 });
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: "Data tidak ditemukan" },
+        { status: 404 }
+      );
     }
+
+    const transaksi = result[0];
+
+    // Ambil detail produk
+    const [produk] = await pool.query(
+      `SELECT b.nama_barang, b.harga_barang
+     FROM barang b
+     JOIN detail_transaksi_pembelian dtp ON dtp.id_barang = b.id_barang
+     WHERE dtp.id_transaksi = ?`,
+      [transaksi.id_transaksi]
+    );
+
+    return NextResponse.json(
+      { transaksi: { ...result[0], produk } },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Gagal ambil data nota:", error);
+    return NextResponse.json({ error: "Gagal ambil data" }, { status: 500 });
+  }
 }
