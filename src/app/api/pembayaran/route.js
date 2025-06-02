@@ -30,7 +30,7 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        
+
         const {
             id_transaksi,
             img_bukti_transfer,
@@ -41,6 +41,30 @@ export async function POST(request) {
 
         if (!id_transaksi || !img_bukti_transfer || !jenis_pengiriman) {
             return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+        }
+
+        const [tx] = await pool.query(`SELECT * FROM transaksi WHERE id_transaksi = ?`, [id_transaksi]);
+        if (tx.length === 0) {
+            return NextResponse.json({ error: "Transaksi tidak ditemukan." }, { status: 404 });
+        }
+
+
+        let lokasi = null;
+        if (jenis_pengiriman === "COURIER") {
+            if (!id_alamat) {
+                return NextResponse.json({ error: "Alamat wajib diisi untuk pengiriman kurir." }, { status: 400 });
+            }
+
+            const [alamatRows] = await pool.query(
+                `SELECT lokasi FROM alamat WHERE id_alamat = ?`,
+                [id_alamat]
+            );
+
+            if (alamatRows.length === 0) {
+                return NextResponse.json({ error: "Alamat tidak ditemukan." }, { status: 404 });
+            }
+
+            lokasi = alamatRows[0].lokasi;
         }
 
         const deadline = new Date(Date.now() + 15 * 60 * 1000);
@@ -58,9 +82,15 @@ export async function POST(request) {
         );
 
         await pool.query(
-            `INSERT INTO pengiriman (id_transaksi, jenis_pengiriman, id_alamat, status_pengiriman)
-             VALUES (?, ?, ?, 'IN_PROGRESS')`,
-            [id_transaksi, jenis_pengiriman, id_alamat || null]
+            `INSERT INTO pengiriman (
+                id_transaksi, jenis_pengiriman, id_alamat, lokasi, status_pengiriman
+             ) VALUES (?, ?, ?, ?, 'IN_PROGRESS')`,
+            [
+                id_transaksi,
+                jenis_pengiriman,
+                jenis_pengiriman === "COURIER" ? id_alamat : null,
+                lokasi
+            ]
         );
 
         return NextResponse.json({

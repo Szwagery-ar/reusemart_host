@@ -32,32 +32,31 @@ export default function KonfirmasiPembayaranPage() {
         fetchUser();
     }, []);
 
-
-
     useEffect(() => {
-        const fetchPembayarans = async () => {
-            try {
-                const res = await fetch("/api/pembayaran/konfirmasi");
-
-                if (!res.ok) {
-                    const text = await res.text();
-                    console.error("Error response:", text);
-                    setError("Gagal mengambil data pembayaran");
-                    return;
-                }
-
-                const data = await res.json();
-                setPembayarans(data.pembayaran);
-            } catch (err) {
-                console.error("Gagal fetch:", err);
-                alert("Terjadi kesalahan saat memuat pembayaran");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchPembayarans();
     }, []);
+
+
+    const fetchPembayarans = async () => {
+        try {
+            const res = await fetch("/api/pembayaran/konfirmasi");
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("Error response:", text);
+                setError("Gagal mengambil data pembayaran");
+                return;
+            }
+
+            const data = await res.json();
+            setPembayarans(data.pembayaran);
+        } catch (err) {
+            console.error("Gagal fetch:", err);
+            alert("Terjadi kesalahan saat memuat pembayaran");
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     const handleKonfirmasi = async (id, status) => {
@@ -76,7 +75,7 @@ export default function KonfirmasiPembayaranPage() {
                 }),
             });
 
-            
+            fetchPembayarans();
 
             if (!res.ok) throw new Error("Gagal memperbarui status");
 
