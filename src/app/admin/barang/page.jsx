@@ -19,7 +19,7 @@ export default function AdminBarangPage() {
 
 
 
-    
+
     const [formData, setFormData] = useState({
         nama_barang: '',
         kode_produk: '',
@@ -100,73 +100,73 @@ export default function AdminBarangPage() {
     //     }
     // };
 
-const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
+        const token = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("token="))
+            ?.split("=")[1];
 
-    const form = new FormData();
-    form.append("nama_barang", formData.nama_barang);
-    form.append("harga_barang", formData.harga_barang);
-    form.append("deskripsi_barang", formData.deskripsi_barang);
-    form.append("berat_barang", formData.berat_barang);
-    form.append("tanggal_garansi", formData.tanggal_garansi);
-    form.append("id_penitip", formData.id_penitip);
+        const form = new FormData();
+        form.append("nama_barang", formData.nama_barang);
+        form.append("harga_barang", formData.harga_barang);
+        form.append("deskripsi_barang", formData.deskripsi_barang);
+        form.append("berat_barang", formData.berat_barang);
+        form.append("tanggal_garansi", formData.tanggal_garansi);
+        form.append("id_penitip", formData.id_penitip);
 
-    if (formData.gambar) {
-        Array.from(formData.gambar).forEach((file) => {
-            form.append("gambar", file);
-        });
-    }
-
-    const res = await fetch("/api/barang/by-gudang", {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-        body: form,
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-        await fetchBarang(); // fetch ulang agar dapat barang dengan id_barang, gambar_barang, dll.
-        setShowSidebar(false);
-        setFormData({
-            nama_barang: "",
-            harga_barang: "",
-            deskripsi_barang: "",
-            berat_barang: "",
-            tanggal_garansi: "",
-            tanggal_masuk: "",
-            id_penitip: "",
-            gambar: null,
-        });
-        alert("Barang berhasil ditambahkan");
-    } else {
-        alert(data.error || "Gagal menambahkan barang");
-    }
-};
-
-
-const fetchBarang = async () => {
-    try {
-        const res = await fetch('/api/barang/by-gudang');
-        const data = await res.json();
-        if (res.ok) {
-            setBarangList(data.barang);
-        } else {
-            setError(data.error || 'Gagal mengambil data barang');
+        if (formData.gambar) {
+            Array.from(formData.gambar).forEach((file) => {
+                form.append("gambar", file);
+            });
         }
-    } catch (err) {
-        setError('Terjadi kesalahan saat mengambil data');
-    } finally {
-        setLoading(false);
-    }
-};
+
+        const res = await fetch("/api/barang/by-gudang", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: form,
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            await fetchBarang(); // fetch ulang agar dapat barang dengan id_barang, gambar_barang, dll.
+            setShowSidebar(false);
+            setFormData({
+                nama_barang: "",
+                harga_barang: "",
+                deskripsi_barang: "",
+                berat_barang: "",
+                tanggal_garansi: "",
+                tanggal_masuk: "",
+                id_penitip: "",
+                gambar: null,
+            });
+            alert("Barang berhasil ditambahkan");
+        } else {
+            alert(data.error || "Gagal menambahkan barang");
+        }
+    };
+
+
+    const fetchBarang = async () => {
+        try {
+            const res = await fetch('/api/barang/by-gudang');
+            const data = await res.json();
+            if (res.ok) {
+                setBarangList(data.barang);
+            } else {
+                setError(data.error || 'Gagal mengambil data barang');
+            }
+        } catch (err) {
+            setError('Terjadi kesalahan saat mengambil data');
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     // useEffect(() => {
@@ -245,7 +245,7 @@ const fetchBarang = async () => {
     return (
         <div className="p-6">
             <WithRole allowed={["Gudang", "Superuser"]}>
-                <h1 className="text-2xl font-bold mb-4 text-indigo-700">
+                <h1 className="text-2xl font-bold mb-4">
                     Data Barang
                 </h1>
                 <div className="flex justify-between mb-4">
@@ -256,26 +256,24 @@ const fetchBarang = async () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                    <button
+                    {/* <button
                         onClick={() => setShowSidebar(true)}
                         className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
                     >
                         Tambah Barang
-                    </button>
+                    </button> */}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {barangList.map((barang) => (
-                        <div key={barang.id_barang} 
+                        <div key={barang.id_barang}
                             onClick={() => router.push(`/admin/barang/${barang.id_barang}`)}
                             className="border p-4 rounded-lg shadow-sm bg-white cursor-pointer hover:shadow-md transition">
                             {Array.isArray(barang.gambar_barang) && barang.gambar_barang.length > 0 ? (
-
-                                // <img
-                                //     src={barang.gambar_barang[0].src_img}
-                                //     alt={barang.nama_barang}
-                                //     className="w-full h-48 object-cover rounded"
-                                // />
-                                <img src={barang.gambar_barang[0].src_img} alt={barang.nama_barang} />
+                                <img
+                                    src={barang.gambar_barang[0].src_img}
+                                    alt={barang.nama_barang}
+                                    className="w-full h-100 object-cover rounded"
+                                />
                             ) : (
                                 <div className="w-full h-48 bg-gray-200 rounded flex items-center justify-center text-gray-400">
                                     Tidak ada gambar
@@ -292,42 +290,43 @@ const fetchBarang = async () => {
                             <div className="flex flex-row gap-3 mt-3">
                                 <button
                                     onClick={(e) => {
-                                    e.stopPropagation();
-                                    router.push(`/admin/barang/edit/${barang.id_barang}`);
+                                        e.stopPropagation();
+                                        router.push(`/admin/barang/${barang.id_barang}`);
                                     }}
                                     className="w-1/2 rounded-full bg-gradient-to-r from-blue-800 to-blue-400 text-white font-semibold py-2 hover:opacity-90 transition"
                                 >
-                                    Edit
+                                    Lihat Detail
                                 </button>
+
                                 <button
                                     onClick={async (e) => {
-                                    e.stopPropagation();
-                                    const confirmDelete = confirm("Yakin ingin menghapus barang ini?");
-                                    if (!confirmDelete) return;
+                                        e.stopPropagation();
+                                        const confirmDelete = confirm("Yakin ingin menghapus barang ini?");
+                                        if (!confirmDelete) return;
 
-                                    const token = document.cookie
-                                        .split("; ")
-                                        .find((row) => row.startsWith("token="))
-                                        ?.split("=")[1];
+                                        const token = document.cookie
+                                            .split("; ")
+                                            .find((row) => row.startsWith("token="))
+                                            ?.split("=")[1];
 
-                                    const res = await fetch("/api/barang", {
-                                        method: "DELETE",
-                                        headers: {
-                                        "Content-Type": "application/json",
-                                        Authorization: `Bearer ${token}`,
-                                        },
-                                        body: JSON.stringify({ id_barang: barang.id_barang }),
-                                    });
+                                        const res = await fetch("/api/barang", {
+                                            method: "DELETE",
+                                            headers: {
+                                                "Content-Type": "application/json",
+                                                Authorization: `Bearer ${token}`,
+                                            },
+                                            body: JSON.stringify({ id_barang: barang.id_barang }),
+                                        });
 
-                                    const data = await res.json();
-                                    if (res.ok) {
-                                        alert("Barang berhasil dihapus");
-                                        setBarangList((prev) =>
-                                        prev.filter((item) => item.id_barang !== barang.id_barang)
-                                        );
-                                    } else {
-                                        alert(data.error || "Gagal menghapus barang");
-                                    }
+                                        const data = await res.json();
+                                        if (res.ok) {
+                                            alert("Barang berhasil dihapus");
+                                            setBarangList((prev) =>
+                                                prev.filter((item) => item.id_barang !== barang.id_barang)
+                                            );
+                                        } else {
+                                            alert(data.error || "Gagal menghapus barang");
+                                        }
                                     }}
                                     className="w-1/2 rounded-full bg-gradient-to-r from-red-700 to-red-400 text-white font-semibold py-2 hover:opacity-90 transition"
                                 >
@@ -435,9 +434,9 @@ const fetchBarang = async () => {
                                     >
                                         <option value="">-- Pilih Penitip --</option>
                                         {penitipOptions.map((p) => (
-                                        <option key={p.id_penitip} value={p.id_penitip}>
-                                            {p.id_penitip} - {p.nama}
-                                        </option>
+                                            <option key={p.id_penitip} value={p.id_penitip}>
+                                                {p.id_penitip} - {p.nama}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>

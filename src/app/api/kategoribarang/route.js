@@ -19,7 +19,7 @@ export async function GET(request) {
 
         const [kategoriBarang] = await pool.query(query, values);
 
-        return NextResponse.json({ kategoriBarang }, { status: 200 });
+        return NextResponse.json({ kategori: kategoriBarang }, { status: 200 });
 
     } catch (error) {
         return NextResponse.json({ error: "Failed to fetch Kategori Barang" }, { status: 500 });

@@ -129,20 +129,32 @@ export async function POST(request) {
             ]
         );
 
-        await pool.query(
-            `
-            UPDATE barang
-            SET id_transaksi = ?, status_titip = 'HOLD'
-            WHERE id_barang IN (?)
-            `,
-            [id_transaksi, barangCheckout.map((b) => b.id_barang)]
+        const insertBridgePromises = barangCheckout.map((item) =>
+            pool.query(
+                `INSERT INTO bridgebarangtransaksi (id_barang, id_transaksi) VALUES (?, ?)`,
+                [item.id_barang, id_transaksi]
+            )
         );
+        await Promise.all(insertBridgePromises);
+
+
+        await pool.query(
+            `UPDATE barang SET status_titip = 'HOLD' WHERE id_barang IN (?)`,
+            [barangCheckout.map((b) => b.id_barang)]
+        );
+
+        if (poin_digunakan > 0) {
+            await pool.query(
+                `UPDATE pembeli SET poin_loyalitas = poin_loyalitas - ? WHERE id_pembeli = ?`,
+                [poin_digunakan, id_pembeli]
+            );
+        }
 
         await pool.query(
             `UPDATE pembeli SET poin_loyalitas = poin_loyalitas + ? WHERE id_pembeli = ?`,
             [totalPoinTambahan, id_pembeli]
         );
-
+        
         await pool.query(
             `
             UPDATE bridgebarangcart
