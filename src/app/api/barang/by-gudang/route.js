@@ -91,7 +91,7 @@ export async function GET(request) {
                 b.tanggal_keluar, 
                 b.tanggal_garansi, 
                 p.nama AS penitip_name,
-                p.id_penitip, p.nama AS penitip_name,
+                p.id_penitip, 
                 gb.id_gambar, 
                 gb.src_img,
                 kb.nama_kategori
@@ -100,6 +100,7 @@ export async function GET(request) {
             LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
             LEFT JOIN bridgekategoribarang bkb ON b.id_barang = bkb.id_barang
             LEFT JOIN kategoribarang kb ON bkb.id_kategori = kb.id_kategori
+            WHERE 1=1
         `;
 
         let values = [];
