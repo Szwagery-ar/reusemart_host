@@ -225,6 +225,10 @@ export default function DetailBarangPage() {
 
     if (!barang) return <div className="h-screen">Loading...</div>;
 
+    const averageRating = barang.rata_rata_rating > 0
+        ? `${barang.rata_rata_rating.toFixed(1)}`
+        : "Belum ada rating";
+
     return (
         <div className="px-6 md:px-20 mt-24">
             <div className="grid md:grid-cols-2 gap-4 mb-15">
@@ -346,6 +350,17 @@ export default function DetailBarangPage() {
                     <div className="px-4">
                         <h2 className="text-xl font-semibold mt-4">Detail Barang</h2>
                         <div className="grid grid-cols-2 gap-4 mt-4">
+
+                            <div>
+                                Nama penitip
+                            </div>
+                            <div className="font-semibold">
+                                {barang.penitip_name}
+                                {averageRating !== "Belum ada rating" && (
+                                    <span className="ml-1 text-yellow-500">({averageRating} ⭐)</span>
+                                )}
+                            </div>
+
                             <div>
                                 Berat barang
                             </div>

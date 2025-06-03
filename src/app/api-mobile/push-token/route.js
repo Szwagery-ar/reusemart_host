@@ -2,8 +2,6 @@ import pool from "@/lib/db";
 import jwt from "jsonwebtoken";
 
 export async function POST(req) {
-  console.log("📥 Endpoint push-token terpanggil!");
-
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.split(" ")[1];
 
@@ -63,6 +61,45 @@ export async function POST(req) {
     });
   } catch (err) {
     console.error("❌ Error saat simpan token:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+    });
+  }
+}
+
+export async function DELETE(req) {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.split(" ")[1];
+
+  if (!token) {
+    return new Response(JSON.stringify({ error: "Token tidak ditemukan" }), {
+      status: 401,
+    });
+  }
+
+  let userId, userRole;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.id;
+    userRole = decoded.role;
+    if (userRole === "kurir" || userRole === "hunter") {
+      userRole = "pegawai";
+    }
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Token tidak valid" }), {
+      status: 401,
+    });
+  }
+
+  try {
+    await pool.query(
+      `UPDATE ${userRole} SET expo_push_token = NULL WHERE id_${userRole} = ?`,
+      [userId]
+    );
+
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
+  } catch (err) {
+    console.error("❌ Error saat hapus token push:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
     });

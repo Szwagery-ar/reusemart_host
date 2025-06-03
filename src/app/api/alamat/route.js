@@ -71,13 +71,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const id_pembeli = decoded.id;
-
-    if (decoded.role !== "pembeli") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        return NextResponse.json({ error: "Token expired" }, { status: 401 });
+      }
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
+    const id_pembeli = decoded.id;
     const { nama_alamat, lokasi, note } = await request.json();
 
     if (!nama_alamat || !lokasi) {
@@ -165,95 +169,104 @@ export async function PUT(request) {
 }
 
 export async function PATCH(request) {
-    try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get('token')?.value;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
 
-        if (!token) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const id_pembeli = decoded.id;
-
-        if (decoded.role !== 'pembeli') {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-
-        const { id_alamat } = await request.json();
-
-        await pool.query(
-            "UPDATE alamat SET is_primary = FALSE WHERE id_pembeli = ?", 
-            [id_pembeli]
-        );
-
-        await pool.query(
-            "UPDATE alamat SET is_primary = TRUE WHERE id_alamat = ? AND id_pembeli = ?", 
-            [id_alamat, id_pembeli]
-        );
-
-        return NextResponse.json({ message: "Alamat utama diperbarui" });
-
-    } catch (error) {
-        console.error("PATCH error:", error);
-        return NextResponse.json({ error: "Gagal memperbarui alamat utama" }, { status: 500 });
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const id_pembeli = decoded.id;
+
+    if (decoded.role !== "pembeli") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id_alamat } = await request.json();
+
+    await pool.query(
+      "UPDATE alamat SET is_primary = FALSE WHERE id_pembeli = ?",
+      [id_pembeli]
+    );
+
+    await pool.query(
+      "UPDATE alamat SET is_primary = TRUE WHERE id_alamat = ? AND id_pembeli = ?",
+      [id_alamat, id_pembeli]
+    );
+
+    return NextResponse.json({ message: "Alamat utama diperbarui" });
+  } catch (error) {
+    console.error("PATCH error:", error);
+    return NextResponse.json(
+      { error: "Gagal memperbarui alamat utama" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(request) {
-    try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get('token')?.value;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
 
-        if (!token) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const id_pembeli = decoded.id;
-
-        if (decoded.role !== 'pembeli') {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-
-        const { id_alamat } = await request.json();
-
-        if (!id_alamat) {
-            return NextResponse.json({ error: "id_alamat is required" }, { status: 400 });
-        }
-
-        const [alamat] = await pool.query(
-            "SELECT * FROM alamat WHERE id_alamat = ? AND id_pembeli = ?", 
-            [id_alamat, id_pembeli]
-        );
-
-        if (alamat.length === 0) {
-            return NextResponse.json({ error: "Alamat not found or not owned by you" }, { status: 404 });
-        }
-
-        const isPrimary = alamat[0].is_primary;
-
-        await pool.query("DELETE FROM alamat WHERE id_alamat = ?", [id_alamat]);
-
-        if (isPrimary) {
-            const [sisaAlamat] = await pool.query(
-                "SELECT id_alamat FROM alamat WHERE id_pembeli = ? LIMIT 1",
-                [id_pembeli]
-            );
-
-            if (sisaAlamat.length > 0) {
-                await pool.query(
-                    "UPDATE alamat SET is_primary = TRUE WHERE id_alamat = ?",
-                    [sisaAlamat[0].id_alamat]
-                );
-            }
-        }
-
-        return NextResponse.json({ message: "Alamat deleted successfully!" });
-
-    } catch (error) {
-        console.error("DELETE error:", error);
-        return NextResponse.json({ error: "Failed to delete Alamat" }, { status: 500 });
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-}
 
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const id_pembeli = decoded.id;
+
+    if (decoded.role !== "pembeli") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id_alamat } = await request.json();
+
+    if (!id_alamat) {
+      return NextResponse.json(
+        { error: "id_alamat is required" },
+        { status: 400 }
+      );
+    }
+
+    const [alamat] = await pool.query(
+      "SELECT * FROM alamat WHERE id_alamat = ? AND id_pembeli = ?",
+      [id_alamat, id_pembeli]
+    );
+
+    if (alamat.length === 0) {
+      return NextResponse.json(
+        { error: "Alamat not found or not owned by you" },
+        { status: 404 }
+      );
+    }
+
+    const isPrimary = alamat[0].is_primary;
+
+    await pool.query("DELETE FROM alamat WHERE id_alamat = ?", [id_alamat]);
+
+    if (isPrimary) {
+      const [sisaAlamat] = await pool.query(
+        "SELECT id_alamat FROM alamat WHERE id_pembeli = ? LIMIT 1",
+        [id_pembeli]
+      );
+
+      if (sisaAlamat.length > 0) {
+        await pool.query(
+          "UPDATE alamat SET is_primary = TRUE WHERE id_alamat = ?",
+          [sisaAlamat[0].id_alamat]
+        );
+      }
+    }
+
+    return NextResponse.json({ message: "Alamat deleted successfully!" });
+  } catch (error) {
+    console.error("DELETE error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete Alamat" },
+      { status: 500 }
+    );
+  }
+}
