@@ -15,6 +15,11 @@ export async function GET(_, { params }) {
                 b.id_barang, b.kode_produk, b.nama_barang, b.deskripsi_barang,
                 b.harga_barang, b.status_titip, b.tanggal_masuk, b.tanggal_keluar,
                 b.tanggal_garansi, b.berat_barang, p.id_penitip, p.nama AS penitip_name,
+                p.total_rating,
+                (
+                    SELECT COUNT(*) FROM barang b2 WHERE b2.id_penitip = p.id_penitip
+                ) AS jumlah_barang,
+
                 gb.id_gambar, gb.src_img,
                 k.nama_kategori
             FROM barang b
@@ -53,6 +58,11 @@ export async function GET(_, { params }) {
             return acc;
         }, null);
 
+        if (grouped.total_rating && grouped.total_rating > 0) {
+            grouped.rata_rata_rating = parseFloat(grouped.total_rating.toFixed(1));
+        } else {
+            grouped.rata_rata_rating = 0;
+        }
         return NextResponse.json({ barang: grouped }, { status: 200 });
 
     } catch (error) {
@@ -64,8 +74,6 @@ export async function GET(_, { params }) {
 // ✅ Ini benar — gunakan parameter kedua
 export async function PUT(request, { params }) {
     const { id_barang } = params;
-
-
 
     try {
         const formData = await request.formData();
@@ -127,4 +135,25 @@ export async function PUT(request, { params }) {
         return NextResponse.json({ error: "Gagal mengupdate barang" }, { status: 500 });
     }
 }
+
+// export async function PATCH(request, { params }) {
+//     const { id_barang } = params;
+//     const { rating } = await request.json();
+
+//     if (!rating || isNaN(rating) || rating < 1 || rating > 5) {
+//         return NextResponse.json({ error: "Rating harus 1-5" }, { status: 400 });
+//     }
+
+//     try {
+//         await pool.query(
+//             `UPDATE barang SET rating = ? WHERE id_barang = ?`,
+//             [rating, id_barang]
+//         );
+
+//         return NextResponse.json({ message: "Rating berhasil disimpan" }, { status: 200 });
+//     } catch (error) {
+//         console.error("Gagal menyimpan rating:", error);
+//         return NextResponse.json({ error: "Server error" }, { status: 500 });
+//     }
+// }
 
