@@ -46,13 +46,14 @@ export default function TransaksiPenitipanPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        for (let i = 0; i < formDataList.length; i++) {
-            const item = formDataList[i];
-            if ((item.kategori_ids || []).includes(1) && !item.tanggal_garansi) {
-                alert(`Barang ke-${i + 1} wajib memiliki tanggal garansi karena termasuk Elektronik`);
-                return;
-            }
-        }
+
+        // for (let i = 0; i < formDataList.length; i++) {
+        //     const item = formDataList[i];
+        //     if ((item.kategori_ids || []).includes(1) && !item.tanggal_garansi) {
+        //         alert(`Barang ke-${i + 1} wajib memiliki tanggal garansi karena termasuk Elektronik`);
+        //         return;
+        //     }
+        // }
 
         const token = document.cookie.split('; ').find((row) => row.startsWith('token='))?.split('=')[1];
 
@@ -155,9 +156,11 @@ export default function TransaksiPenitipanPage() {
                 />
                 <button
                     onClick={() => setShowSidebar(true)}
-                    className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                    // className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                    className="bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] text-white px-6 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition"
+                   //w-full text-white py-3 rounded-full font-semibold bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]
                 >
-                    Tambah Barang
+                    Tambah Penitipan Barang
                 </button>
             </div>
 
@@ -183,7 +186,7 @@ export default function TransaksiPenitipanPage() {
                         <p className="text-sm text-gray-600">Kode: {barang.kode_produk}</p>
                         <p className="text-sm text-gray-600">Harga: Rp{parseInt(barang.harga_barang).toLocaleString("id-ID")}</p>
                         <p className="text-sm text-gray-600">Status Titip: {barang.status_titip}</p>
-                        <p className="text-sm text-gray-600">Garansi: {barang.tanggal_garansi}</p>
+                        <p className="text-sm text-gray-600">Garansi: {barang.tanggal_garansi?.split('T')[0] || '-'}</p>
                         <p className="text-sm text-gray-600">Tanggal Masuk: {barang.tanggal_masuk?.split('T')[0]}</p>
                         <p className="text-sm text-gray-600">Tanggal Keluar: {barang.tanggal_keluar?.split('T')[0] || '-'}</p>
                         <p className="text-sm text-gray-600">Penitip: {barang.penitip_name || '-'}</p>
@@ -192,7 +195,7 @@ export default function TransaksiPenitipanPage() {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    router.push(`/admin/nota-penitipan/${barang.id_transaksi}`); // asumsi: id_transaksi tersedia di data barang
+                                      router.push(`/admin/transaksi-penitipan/nota-penitipan/${encodeURIComponent(barang.id_penitipan)}`);
                                 }}
                                 className="text-sm text-blue-600 underline hover:text-blue-800"
                             >
@@ -217,10 +220,10 @@ export default function TransaksiPenitipanPage() {
                                     <div className="flex justify-between items-center">
                                         <h3 className="font-semibold">Barang {index + 1}</h3>
                                         <div className="flex gap-2">
-                                            <button type="button" onClick={() => toggleEdit(index)} className="bg-yellow-400 text-black px-3 py-1 text-sm rounded">
+                                            <button type="button" onClick={() => toggleEdit(index)} className="bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#FFE259_0%,_#FFA751_90%)] text-white px-6 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition">
                                                 {item.isEditing ? "Tutup" : "Edit"}
                                             </button>
-                                            <button type="button" onClick={() => handleRemove(index)} className="bg-red-700 text-white px-3 py-1 text-sm rounded">
+                                            <button type="button" onClick={() => handleRemove(index)} className="bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#FFE6E1_0%,_#CB0404_30%)] text-white px-6 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition">
                                                 Hapus
                                             </button>
                                         </div>
@@ -229,23 +232,27 @@ export default function TransaksiPenitipanPage() {
                                     {item.isEditing && (
                                         <div className="mt-4 grid gap-2">
                                             {/* 1. Gambar */}
-                                            <input name="gambar" type="file" multiple onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" />
-                                            {item.gambar && (
-                                                <div className="flex gap-2 mt-2 flex-wrap">
-                                                    {Array.from(item.gambar).map((file, i) => (
-                                                        <img
-                                                            key={i}
-                                                            src={URL.createObjectURL(file)}
-                                                            alt={`preview-${i}`}
-                                                            className="w-20 h-20 object-cover border rounded"
-                                                        />
-                                                    ))}
-                                                </div>
-                                            )}
+                                            <div>
+                                                <label className="font-semibold text-sm">Gambar Barang:</label>
+                                                <input name="gambar" type="file" multiple onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" />
+                                                {item.gambar && (
+                                                    <div className="flex gap-2 mt-2 flex-wrap">
+                                                        {Array.from(item.gambar).map((file, i) => (
+                                                            <img
+                                                                key={i}
+                                                                src={URL.createObjectURL(file)}
+                                                                alt={`preview-${i}`}
+                                                                className="w-20 h-20 object-cover border rounded"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
 
                                             {/* 2. Kategori */}
                                             <div className="mt-2">
-                                                <label className="font-semibold">Kategori:</label>
+                                                <label className="font-semibold text-sm">Kategori:</label>
                                                 <div className="flex flex-wrap gap-2 mt-1">
                                                     {kategoriOptions.map(kat => (
                                                         <label key={kat.id_kategori} className="flex items-center gap-2 text-sm">
@@ -272,51 +279,76 @@ export default function TransaksiPenitipanPage() {
                                             </div>
 
                                             {/* 3. Nama Barang */}
-                                            <input name="nama_barang" value={item.nama_barang} onChange={(e) => handleChange(index, e)} placeholder="Nama Barang" className="border px-3 py-2 rounded w-full" required />
+                                            <div>
+                                                <label className="font-semibold text-sm">Nama Barang:</label>
+                                                <input name="nama_barang" value={item.nama_barang} onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" required />
+                                            </div>
 
                                             {/* 4. Harga */}
-                                            <input name="harga_barang" type="number" value={item.harga_barang} onChange={(e) => handleChange(index, e)} placeholder="Harga Barang" className="border px-3 py-2 rounded w-full" required />
+                                            <div>
+                                                <label className="font-semibold text-sm">Harga Barang:</label>
+                                                <input name="harga_barang" type="number" value={item.harga_barang} onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" required />
+                                            </div>
+
 
                                             {/* 5. Berat */}
-                                            <input name="berat_barang" type="number" value={item.berat_barang} onChange={(e) => handleChange(index, e)} placeholder="Berat Barang" className="border px-3 py-2 rounded w-full" required />
+                                            <div>
+                                                <label className="font-semibold text-sm">Berat Barang:</label>
+                                                <input name="berat_barang" type="number" value={item.berat_barang} onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" required />
+                                            </div>
+
 
                                             {/* 6. Penitip */}
-                                            <select name="id_penitip" value={item.id_penitip} onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" required>
-                                                <option value="">Pilih Penitip</option>
-                                                {penitipOptions.map(p => (
-                                                    <option key={p.id_penitip} value={p.id_penitip}>{p.id_penitip} - {p.nama}</option>
-                                                ))}
-                                            </select>
+                                            <div>
+                                                <label className="font-semibold text-sm">Penitip:</label>
+                                                <select name="id_penitip" value={item.id_penitip} onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" required>
+                                                    <option value="">---</option>
+                                                    {penitipOptions.map(p => (
+                                                        <option key={p.id_penitip} value={p.id_penitip}>{p.id_penitip} - {p.nama}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
 
                                             {/* 7. QC */}
-                                            <select
-                                                name="id_petugas_qc"
-                                                value={item.id_petugas_qc}
-                                                onChange={(e) => handleChange(index, e)}
-                                                className="border px-3 py-2 rounded w-full"
-                                                required
-                                            >
-                                                <option value="">Pilih Petugas QC</option>
-                                                {qcOptions.map(qc => (
-                                                    <option key={qc.id_pegawai} value={qc.id_pegawai}>
-                                                        {qc.id_pegawai} - {qc.nama}
-                                                    </option>
-                                                ))}
-                                            </select>
-
-                                            {/* 8. Deskripsi */}
-                                            <textarea name="deskripsi_barang" value={item.deskripsi_barang} onChange={(e) => handleChange(index, e)} placeholder="Deskripsi Barang" className="border px-3 py-2 rounded w-full" required />
-
-                                            {/* Optional: Tanggal Garansi jika Elektronik */}
-                                            {item.kategori_ids.includes(1) && (
-                                                <input
-                                                    name="tanggal_garansi"
-                                                    type="date"
-                                                    value={item.tanggal_garansi}
+                                            <div>
+                                                <label className="font-semibold text-sm">Petugas QC:</label>
+                                                <select
+                                                    name="id_petugas_qc"
+                                                    value={item.id_petugas_qc}
                                                     onChange={(e) => handleChange(index, e)}
                                                     className="border px-3 py-2 rounded w-full"
                                                     required
-                                                />
+                                                >
+                                                    <option value="">---</option>
+                                                    {qcOptions.map(qc => (
+                                                        <option key={qc.id_pegawai} value={qc.id_pegawai}>
+                                                            {qc.id_pegawai} - {qc.nama}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+
+                                            {/* 8. Deskripsi */}
+                                            <div>
+                                                <label className="font-semibold text-sm">Deskripsi Barang:</label>
+                                                <textarea name="deskripsi_barang" value={item.deskripsi_barang} onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" required />
+                                            </div>
+
+
+                                            {/* Optional: Tanggal Garansi jika Elektronik */}
+                                            {item.kategori_ids.includes(1) && (
+                                                <div>
+                                                    <label className="font-semibold text-sm">Tanggal Garansi:</label>
+                                                    <input
+                                                        name="tanggal_garansi"
+                                                        type="date"
+                                                        value={item.tanggal_garansi}
+                                                        onChange={(e) => handleChange(index, e)}
+                                                        className="border px-3 py-2 rounded w-full"
+                                                    />
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -328,13 +360,13 @@ export default function TransaksiPenitipanPage() {
                                 onClick={() => setFormDataList([...formDataList, {
                                     nama_barang: '', harga_barang: '', deskripsi_barang: '', berat_barang: '', tanggal_garansi: '', id_penitip: '', gambar: null, kategori_ids: [], isEditing: false
                                 }])}
-                                className="bg-gray-600 text-white px-4 py-2 rounded"
+                                className="bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#E0E0E0_0%,_#4B4B4B_90%)] text-white px-6 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition"
                             >
                                 Tambah Barang Titipan
                             </button>
                             <div className="flex justify-end gap-2 mt-4">
-                                <button type="button" onClick={() => setShowSidebar(false)} className="px-4 py-2 bg-gray-200 rounded">Batal</button>
-                                <button type="submit" className="px-4 py-2 bg-green-500 text-white rounded">Simpan Semua</button>
+                                <button type="button" onClick={() => setShowSidebar(false)} className="bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#FFE6E1_0%,_#CB0404_30%)] text-white px-6 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition">Batal</button>
+                                <button type="submit" className="bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] text-white px-6 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition">Simpan Semua</button>
                             </div>
                         </form>
                     </div>

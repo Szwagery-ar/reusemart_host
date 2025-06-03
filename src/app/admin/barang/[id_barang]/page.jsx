@@ -14,6 +14,8 @@ export default function DetailBarangAdminPage() {
     const [showSidebar, setShowSidebar] = useState(false);
     const [formData, setFormData] = useState({});
     const [previewImages, setPreviewImages] = useState([]);
+    const [penitipOptions, setPenitipOptions] = useState([]);
+
 
 
 
@@ -64,6 +66,11 @@ export default function DetailBarangAdminPage() {
         form.append("harga_barang", formData.harga_barang);
         form.append("berat_barang", formData.berat_barang);
         form.append("tanggal_garansi", formData.tanggal_garansi);
+        form.append("id_penitip", formData.id_penitip);
+        form.append("tanggal_masuk", formData.tanggal_masuk || "");
+        form.append("tanggal_keluar", formData.tanggal_keluar || "");
+
+
         form.append("status_titip", "AVAILABLE");
 
         if (formData.gambar instanceof FileList) {
@@ -96,6 +103,18 @@ export default function DetailBarangAdminPage() {
         };
     }, [previewImages]);
 
+    useEffect(() => {
+        const fetchPenitip = async () => {
+            try {
+                const res = await fetch("/api/penitip");
+                const data = await res.json();
+                setPenitipOptions(data.penitip || []); // pastikan endpointnya mengirim array penitip
+            } catch (err) {
+                console.error("Gagal memuat data penitip:", err);
+            }
+        };
+        fetchPenitip();
+    }, []);
 
 
 
@@ -224,7 +243,11 @@ export default function DetailBarangAdminPage() {
                         </div>
 
                         <form className="flex flex-col gap-6 p-6" onSubmit={handleUpdate}>
+
                             {/* 1. Foto Barang */}
+                            <label htmlFor="gambar" className="text-sm font-bold text-black-700">
+                                Foto Barang :
+                            </label>
                             <input
                                 type="file"
                                 name="gambar"
@@ -255,6 +278,9 @@ export default function DetailBarangAdminPage() {
                             </div>
 
                             {/* 2. Nama Barang */}
+                            <label htmlFor="nama_barang" className="text-sm font-bold text-black-700">
+                                Nama Barang :
+                            </label>
                             <input
                                 type="text"
                                 name="nama_barang"
@@ -265,6 +291,9 @@ export default function DetailBarangAdminPage() {
                             />
 
                             {/* 3. Harga Barang */}
+                            <label htmlFor="harga_barang" className="text-sm font-bold text-black-700">
+                                Harga Barang :
+                            </label>
                             <input
                                 type="number"
                                 name="harga_barang"
@@ -275,6 +304,9 @@ export default function DetailBarangAdminPage() {
                             />
 
                             {/* 4. Berat Barang */}
+                            <label htmlFor="berat_barang" className="text-sm font-bold text-black-700">
+                                Berat Barang :
+                            </label>
                             <input
                                 type="number"
                                 name="berat_barang"
@@ -284,18 +316,72 @@ export default function DetailBarangAdminPage() {
                                 placeholder="Berat (gram)"
                             />
 
+
                             {/* 5. Tanggal Garansi (jika kategori barang elektronik) */}
+
                             {barang?.kategori_barang?.includes("Elektronik") && (
-                                <input
-                                    type="date"
-                                    name="tanggal_garansi"
-                                    value={formData.tanggal_garansi?.split("T")[0] || ""}
-                                    onChange={(e) => setFormData({ ...formData, tanggal_garansi: e.target.value })}
-                                    className="border px-3 py-2 rounded"
-                                />
+                                <>
+                                    <label htmlFor="tanggal_garansi" className="text-sm font-bold text-black-700">
+                                        Tanggal Garansi Barang :
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="tanggal_garansi"
+                                        value={formData.tanggal_garansi?.split("T")[0] || ""}
+                                        onChange={(e) => setFormData({ ...formData, tanggal_garansi: e.target.value })}
+                                        className="border px-3 py-2 rounded"
+                                    />
+                                </>
                             )}
 
+                            {/* 5.1 Tanggal Masuk */}
+                            <label htmlFor="tanggal_masuk" className="text-sm font-bold text-black-700">
+                                Tanggal Masuk :
+                            </label>
+                            <input
+                                type="date"
+                                name="tanggal_masuk"
+                                value={formData.tanggal_masuk?.split("T")[0] || ""}
+                                onChange={(e) => setFormData({ ...formData, tanggal_masuk: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                            />
+
+                            {/* 5.2 Tanggal Keluar */}
+                            <label htmlFor="tanggal_keluar" className="text-sm font-bold text-black-700">
+                                Tanggal Keluar :
+                            </label>
+                            <input
+                                type="date"
+                                name="tanggal_keluar"
+                                value={formData.tanggal_keluar?.split("T")[0] || ""}
+                                onChange={(e) => setFormData({ ...formData, tanggal_keluar: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                            />
+
+
+                            {/* Pilih Penitip */}
+                            <label htmlFor="nama_barang" className="text-sm font-bold text-black-700">
+                                Pilih Penitip :
+                            </label>
+                            <select
+                                value={formData.id_penitip || ""}
+                                onChange={(e) => setFormData({ ...formData, id_penitip: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                            >
+                                <option value=""></option>
+                                {penitipOptions.map((penitip) => (
+                                    <option key={penitip.id_penitip} value={penitip.id_penitip}>
+                                        {penitip.id_penitip} - {penitip.nama}
+                                    </option>
+                                ))}
+                            </select>
+
+
                             {/* 6. Deskripsi Barang */}
+
+                            <label htmlFor="deskripsi_barang" className="text-sm font-bold text-black-700">
+                                Deskripsi :
+                            </label>
                             <textarea
                                 name="deskripsi_barang"
                                 value={formData.deskripsi_barang || ""}
