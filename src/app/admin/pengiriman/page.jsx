@@ -137,12 +137,14 @@ export default function AdminPengirimanPage() {
         return "bg-green-100 text-green-800";
       case "GAGAL":
         return "bg-red-100 text-red-800";
-      case "ATUR KURIR":
+      case "BUTUH KURIR":
         return "bg-yellow-100 text-yellow-800";
       case "ATUR TANGGAL KIRIM":
         return "bg-yellow-100 text-yellow-800";
       case "ATUR JADWAL AMBIL":
         return "bg-yellow-100 text-yellow-800";
+      case "KIRIM KURIR":
+        return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -155,10 +157,13 @@ export default function AdminPengirimanPage() {
     ) {
       if (item.jenis_pengiriman === "COURIER") {
         if (!item.nama_kurir) {
-          return "ATUR KURIR";
+          return "BUTUH KURIR";
         }
         if (!item.tanggal_kirim) {
           return "ATUR TANGGAL KIRIM";
+        }
+        if (item.tanggal_kirim && item.nama_kurir) {
+          return "KIRIM KURIR";
         }
       }
 
@@ -250,12 +255,12 @@ export default function AdminPengirimanPage() {
     const batasMax = new Date(lunas);
     batasMax.setDate(batasMax.getDate() + 2);
 
-    if (selected > batasMax) {
-      toast.error(
-        "Jadwal pengambilan tidak boleh lebih dari 2 hari setelah tanggal lunas."
-      );
-      return;
-    }
+    // if (selected > batasMax) {
+    //   toast.error(
+    //     "Jadwal pengambilan tidak boleh lebih dari 2 hari setelah tanggal lunas."
+    //   );
+    //   return;
+    // }
 
     try {
       const res = await fetch(
@@ -349,10 +354,60 @@ export default function AdminPengirimanPage() {
     }
   };
 
+  const handleKirimKurir = async (id_pengiriman) => {
+    try {
+      const res = await fetch(`/api/pengiriman/aturjadwal/${id_pengiriman}`, {
+        method: "PUT",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Gagal mengirim kurir.");
+        return;
+      }
+
+      toast.success("Kurir dalam perjalanan");
+      fetchPengiriman();
+      setShowSidebar(false);
+    } catch (err) {
+      console.error("Error:", err);
+      toast.error("Terjadi kesalahan saat mengirim kurir.");
+    }
+  };
+
+  const handleDelete = async (id_pengiriman) => {
+    if (!id_pengiriman) return;
+
+    const konfirmasi = window.confirm(
+      "Yakin ingin membatalkan pengiriman ini?"
+    );
+    if (!konfirmasi) return;
+
+    try {
+      const res = await fetch(`/api/pengiriman/aturjadwal/${id_pengiriman}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(data.message || "Pengiriman dibatalkan.");
+        setShowSidebar(false);
+        fetchPengiriman();
+      } else {
+        alert(data.error || "Gagal membatalkan pengiriman.");
+      }
+    } catch (err) {
+      console.error("handleDelete error:", err);
+      alert("Terjadi kesalahan saat menghapus.");
+    }
+  };
+
   const statusOptions = [
     { label: "Semua", value: "ALL" },
-    { label: "Butuh Kurir", value: "Butuh Kurir" },
-    { label: "Menunggu Bayar", value: "Menunggu Bayar" },
+    { label: "Butuh Kurir", value: "BUTUH KURIR" },
+    { label: "Menunggu Bayar", value: "MENUNGGU BAYAR" },
     { label: "Dalam Pengiriman", value: "Dalam Pengiriman" },
     { label: "Akan Diambil", value: "Akan Diambil" },
     { label: "Selesai", value: "Selesai" },
@@ -428,7 +483,7 @@ export default function AdminPengirimanPage() {
         {[...filteredList]
           .sort((a, b) => {
             const priority = {
-              "Butuh Kurir": 1,
+              "BUTUH KURIR": 1,
               "Atur Jadwal": 2,
               "Menunggu Bayar": 3,
               "Sedang Diproses": 4,
@@ -508,6 +563,16 @@ export default function AdminPengirimanPage() {
                     >
                       Lihat Detail
                     </button>
+                    {item.status_pengiriman === "IN_PROGRESS" &&
+                      item.tanggal_kirim &&
+                      item.nama_kurir && (
+                        <button
+                          className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                          onClick={() => handleKirimKurir(item.id_pengiriman)}
+                        >
+                          Kirim Kurir
+                        </button>
+                      )}
                     {(item.status_pengiriman === "IN_DELIVERY" ||
                       item.status_pengiriman === "PICKED_UP") && (
                       <button
@@ -519,9 +584,9 @@ export default function AdminPengirimanPage() {
                     )}
                     <button
                       className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
-                      // onClick={() => handleDelete(item.id_pengiriman)}
+                      onClick={() => handleDelete(item.id_pengiriman)}
                     >
-                      Hapus
+                      Batalkan Pengiriman
                     </button>
                   </div>
                 )}
@@ -679,7 +744,7 @@ export default function AdminPengirimanPage() {
               {/* Atur Kurir Dulu*/}
               {selectedTransaksi.jenis_pengiriman === "COURIER" &&
                 selectedTransaksi.status_pembayaran === "CONFIRMED" &&
-                getStatusLabel(selectedTransaksi) === "ATUR KURIR" && (
+                getStatusLabel(selectedTransaksi) === "BUTUH KURIR" && (
                   <div className="mt-6">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Pilih Kurir
@@ -706,6 +771,7 @@ export default function AdminPengirimanPage() {
                   </div>
                 )}
 
+              {/* Lalu Atur Jadwal Kirim*/}
               {selectedTransaksi.jenis_pengiriman === "COURIER" &&
                 selectedTransaksi.status_pembayaran === "CONFIRMED" &&
                 getStatusLabel(selectedTransaksi) === "ATUR TANGGAL KIRIM" && (
@@ -727,6 +793,21 @@ export default function AdminPengirimanPage() {
                       Simpan Tanggal Kirim
                     </button>
                   </div>
+                )}
+
+              {selectedTransaksi.jenis_pengiriman === "COURIER" &&
+                selectedTransaksi.status_pengiriman === "IN_PROGRESS" &&
+                selectedTransaksi.status_pembayaran === "CONFIRMED" &&
+                selectedTransaksi.tanggal_kirim &&
+                selectedTransaksi.nama_kurir && (
+                  <button
+                    onClick={() =>
+                      handleKirimKurir(selectedTransaksi.id_pengiriman)
+                    }
+                    className="mt-4 w-full px-4 py-2 bg-orange-600 text-white rounded"
+                  >
+                    Kirim Kurir
+                  </button>
                 )}
 
               {selectedTransaksi.jenis_pengiriman === "SELF_PICKUP" &&
