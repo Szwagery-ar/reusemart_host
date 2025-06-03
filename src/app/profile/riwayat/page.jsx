@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import ReuseButton from '@/components/ReuseButton/ReuseButton';
 import ReduseButton from '@/components/ReduseButton/ReduseButton';
 
+
+
 export default function Riwayat() {
     const [pending, setPending] = useState([]);
     const [history, setHistory] = useState([]);
@@ -13,6 +15,8 @@ export default function Riwayat() {
     const [error, setError] = useState(null);
     const [barangData, setBarangData] = useState({});
     const [showAll, setShowAll] = useState(false);
+    const [ratings, setRatings] = useState({});
+    const [modalRatingOpen, setModalRatingOpen] = useState(false);
 
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -87,7 +91,6 @@ export default function Riwayat() {
 
         return `${hari} ${bulan} ${tahun}, ${jam}:${menit}`;
     };
-
 
 
     useEffect(() => {
@@ -185,6 +188,76 @@ export default function Riwayat() {
     const handleLihatSemua = () => {
         setShowAll(!showAll);
     };
+
+    const handleRatingChange = (id_barang, newRating) => {
+        setRatings((prev) => ({
+            ...prev,
+            [id_barang]: newRating
+        }));
+    };
+
+    const semuaBarangBelumRated = (id_transaksi) => {
+        const barangList = barangData[id_transaksi] || [];
+        return barangList.some(b => b.is_rated === 0 || b.is_rated === null);
+    };
+
+
+
+    const submitRatings = async () => {
+        const barangToRate = barangData[selectedTransaction.id_transaksi] || [];
+
+        for (const barang of barangToRate) {
+            const rating = ratings[barang.id_barang];
+
+            if (!rating || typeof rating !== 'number' || rating < 1 || rating > 5) {
+                console.warn(`Rating tidak valid untuk barang ${barang.id_barang}:`, rating);
+                continue;
+            }
+
+            if (!barang.id_barang) {
+                console.error("❌ Tidak ada id_barang pada barang:", barang);
+                continue;
+            }
+
+            try {
+                const res = await fetch(`/api/barang/${barang.id_barang}/rating`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating }),
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    console.error(`❌ Gagal menyimpan rating untuk barang ${barang.id_barang}:`, data.message);
+                } else {
+                    console.log(`✅ Rating berhasil untuk ${barang.id_barang}:`, rating);
+
+                    setRatings(prev => ({
+                        ...prev,
+                        [barang.id_barang]: rating
+                    }));
+                }
+            } catch (err) {
+                console.error(`❌ Error rating barang ${barang.id_barang}:`, err);
+            }
+        }
+
+        try {
+            await fetch(`/api/transaksi/mark-rated?id_transaksi=${selectedTransaction.id_transaksi}`, {
+                method: 'PATCH',
+            });
+            console.log("✅ is_rated berhasil diperbarui.");
+        } catch (error) {
+            console.error("❌ Gagal mengupdate is_rated:", error);
+        }
+
+        await fetchBarang(selectedTransaction.id_transaksi);
+
+        alert('Rating berhasil disimpan!');
+        setModalRatingOpen(false);
+    };
+
+
 
     return (
         <div className="">
@@ -379,7 +452,7 @@ export default function Riwayat() {
                                             </div>
                                         ))}
 
-                                        <div className="flex flex-col justify-between">
+                                        <div className="flex flex-col items-end gap-2">
                                             {barangData[item.id_transaksi]?.length > 1 && (
                                                 <p className="text-sm text-gray-500 text-right">
                                                     + {barangData[item.id_transaksi]?.length - 1} barang lainnya
@@ -388,6 +461,17 @@ export default function Riwayat() {
                                             <ReuseButton>
                                                 <div className="px-4 py-2" onClick={() => openModal(item)}>Lihat Detail Transaksi</div>
                                             </ReuseButton>
+
+                                            {item.status_transaksi === "DONE" && item.is_rated !== 1 && (
+                                                <ReuseButton>
+                                                    <div className="px-4 py-2" onClick={() => {
+                                                        setSelectedTransaction(item);
+                                                        setModalRatingOpen(true);
+                                                    }}>
+                                                        Beri Rating Barang
+                                                    </div>
+                                                </ReuseButton>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -583,6 +667,55 @@ export default function Riwayat() {
                             </div>
 
 
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {modalRatingOpen && selectedTransaction && (
+                <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+                    <div className="bg-white rounded-3xl p-6 w-[80%] md:w-[50%] lg:w-[40%] max-h-[90%] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold">Beri Rating Pada Barang</h2>
+                            <button onClick={() => setModalRatingOpen(false)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {(barangData[selectedTransaction.id_transaksi] || []).map((barang) => (
+                                <div key={barang.id_barang || `${barang.id}_${barang.nama_barang}`} className="border p-4 rounded-xl shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                        <img src={barang.src_img || "/default.jpg"} alt={barang.nama_barang} className="w-16 h-16 rounded-lg object-cover" />
+                                        <div>
+                                            <p className="font-semibold text-sm truncate w-32">{barang.nama_barang}</p>
+                                            <p className="text-xs text-gray-500">Rp{formatRupiah(barang.harga_barang)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1 mt-2 justify-start">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <svg
+                                                key={star}
+                                                onClick={() => handleRatingChange(barang.id_barang, star)}
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 24 24"
+                                                fill={(ratings?.[barang.id_barang] || 0) >= star ? "#FACC15" : "none"}
+                                                stroke="#FACC15"
+                                                strokeWidth="2"
+                                                className="w-5 h-5 cursor-pointer hover:scale-110 transition"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.518 4.674a1 1 0 00.95.69h4.862c.969 0 1.371 1.24.588 1.81l-3.93 2.846a1 1 0 00-.364 1.118l1.518 4.674c.3.921-.755 1.688-1.538 1.118l-3.93-2.846a1 1 0 00-1.175 0l-3.93 2.846c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118l-3.93-2.846c-.783-.57-.38-1.81.588-1.81h4.862a1 1 0 00.95-.69l1.518-4.674z" />
+                                            </svg>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-4 text-right">
+                            <ReuseButton onClick={submitRatings}>
+                                <div className="px-4 py-2">Simpan</div>
+                            </ReuseButton>
                         </div>
                     </div>
                 </div>

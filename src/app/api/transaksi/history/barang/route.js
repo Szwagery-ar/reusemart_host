@@ -35,11 +35,13 @@ export async function GET(request) {
         // Ambil data barang berdasarkan id_transaksi
         let query = `
         SELECT 
+                b.id_barang,
                 b.kode_produk, 
                 b.nama_barang, 
                 b.harga_barang, 
                 b.berat_barang, 
                 b.tanggal_garansi, 
+                b.rating,
                 gb.src_img
             FROM 
                 bridgebarangtransaksi bt

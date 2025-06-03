@@ -181,6 +181,59 @@ export async function POST(request) {
     }
 }
 
+// export async function GET(request) {
+//     try {
+//         await pool.query("SET SESSION group_concat_max_len = 10000");
+
+//         const { searchParams } = new URL(request.url);
+//         const q = searchParams.get("q")?.toLowerCase() || "";
+
+//         const [rows] = await pool.query(
+//             `
+//             SELECT 
+//                 b.id_barang,
+//                 b.kode_produk,
+//                 b.nama_barang,
+//                 b.deskripsi_barang,
+//                 b.harga_barang,
+//                 b.status_titip,
+//                 b.tanggal_masuk,
+//                 b.tanggal_keluar,
+//                 b.tanggal_garansi,
+//                 b.id_penitipan,
+//                 p.id_penitip,
+//                 p.nama AS penitip_name,
+//                 GROUP_CONCAT(
+//                     JSON_OBJECT(
+//                         'id_gambar', g.id_gambar,
+//                         'src_img', g.src_img
+//                     )
+//                 ) AS gambar_barang
+//             FROM barang b
+//             LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+//             LEFT JOIN gambarbarang g ON b.id_barang = g.id_barang
+//             WHERE LOWER(b.nama_barang) LIKE ? OR LOWER(b.kode_produk) LIKE ?
+//             GROUP BY b.id_barang
+//             ORDER BY b.tanggal_masuk DESC
+//             `,
+//             [`%${q}%`, `%${q}%`]
+//         );
+
+//         const parsed = rows.map(row => ({
+//             ...row,
+//             gambar_barang: row.gambar_barang
+//                 ? JSON.parse(`[${row.gambar_barang}]`)
+//                 : []
+//         }));
+
+//         return NextResponse.json({ barang: parsed }, { status: 200 });
+//     } catch (error) {
+//         console.error("GET /api/transaksi-penitipan error:", error);
+//         return NextResponse.json({ error: "Gagal mengambil data barang penitipan." }, { status: 500 });
+//     }
+// }
+
+
 export async function GET(request) {
     try {
         await pool.query("SET SESSION group_concat_max_len = 10000");
@@ -191,45 +244,113 @@ export async function GET(request) {
         const [rows] = await pool.query(
             `
             SELECT 
-                b.id_barang,
-                b.kode_produk,
-                b.nama_barang,
-                b.deskripsi_barang,
-                b.harga_barang,
-                b.status_titip,
-                b.tanggal_masuk,
-                b.tanggal_keluar,
-                b.tanggal_garansi,
                 b.id_penitipan,
-                p.id_penitip,
+                MIN(b.tanggal_masuk) AS tanggal_masuk,
                 p.nama AS penitip_name,
                 GROUP_CONCAT(
                     JSON_OBJECT(
-                        'id_gambar', g.id_gambar,
-                        'src_img', g.src_img
+                        'id_barang', b.id_barang,
+                        'nama_barang', b.nama_barang,
+                        'kode_produk', b.kode_produk,
+                        'harga_barang', b.harga_barang,
+                        'status_titip', b.status_titip,
+                        'tanggal_garansi', b.tanggal_garansi,
+                        'tanggal_keluar', b.tanggal_keluar,
+                        'gambar_barang', IFNULL((
+                            SELECT GROUP_CONCAT(
+                                JSON_OBJECT('id_gambar', g.id_gambar, 'src_img', g.src_img)
+                                SEPARATOR ','
+                            )
+                            FROM gambarbarang g
+                            WHERE g.id_barang = b.id_barang
+                        ), '')
                     )
-                ) AS gambar_barang
+                ) AS barang_json
             FROM barang b
             LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
-            LEFT JOIN gambarbarang g ON b.id_barang = g.id_barang
             WHERE LOWER(b.nama_barang) LIKE ? OR LOWER(b.kode_produk) LIKE ?
-            GROUP BY b.id_barang
-            ORDER BY b.tanggal_masuk DESC
+            GROUP BY b.id_penitipan
+            ORDER BY tanggal_masuk DESC
             `,
             [`%${q}%`, `%${q}%`]
         );
 
+
+
         const parsed = rows.map(row => ({
             ...row,
-            gambar_barang: row.gambar_barang
-                ? JSON.parse(`[${row.gambar_barang}]`)
-                : []
+            barang: JSON.parse(`[${row.barang_json}]`.replace(/}\s*{/g, '},{')).map(b => ({
+                ...b,
+                gambar_barang: b.gambar_barang
+                    ? JSON.parse(`[${b.gambar_barang}]`.replace(/}\s*{/g, '},{'))
+                    : []
+            }))
         }));
 
         return NextResponse.json({ barang: parsed }, { status: 200 });
+
     } catch (error) {
         console.error("GET /api/transaksi-penitipan error:", error);
         return NextResponse.json({ error: "Gagal mengambil data barang penitipan." }, { status: 500 });
     }
 }
+
+// export async function GET(request) {
+//     try {
+//         await pool.query("SET SESSION group_concat_max_len = 10000");
+
+//         const { searchParams } = new URL(request.url);
+//         const q = searchParams.get("q")?.toLowerCase() || "";
+
+//         const [rows] = await pool.query(
+//             `
+//             SELECT
+//                 b.id_penitipan,
+//                 MIN(b.tanggal_masuk) AS tanggal_masuk,
+//                 p.nama AS penitip_name,
+//                 GROUP_CONCAT(
+//                     DISTINCT JSON_OBJECT(
+//                         'id_barang', b.id_barang,
+//                         'nama_barang', b.nama_barang,
+//                         'kode_produk', b.kode_produk,
+//                         'harga_barang', b.harga_barang,
+//                         'status_titip', b.status_titip,
+//                         'tanggal_garansi', b.tanggal_garansi,
+//                         'tanggal_keluar', b.tanggal_keluar,
+//                         'gambar_barang', IFNULL(
+//                             (
+//                                 SELECT JSON_ARRAYAGG(
+//                                     JSON_OBJECT(
+//                                         'id_gambar', g.id_gambar,
+//                                         'src_img', g.src_img
+//                                     )
+//                                 )
+//                                 FROM gambarbarang g
+//                                 WHERE g.id_barang = b.id_barang
+//                             ),
+//                             JSON_ARRAY()
+//                         )
+//                     )
+//                 ) AS barang_json
+//             FROM barang b
+//             LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+//             WHERE LOWER(b.nama_barang) LIKE ? OR LOWER(b.kode_produk) LIKE ?
+//             GROUP BY b.id_penitipan
+//             ORDER BY tanggal_masuk DESC
+//             `,
+//             [`%${q}%`, `%${q}%`]
+//         );
+
+//         const parsed = rows.map(row => ({
+//             ...row,
+//             barang: JSON.parse(`[${row.barang_json}]`.replace(/}\s*{/g, '},{'))
+//         }));
+
+//         return NextResponse.json({ barang: parsed }, { status: 200 });
+
+//     } catch (error) {
+//         console.error("GET /api/transaksi-penitipan error:", error);
+//         return NextResponse.json({ error: "Gagal mengambil data barang penitipan." }, { status: 500 });
+//     }
+// }
 
