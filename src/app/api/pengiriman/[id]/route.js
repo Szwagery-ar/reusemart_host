@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 
-export async function GET(request, { params }) {
-  const { id } = params;
+export async function GET(request, context) {
+  const { id } = context.params;
 
   try {
     const [result] = await pool.query(

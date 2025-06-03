@@ -16,8 +16,6 @@ export default function TransaksiPenitipanPage() {
     const [kategoriOptions, setKategoriOptions] = useState([]);
     const [qcOptions, setQcOptions] = useState([]);
 
-
-
     const [formDataList, setFormDataList] = useState([
         {
             nama_barang: '',

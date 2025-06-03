@@ -154,8 +154,6 @@ export default function AdminDonasiPage() {
               <tr key={item.id_donasi} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-right font-medium">
                   <div className="relative dropdown-action flex justify-center items-center">
-
-                    
                     <button
                       onClick={() =>
                         setActiveDropdown(activeDropdown === item.id_donasi ? null : item.id_donasi)
