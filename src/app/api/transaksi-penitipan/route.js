@@ -81,9 +81,28 @@ export async function POST(request) {
         const itemsRaw = formData.get("items");
         const items = JSON.parse(itemsRaw);
 
+
         if (!Array.isArray(items) || items.length === 0) {
             return NextResponse.json({ error: "Minimal 1 barang harus diisi." }, { status: 400 });
         }
+
+        const id_penitip = items[0].id_penitip;
+        const tanggal_masuk = new Date();
+
+        const [insertPenitipan] = await pool.query(
+            `INSERT INTO penitipanbarang (id_penitip, tanggal_masuk) VALUES (?, ?)`,
+            [id_penitip, tanggal_masuk]
+        );
+        const id_penitipan = insertPenitipan.insertId;
+
+        const year = tanggal_masuk.getFullYear();
+        const month = String(tanggal_masuk.getMonth() + 1).padStart(2, '0');
+        const noNota = `${year}.${month}.${id_penitipan}`;
+
+        await pool.query(
+            `UPDATE penitipanbarang SET no_nota = ? WHERE id_penitipan = ?`,
+            [noNota, id_penitipan]
+        );
 
         const [lastBarang] = await pool.query("SELECT id_barang FROM barang ORDER BY id_barang DESC LIMIT 1");
         let nextId = lastBarang.length > 0 ? lastBarang[0].id_barang + 1 : 1;
@@ -100,25 +119,26 @@ export async function POST(request) {
                 return NextResponse.json({ error: `Semua field wajib diisi untuk barang ke-${i + 1}` }, { status: 400 });
             }
 
-            if (kategori_ids.includes(1) && !tanggal_garansi) {
-                return NextResponse.json({ error: `Tanggal garansi wajib diisi untuk kategori Elektronik (barang ke-${i + 1})` }, { status: 400 });
-            }
+            // if (kategori_ids.includes(1) && !tanggal_garansi) {
+            //     return NextResponse.json({ error: `Tanggal garansi wajib diisi untuk kategori Elektronik (barang ke-${i + 1})` }, { status: 400 });
+            // }
 
             const kode_produk = `${nama_barang.charAt(0).toUpperCase()}${nextId}`;
             const status_titip = "AVAILABLE";
-            const tanggal_masuk = new Date();
+            //const tanggal_masuk = new Date();
+            const tanggal_expire = new Date(tanggal_masuk);
+            tanggal_expire.setDate(tanggal_expire.getDate() + 30);
 
             const [insertResult] = await pool.query(
                 `INSERT INTO barang (
-                    id_penitip, kode_produk, nama_barang, deskripsi_barang,
-                    berat_barang, harga_barang, tanggal_garansi, tanggal_masuk, status_titip, id_petugas_qc
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    id_penitip, id_penitipan,kode_produk, nama_barang, deskripsi_barang,
+                    berat_barang, harga_barang, tanggal_garansi, tanggal_masuk, tanggal_expire, status_titip, id_petugas_qc
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    id_penitip, kode_produk, nama_barang, deskripsi_barang,
-                    berat_barang, harga_barang, tanggal_garansi || null, tanggal_masuk, status_titip, id_petugas_qc
+                    id_penitip, id_penitipan, kode_produk, nama_barang, deskripsi_barang,
+                    berat_barang, harga_barang, tanggal_garansi || null, tanggal_masuk, tanggal_expire, status_titip, id_petugas_qc
                 ]
             );
-
 
             const id_barang = insertResult.insertId;
 
@@ -180,6 +200,7 @@ export async function GET(request) {
                 b.tanggal_masuk,
                 b.tanggal_keluar,
                 b.tanggal_garansi,
+                b.id_penitipan,
                 p.id_penitip,
                 p.nama AS penitip_name,
                 GROUP_CONCAT(
