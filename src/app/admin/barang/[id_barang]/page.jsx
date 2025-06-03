@@ -18,7 +18,6 @@ export default function DetailBarangAdminPage() {
 
 
 
-
     useEffect(() => {
         const fetchBarang = async () => {
             try {
@@ -102,6 +101,33 @@ export default function DetailBarangAdminPage() {
             previewImages.forEach((src) => URL.revokeObjectURL(src));
         };
     }, [previewImages]);
+
+    const handleKonfirmasiPengambilan = async (id_barang) => {
+        try {
+            const res = await fetch(`/api/barang/by-gudang/picked/${id_barang}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    status_titip: "PICKED_UP"
+                }),
+            });
+
+            if (!res.ok) throw new Error("Gagal mengkonfirmasi pengambilan");
+
+            alert("Status diperbarui ke PICKED_UP.");
+
+            // Update state barang yang sedang dilihat
+            setBarang((prev) => ({
+                ...prev,
+                status_titip: "PICKED_UP"
+            }));
+        } catch (error) {
+            console.error("Error konfirmasi pengambilan:", error);
+            alert("Terjadi kesalahan saat mengkonfirmasi.");
+        }
+    };
 
     useEffect(() => {
         const fetchPenitip = async () => {
@@ -214,6 +240,19 @@ export default function DetailBarangAdminPage() {
                         <div className="text-sm whitespace-pre-line leading-relaxed">
                             {barang.deskripsi_barang || 'Tidak ada deskripsi.'}
                         </div>
+
+                        {["READY_PICK_UP"].includes(barang?.status_titip?.toUpperCase()) && (
+                            <ReuseButton className="mt-4">
+                                <button
+                                    className="p-2 text-lg font-medium"
+                                    onClick={() => handleKonfirmasiPengambilan(barang.id_barang)}
+                                >
+                                    Barang Telah Diambil Penitip
+                                </button>
+                            </ReuseButton>
+                        )}
+
+
                     </div>
 
                     {/* <div className="mt-6">
