@@ -49,6 +49,25 @@ export async function PATCH(request, { params }) {
         [id_transaksi]
       );
 
+      const [[trxData]] = await pool.query(
+        `SELECT id_pembeli, tambahan_poin FROM transaksi WHERE id_transaksi = ?`,
+        [id_transaksi]
+      );
+
+      const { id_pembeli, tambahan_poin } = trxData;
+
+      // Tambah poin loyalitas ke pembeli
+      await pool.query(
+        `UPDATE pembeli 
+          SET pembeli.poin_loyalitas = poin_loyalitas + ? 
+          WHERE id_pembeli = ?`,
+        [tambahan_poin, id_pembeli]
+      );
+
+      console.log(
+        `Poin loyalitas ${tambahan_poin} berhasil ditambahkan ke pembeli ${id_pembeli}`
+      );
+
       // 🔔 Kirim notifikasi ke semua penitip barang dalam transaksi ini
       const [penitipRows] = await pool.query(
         `SELECT DISTINCT p.expo_push_token, p.nama AS nama_penitip, b.nama_barang
