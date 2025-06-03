@@ -27,8 +27,8 @@ export async function PATCH(request, { params }) {
 
     await pool.query(
       `UPDATE pembayaran 
-             SET status_pembayaran = ?, id_petugas_cs = ? 
-             WHERE id_pembayaran = ?`,
+        SET status_pembayaran = ?, id_petugas_cs = ? 
+        WHERE id_pembayaran = ?`,
       [status_pembayaran, id_petugas_cs, id_pembayaran]
     );
 
@@ -36,16 +36,16 @@ export async function PATCH(request, { params }) {
       // ✅ Konfirmasi berhasil → transaksi PAID, barang SOLD
       await pool.query(
         `UPDATE transaksi 
-                 SET status_transaksi = 'PAID', tanggal_lunas = CURRENT_TIMESTAMP 
-                 WHERE id_transaksi = ?`,
+          SET status_transaksi = 'PAID', tanggal_lunas = CURRENT_TIMESTAMP 
+          WHERE id_transaksi = ?`,
         [id_transaksi]
       );
 
       await pool.query(
         `UPDATE barang b
-                 JOIN bridgebarangtransaksi bt ON bt.id_barang = b.id_barang
-                 SET b.status_titip = 'SOLD', b.tanggal_keluar = CURRENT_TIMESTAMP
-                 WHERE bt.id_transaksi = ?`,
+          JOIN bridgebarangtransaksi bt ON bt.id_barang = b.id_barang
+          SET b.status_titip = 'SOLD', b.tanggal_keluar = CURRENT_TIMESTAMP
+          WHERE bt.id_transaksi = ?`,
         [id_transaksi]
       );
 

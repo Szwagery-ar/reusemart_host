@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { EllipsisVertical, Printer, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import jsPDF from "jspdf";
 
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { handlePrintPDF } from "../../../utils/printPengirimanNota";
+
 export default function AdminPengirimanPage() {
   const [transaksiList, setTransaksiList] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [selectedTransaksi, setSelectedTransaksi] = useState(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedPickupDate, setSelectedPickupDate] = useState("");
@@ -24,7 +25,7 @@ export default function AdminPengirimanPage() {
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   useEffect(() => {
-    if (showModal) {
+    if (showSidebar) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -32,7 +33,17 @@ export default function AdminPengirimanPage() {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [showModal]);
+  }, [showSidebar]);
+
+  const fetchPengiriman = async () => {
+    try {
+      const res = await fetch("/api/pengiriman/aturjadwal");
+      const data = await res.json();
+      setTransaksiList(Array.isArray(data.pengiriman) ? data.pengiriman : []);
+    } catch (err) {
+      console.error("Gagal fetch data pengiriman:", err);
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -61,22 +72,12 @@ export default function AdminPengirimanPage() {
         toast.success(
           data.message || "Transaksi dibatalkan & barang jadi donasi."
         );
-        setShowModal(false);
+        setShowSidebar(false);
         fetchPengiriman();
       }
     } catch (error) {
       console.error("Error:", error);
       toast.error("Terjadi kesalahan saat membatalkan transaksi.");
-    }
-  };
-
-  const fetchPengiriman = async () => {
-    try {
-      const res = await fetch("/api/pengiriman/aturjadwal");
-      const data = await res.json();
-      setTransaksiList(Array.isArray(data.pengiriman) ? data.pengiriman : []);
-    } catch (err) {
-      console.error("Gagal fetch data pengiriman:", err);
     }
   };
 
@@ -126,45 +127,57 @@ export default function AdminPengirimanPage() {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case "IN_PROGRESS":
+      case "DALAM PROSES":
         return "bg-gray-100 text-gray-800";
-      case "IN_DELIVERY":
-        return "bg-yellow-100 text-yellow-800";
-      case "PICKED_UP":
+      case "SEDANG DIKIRIM":
+        return "bg-cyan-100 text-cyan-800";
+      case "BISA DIAMBIL":
         return "bg-blue-100 text-blue-800";
-      case "DONE":
+      case "SELESAI":
         return "bg-green-100 text-green-800";
-      case "FAILED":
+      case "GAGAL":
         return "bg-red-100 text-red-800";
+      case "ATUR KURIR":
+        return "bg-yellow-100 text-yellow-800";
+      case "ATUR TANGGAL KIRIM":
+        return "bg-yellow-100 text-yellow-800";
+      case "ATUR JADWAL AMBIL":
+        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusLabel = (item) => {
-    if (item.status_pengiriman === "IN_PROGRESS") {
-      if (item.status_pembayaran === "PENDING") return "Menunggu Bayar";
-      if (
-        item.status_pembayaran === "CONFIRMED" &&
-        item.jenis_pengiriman === "SELF_PICKUP"
-      )
-        return "Atur Jadwal";
-      if (
-        item.status_pembayaran === "CONFIRMED" &&
-        item.jenis_pengiriman === "COURIER"
-      )
-        return "Butuh Kurir";
-      return "Sedang Diproses";
+    if (
+      item.status_pengiriman === "IN_PROGRESS" &&
+      item.status_pembayaran === "CONFIRMED"
+    ) {
+      if (item.jenis_pengiriman === "COURIER") {
+        if (!item.nama_kurir) {
+          return "ATUR KURIR";
+        }
+        if (!item.tanggal_kirim) {
+          return "ATUR TANGGAL KIRIM";
+        }
+      }
+
+      if (item.jenis_pengiriman === "SELF_PICKUP") {
+        return "ATUR JADWAL AMBIL";
+      }
     }
+
     switch (item.status_pengiriman) {
+      case "IN_PROGRESS":
+        return "MENUNGGU PEMBAYARAN";
       case "IN_DELIVERY":
-        return "Dalam Pengiriman";
+        return "SEDANG DIKIRIM";
       case "PICKED_UP":
-        return "Akan Diambil";
+        return "BISA DIAMBIL";
       case "DONE":
-        return "Selesai";
+        return "SELESAI";
       case "FAILED":
-        return "Gagal";
+        return "GAGAL";
       default:
         return item.status_pengiriman;
     }
@@ -203,7 +216,7 @@ export default function AdminPengirimanPage() {
       if (kurirRes.ok) setKurirList(kurirData.kurir);
       if (detailRes.ok) {
         setTransaksiDetail(detailData.transaksi);
-        setShowModal(true); // Pindahkan ke sini setelah data siap
+        setShowSidebar(true);
       }
     } catch (err) {
       console.error("Gagal fetch kurir atau detail:", err);
@@ -257,7 +270,7 @@ export default function AdminPengirimanPage() {
       if (!res.ok) throw new Error("Gagal mengatur jadwal ambil");
 
       toast.success("Jadwal pengambilan berhasil diatur.");
-      setShowModal(false);
+      setShowSidebar(false);
       fetchPengiriman();
     } catch (err) {
       console.error(err);
@@ -266,10 +279,7 @@ export default function AdminPengirimanPage() {
   };
 
   const handlePenjadwalan = async () => {
-    if (!selectedDate || !selectedKurir) {
-      toast.error("Mohon isi semua field");
-      return;
-    }
+    if (!selectedDate) return toast.error("Tanggal wajib diisi.");
 
     const pesanDate = new Date(selectedTransaksi.tanggal_pesan);
     const selected = new Date(selectedDate);
@@ -293,19 +303,49 @@ export default function AdminPengirimanPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tanggal_kirim: selectedDate,
-            id_kurir: selectedKurir,
           }),
         }
       );
 
-      if (!res.ok) throw new Error("Gagal menjadwalkan pengiriman");
+      const data = await res.json();
 
-      toast.success("Pengiriman berhasil dijadwalkan!");
-      setShowModal(false);
+      if (!res.ok) {
+        toast.error(data.error || "Gagal menyimpan tanggal kirim.");
+        return;
+      }
+
+      toast.success("Tanggal kirim berhasil disimpan.");
+      setShowSidebar(false);
       fetchPengiriman();
     } catch (err) {
-      console.error("Gagal menjadwalkan:", err);
-      toast.error("Terjadi kesalahan saat menyimpan jadwal");
+      toast.error("Gagal menyimpan tanggal kirim.");
+    }
+  };
+
+  const handlePilihKurir = async () => {
+    if (!selectedKurir) return toast.error("Kurir wajib dipilih.");
+
+    try {
+      const res = await fetch(
+        `/api/pengiriman/aturjadwal/${selectedTransaksi.id_pengiriman}/kurir`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_kurir: selectedKurir }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        return toast.error(data.error || "Gagal menetapkan kurir.");
+      }
+
+      toast.success("Kurir berhasil ditetapkan dan pengiriman dimulai.");
+      setShowSidebar(false);
+      fetchPengiriman();
+    } catch (err) {
+      console.error("Gagal menetapkan kurir:", err);
+      toast.error("Terjadi kesalahan saat menetapkan kurir.");
     }
   };
 
@@ -326,159 +366,9 @@ export default function AdminPengirimanPage() {
       toast.success("Jadwal pengambilan berhasil diatur.");
     } catch (err) {
       toast.error("Gagal update status");
+    } finally {
+      setShowSidebar(false);
     }
-  };
-
-  const handlePrintPDF = () => {
-    const t = transaksiDetail;
-    if (!t) return;
-
-    const doc = new jsPDF();
-    let y = 10;
-
-    const formatCurrency = (val) => formatRupiah(val);
-
-    const jenisPengiriman =
-      t.jenis_pengiriman === "COURIER"
-        ? "dibawa oleh kurir"
-        : "diambil oleh pembeli";
-    const labelTanggal =
-      t.jenis_pengiriman === "COURIER" ? "Tanggal kirim" : "Tanggal ambil";
-    const tanggalLabel =
-      t.jenis_pengiriman === "COURIER"
-        ? t.tanggal_kirim
-          ? formatDateTime(t.tanggal_kirim)
-          : "-"
-        : t.tanggal_terima
-        ? formatDateTime(t.tanggal_terima)
-        : "-";
-
-    const deliveryInfo =
-      t.jenis_pengiriman === "COURIER"
-        ? `Delivery: Kurir ReUseMart (${t.nama_kurir || "-"})`
-        : "Delivery: - (diambil sendiri)";
-
-    const labelX = 10;
-    const valueX = 190;
-
-    // Header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text("ReUse Mart", labelX, y);
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    doc.text("Jl. Green Eco Park No. 456 Yogyakarta", labelX, y);
-    y += 10;
-
-    // Transaksi info
-    doc.text(`No Nota               : ${t.no_nota || "-"}`, labelX, y);
-    y += 6;
-    doc.text(`Tanggal pesan   : ${formatDateTime(t.tanggal_pesan)}`, labelX, y);
-    y += 6;
-    doc.text(
-      `Lunas pada         : ${formatDateTime(t.tanggal_lunas)}`,
-      labelX,
-      y
-    );
-    y += 6;
-    doc.text(`${labelTanggal.padEnd(20)}: ${tanggalLabel}`, labelX, y);
-    y += 12;
-
-    // Pembeli info
-    doc.setFont("helvetica", "bold");
-    doc.text(`Pembeli   : ${t.email_pembeli} / ${t.nama_pembeli}`, labelX, y);
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    if (t.alamat_pembeli) {
-      const lines = doc.splitTextToSize(t.alamat_pembeli, 180);
-      lines.forEach((line) => {
-        doc.text(line, labelX, y);
-        y += 6;
-      });
-    } else {
-      doc.text("-", labelX, y);
-      y += 6;
-    }
-    doc.text(deliveryInfo, labelX, y);
-    y += 12;
-
-    // Produk list
-    if (Array.isArray(t.produk)) {
-      t.produk.forEach((p) => {
-        doc.text(p.nama_barang || "-", labelX, y);
-        doc.text(formatCurrency(p.harga_barang), valueX, y, { align: "right" });
-        y += 6;
-      });
-      y += 4;
-    }
-
-    // Harga detail
-    const hargaAwal = Number(t.harga_awal || 0);
-    const ongkosKirim = Number(t.ongkos_kirim || 0);
-    const subtotal = hargaAwal + ongkosKirim;
-    const potongan = Number(t.diskon || 0);
-    const poinDiskon = potongan / 10000;
-
-    doc.text("Total", labelX, y);
-    doc.text(formatCurrency(hargaAwal), valueX, y, { align: "right" });
-    y += 6;
-
-    doc.text("Ongkos Kirim", labelX, y);
-    doc.text(formatCurrency(ongkosKirim), valueX, y, { align: "right" });
-    y += 6;
-
-    doc.text("Total", labelX, y);
-    doc.text(formatCurrency(subtotal), valueX, y, { align: "right" });
-    y += 6;
-
-    doc.text(`Potongan ${poinDiskon} poin`, labelX, y);
-    doc.text(`- ${formatCurrency(potongan)}`, valueX, y, { align: "right" });
-    y += 6;
-
-    doc.setFont("helvetica", "bold");
-    doc.text("Total", labelX, y);
-    doc.text(formatCurrency(t.harga_akhir), valueX, y, { align: "right" });
-    y += 10;
-    doc.setFont("helvetica", "normal");
-
-    // Poin
-    doc.text(`Poin dari pesanan ini: ${t.tambahan_poin || "-"}`, labelX, y);
-    y += 6;
-    doc.text(`Total poin customer  : ${t.poin_loyalitas || "-"}`, labelX, y);
-    y += 10;
-
-    // QC dan tanda tangan
-    doc.text(
-      `QC oleh: ${t.nama_petugas_cs || "-"} (${t.kode_petugas || "-"})`,
-      labelX,
-      y
-    );
-    y += 10;
-    doc.text(
-      t.jenis_pengiriman === "COURIER" ? "Diterima oleh:" : "Diambil oleh:",
-      labelX + 7,
-      y
-    );
-    y += 20;
-
-    doc.text(
-      `${t.nama_pembeli || "(...........................)"}`,
-      labelX + 7,
-      y
-    );
-    y += 6;
-    doc.text(
-      `Tanggal: ${
-        t.tanggal_terima
-          ? formatDateTime(t.tanggal_terima)
-          : "(...........................)"
-      }`,
-      labelX + 7,
-      y
-    );
-
-    // Save
-    doc.save(`nota_${t.no_nota}.pdf`);
   };
 
   const filteredList = transaksiList.filter((item) => {
@@ -590,10 +480,9 @@ export default function AdminPengirimanPage() {
               >
                 {getJenisLabel(item.jenis_pengiriman)}
               </div>
-
               <div
                 className={`flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(
-                  item.status_pengiriman
+                  getStatusLabel(item)
                 )}`}
               >
                 {getStatusLabel(item)}
@@ -641,13 +530,13 @@ export default function AdminPengirimanPage() {
           ))}
       </div>
 
-      {showModal && selectedTransaksi && transaksiDetail && (
+      {showSidebar && selectedTransaksi && transaksiDetail && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-end z-50">
           <div className="bg-white w-full h-full max-w-2xl overflow-auto">
             <div className="sticky top-0 left-0 right-0 z-20 px-6 py-4 flex justify-between items-center bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
               <h2 className="text-xl font-bold text-white">Detail Transaksi</h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowSidebar(false)}
                 className="text-white hover:text-red-500 transition-colors"
               >
                 <X />
@@ -779,18 +668,50 @@ export default function AdminPengirimanPage() {
               </div>
 
               <button
-                onClick={handlePrintPDF}
+                onClick={() =>
+                  handlePrintPDF(transaksiDetail, formatRupiah, formatDateTime)
+                }
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded flex items-center gap-2"
               >
                 <Printer size={16} /> Cetak PDF
               </button>
 
-              {/* Penjadwalan pengiriman */}
+              {/* Atur Kurir Dulu*/}
               {selectedTransaksi.jenis_pengiriman === "COURIER" &&
-                getStatusLabel(selectedTransaksi) === "Butuh Kurir" && (
+                selectedTransaksi.status_pembayaran === "CONFIRMED" &&
+                getStatusLabel(selectedTransaksi) === "ATUR KURIR" && (
                   <div className="mt-6">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Atur Jadwal Pengiriman
+                      Pilih Kurir
+                    </label>
+                    <select
+                      value={selectedKurir}
+                      onChange={(e) => setSelectedKurir(e.target.value)}
+                      className="w-full border px-3 py-2 rounded mb-3"
+                    >
+                      <option value="">-- Pilih Kurir --</option>
+                      {kurirList.map((kurir) => (
+                        <option key={kurir.id_pegawai} value={kurir.id_pegawai}>
+                          {kurir.nama}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={handlePilihKurir}
+                      className="w-full px-4 py-2 bg-indigo-600 text-white rounded"
+                    >
+                      Simpan Kurir
+                    </button>
+                  </div>
+                )}
+
+              {selectedTransaksi.jenis_pengiriman === "COURIER" &&
+                selectedTransaksi.status_pembayaran === "CONFIRMED" &&
+                getStatusLabel(selectedTransaksi) === "ATUR TANGGAL KIRIM" && (
+                  <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Atur Tanggal Kirim
                     </label>
                     <input
                       type="datetime-local"
@@ -799,33 +720,11 @@ export default function AdminPengirimanPage() {
                       onChange={(e) => setSelectedDate(e.target.value)}
                       className="w-full border px-3 py-2 rounded mb-3"
                     />
-
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Pilih Kurir
-                    </label>
-                    <select
-                      value={selectedKurir}
-                      onChange={(e) => setSelectedKurir(e.target.value)}
-                      className="w-full border px-3 py-2 rounded"
-                    >
-                      <option value="">-- Pilih Kurir --</option>
-                      {kurirList.map((kurir) => (
-                        <option
-                          key={kurir.id_pegawai}
-                          value={kurir.id_pegawai}
-                          disabled={kurir.status === "sibuk"}
-                        >
-                          {kurir.nama}{" "}
-                          {kurir.status === "sibuk" ? "[sibuk]" : ""}
-                        </option>
-                      ))}
-                    </select>
-
                     <button
                       onClick={handlePenjadwalan}
-                      className="mt-4 w-full px-4 py-2 bg-indigo-600 text-white rounded"
+                      className="w-full px-4 py-2 bg-indigo-600 text-white rounded"
                     >
-                      Simpan Jadwal
+                      Simpan Tanggal Kirim
                     </button>
                   </div>
                 )}
@@ -878,7 +777,7 @@ export default function AdminPengirimanPage() {
                 )}
 
               {selectedTransaksi.jenis_pengiriman === "SELF_PICKUP" &&
-                getStatusLabel(selectedTransaksi) !== "Selesai" && (
+                getStatusLabel(selectedTransaksi) === "BISA DIAMBIL" && (
                   <button
                     onClick={() =>
                       handleSetDone(selectedTransaksi.id_pengiriman)

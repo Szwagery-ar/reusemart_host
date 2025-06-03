@@ -7,8 +7,15 @@ export async function GET(request) {
     const search = searchParams.get("q");
 
     let query = `
-        SELECT p.id_pengiriman, t.no_nota, p.jenis_pengiriman, p.tanggal_kirim, p.status_pengiriman, 
-                peg.nama AS kurir_name, a.lokasi AS alamat_lokasi
+        SELECT 
+          p.id_pengiriman, 
+          t.no_nota,
+          p.jenis_pengiriman, 
+          p.tanggal_kirim, 
+          p.status_pengiriman, 
+          p.id_petugas_kurir,
+          peg.nama AS kurir_name, 
+          a.lokasi AS alamat_lokasi
         FROM pengiriman p
         JOIN transaksi t ON p.id_transaksi = t.id_transaksi
         LEFT JOIN pegawai peg ON p.id_petugas_kurir = peg.id_pegawai
