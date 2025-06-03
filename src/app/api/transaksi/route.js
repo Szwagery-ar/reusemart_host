@@ -102,7 +102,7 @@ export async function POST(request) {
     const maxDiskon = Math.floor(poinTersedia) * 10000;
     const diskon = Math.min(inputDiskon, maxDiskon, harga_awal);
     const harga_akhir = (harga_awal + ongkos_kirim - diskon).toFixed(2);
-    
+
     // Perhitungan poin
     let poinBaru = Math.floor((harga_awal - diskon) / 10000);
 
