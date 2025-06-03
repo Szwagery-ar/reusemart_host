@@ -24,6 +24,18 @@ export default function PenitipBarangPage() {
     const [showDetailModal, setShowDetailModal] = useState(false)
     const [selectedBarang, setSelectedBarang] = useState(null);
 
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => setIsClient(true), []);
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+
+        return () => clearInterval(intervalId);
+    }, []);
+
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -113,11 +125,51 @@ export default function PenitipBarangPage() {
             .replace('.', '');
     }
 
-    function countTanggalExpire(tanggalString) {
-        const tanggal = new Date(tanggalString);
-        tanggal.setDate(tanggal.getDate() + 30);
-        return tanggal;
-    }
+    const handleAjukanPerpanjangan = async (id_barang) => {
+        const barang = barangList.find(b => b.id_barang === id_barang);
+        if (!barang || !barang.tanggal_expire) {
+            alert("Data barang tidak valid.");
+            return;
+        }
+
+        try {
+            const tanggalLama = new Date(barang.tanggal_expire);
+            const tanggalBaru = new Date(tanggalLama.setDate(tanggalLama.getDate() + 30));
+
+            const res = await fetch(`/api/barang/by-penitip/${id_barang}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    tanggal_expire: tanggalBaru.toISOString().split("T")[0],
+                    status_titip: "EXTENDED",
+                    is_extended: 1
+                })
+            });
+
+            if (!res.ok) throw new Error("Gagal memperpanjang barang.");
+
+            alert("Perpanjangan berhasil diajukan!");
+
+            setBarangList(prev =>
+                prev.map(item =>
+                    item.id_barang === id_barang
+                        ? {
+                            ...item,
+                            tanggal_expire: tanggalBaru.toISOString().split("T")[0],
+                            status_titip: "EXTENDED",
+                            is_extended: 1
+                        }
+                        : item
+                )
+            );
+            setShowDetailModal(false);
+        } catch (err) {
+            console.error("Error perpanjangan:", err);
+            alert("Terjadi kesalahan saat memperpanjang.");
+        }
+    };
 
 
     return (
@@ -125,27 +177,41 @@ export default function PenitipBarangPage() {
             {/* Main Content */
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-4xl font-[Montage-Demo]">Barang Titipan</h2>
-                    <div
-                        className="p-1 rounded-full cursor-pointer flex items-center justify-center w-12 h-12"
-                        onClick={() => router.push('/penitip/profile')}
-                        style={{
-                            background: 'radial-gradient(ellipse 130.87% 392.78% at 121.67% 0%, #26C2FF 0%, #220593 90%)',
-                        }}
-                    >
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
-                            {user && user.src_img_profile ? (
-                                <img
-                                    src={user.src_img_profile}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover rounded-full"
-                                />
-                            ) : user ? (
-                                <span className="text-white text-lg font-semibold">
-                                    {getFirstLetter(user.nama)}
-                                </span>
-                            ) : (
-                                <div className="animate-pulse w-full h-full bg-gray-300 rounded-full" />
-                            )}
+                    <div className="flex items-center gap-4">
+                        {isClient && (
+                            <div className="font-mono text-lg text-gray-800 flex gap-2">
+                                <div>{currentTime.toLocaleDateString("id-ID", {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                })}</div>
+                                <div>{currentTime.toLocaleTimeString("id-ID")}</div>
+                            </div>
+                        )}
+
+                        <div
+                            className="p-1 rounded-full cursor-pointer flex items-center justify-center w-12 h-12"
+                            onClick={() => router.push('/penitip/profile')}
+                            style={{
+                                background: 'radial-gradient(ellipse 130.87% 392.78% at 121.67% 0%, #26C2FF 0%, #220593 90%)',
+                            }}
+                        >
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+                                {user && user.src_img_profile ? (
+                                    <img
+                                        src={user.src_img_profile}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover rounded-full"
+                                    />
+                                ) : user ? (
+                                    <span className="text-white text-lg font-semibold">
+                                        {getFirstLetter(user.nama)}
+                                    </span>
+                                ) : (
+                                    <div className="animate-pulse w-full h-full bg-gray-300 rounded-full" />
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>}
@@ -214,7 +280,7 @@ export default function PenitipBarangPage() {
                             <div className="truncate">{item.nama_barang}</div>
                             <div className="truncate">{formatRupiah(item.harga_barang)}</div>
                             <div>{formatDate(item.tanggal_masuk)}</div>
-                            <div>{formatDate(countTanggalExpire(item.tanggal_masuk))}</div>
+                            <div>{formatDate(item.tanggal_expire)}</div>
                             <div>{item.tanggal_keluar ? formatDate(item.tanggal_keluar) : "-"}</div>
                             <div>{item.status_titip}</div>
                             <div className="flex justify-center items-center">
@@ -291,16 +357,29 @@ export default function PenitipBarangPage() {
                             )}
                         </div>
 
-                        {new Date().getTime() - new Date(selectedBarang.tanggal_masuk).getTime() > 30 * 24 * 60 * 60 * 1000 && (
-                            <div className="mt-6">
-                                <button
-                                    onClick={() => handleAjukanPerpanjangan(selectedBarang.id_barang)}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                                >
-                                    Ajukan Perpanjangan
-                                </button>
-                            </div>
-                        )}
+                        {isClient && (() => {
+                            const expireDate = new Date(selectedBarang.tanggal_expire);
+                            const today = new Date(currentTime);
+                            expireDate.setHours(0, 0, 0, 0);
+                            today.setHours(0, 0, 0, 0);
+                            const selisihHari = Math.ceil((expireDate - today) / (1000 * 60 * 60 * 24));
+
+                            const isH3OrLess = selisihHari <= 3;
+                            const isAvailable = selectedBarang.status_titip?.toLowerCase() === "available";
+
+                            return isH3OrLess && isAvailable;
+                        })() && (
+                                <div className="mt-6">
+                                    <button
+                                        onClick={() => handleAjukanPerpanjangan(selectedBarang.id_barang)}
+                                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                                    >
+                                        Ajukan Perpanjangan
+                                    </button>
+                                </div>
+                            )}
+
+
 
                         <div className="mt-4 text-right">
                             <button
