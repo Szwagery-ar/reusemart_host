@@ -178,8 +178,6 @@ export async function POST(request) {
 }
 
 
-
-
 export async function PUT(request) {
     try {
         const { id_transaksi, status_transaksi, no_nota, harga_awal, ongkos_kirim, diskon, harga_akhir } = await request.json();
