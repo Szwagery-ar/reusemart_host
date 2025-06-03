@@ -13,7 +13,7 @@ export default function PembayaranPage() {
     const [imagePreview, setImagePreview] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     // const [timeLeft, setTimeLeft] = useState(900);
-    const [timeLeft, setTimeLeft] = useState(10);
+    const [timeLeft, setTimeLeft] = useState(60);
 
     useEffect(() => {
         if (timeLeft <= 0) {
