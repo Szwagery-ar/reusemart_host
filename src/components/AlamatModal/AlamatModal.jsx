@@ -85,7 +85,6 @@ export default function AlamatModal({ selectedAlamat, setSelectedAlamat }) {
             document.body.style.overflow = "auto";
         }
 
-        // Bersihkan saat komponen unmount
         return () => {
             document.body.style.overflow = "auto";
         };
@@ -150,7 +149,6 @@ export default function AlamatModal({ selectedAlamat, setSelectedAlamat }) {
                                                         </span>
                                                     )}
                                                 </p>
-                                                <p className="font-semibold text-sm">Szwagery AR</p>
                                                 <p className="text-sm text-gray-700 mt-1">{a.note}</p>
                                                 <p className="text-sm text-gray-700">{a.lokasi}</p>
                                             </div>

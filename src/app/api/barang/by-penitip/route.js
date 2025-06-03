@@ -23,7 +23,7 @@ export async function GET(request) {
         let baseQuery = `
         SELECT 
             b.id_barang, b.kode_produk, b.nama_barang, b.deskripsi_barang,
-            b.harga_barang, b.status_titip, b.tanggal_masuk, b.tanggal_keluar,
+            b.harga_barang, b.status_titip, b.tanggal_masuk, b.tanggal_keluar, b.tanggal_expire,
             b.tanggal_garansi, p.nama AS penitip_name,
             gb.id_gambar, gb.src_img
         FROM barang b
@@ -70,3 +70,4 @@ export async function GET(request) {
         return NextResponse.json({ error: "Failed to fetch Penitip's Barang" }, { status: 500 });
     }
 }
+
