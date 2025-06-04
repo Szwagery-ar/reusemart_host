@@ -526,18 +526,18 @@ export default function Riwayat() {
                       </ReuseButton>
 
                       {!item.is_rated && item.status_transaksi === "DONE" && (
-                          <ReuseButton>
-                            <div
-                              className="px-4 py-2"
-                              onClick={() => {
-                                setSelectedTransaction(item);
-                                setModalRatingOpen(true);
-                              }}
-                            >
-                              Beri Rating Barang
-                            </div>
-                          </ReuseButton>
-                        )}
+                        <ReuseButton>
+                          <div
+                            className="px-4 py-2"
+                            onClick={() => {
+                              setSelectedTransaction(item);
+                              setModalRatingOpen(true);
+                            }}
+                          >
+                            Beri Rating Barang
+                          </div>
+                        </ReuseButton>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -575,7 +575,7 @@ export default function Riwayat() {
                       onClick={() => paginate(index + 1)}
                       className={`px-3 py-1 rounded-xs text-sm 
                         ${
-                            currentPage === index + 1
+                          currentPage === index + 1
                             ? "bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] text-white"
                             : "bg-white text-blue-500"
                         }`}
@@ -643,23 +643,18 @@ export default function Riwayat() {
                 <div
                   className={`px-4 py-2 rounded-full text-xs font-semibold w-fit
                     ${
-                        selectedTransaction.status_transaksi ===
-                        "PENDING"
+                      selectedTransaction.status_transaksi === "PENDING"
                         ? "bg-[#FFF2D5] text-[#B87A06]"
-                        : selectedTransaction.status_transaksi ===
-                            "DONE"
+                        : selectedTransaction.status_transaksi === "DONE"
                         ? "bg-[#D6FFDE] text-[#0A6810]"
-                        : selectedTransaction.status_transaksi ===
-                            "ON_PROGRESS"
-                        ? selectedTransaction.jenis_pengiriman ===
-                            "COURIER"
-                            ? "bg-[#DDEDFC] text-[#1C274C]"
-                            : selectedTransaction.jenis_pengiriman ===
+                        : selectedTransaction.status_transaksi === "ON_PROGRESS"
+                        ? selectedTransaction.jenis_pengiriman === "COURIER"
+                          ? "bg-[#DDEDFC] text-[#1C274C]"
+                          : selectedTransaction.jenis_pengiriman ===
                             "SELF_PICKUP"
-                            ? "bg-[#DDEDFC] text-[#1C274C]"
-                            : "bg-gray-200 text-gray-800"
-                        : selectedTransaction.status_transaksi ===
-                            "CANCELLED"
+                          ? "bg-[#DDEDFC] text-[#1C274C]"
+                          : "bg-gray-200 text-gray-800"
+                        : selectedTransaction.status_transaksi === "CANCELLED"
                         ? "bg-[#FFEAEF] text-[#F0144A]"
                         : "bg-gray-100 text-gray-500"
                     }`}

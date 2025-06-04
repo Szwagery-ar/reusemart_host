@@ -12,13 +12,11 @@ export async function PATCH(request, context) {
     }
 
     try {
-        // 1. Simpan rating ke tabel barang
         await pool.query(
             "UPDATE barang SET rating = ? WHERE id_barang = ?",
             [rating, id_barang]
         );
 
-        // 2. Ambil id_penitip dari barang tersebut
         const [barangRows] = await pool.query(
             "SELECT id_penitip FROM barang WHERE id_barang = ?",
             [id_barang]
@@ -30,9 +28,12 @@ export async function PATCH(request, context) {
 
         const id_penitip = barangRows[0].id_penitip;
 
-        // 3. Tambahkan rating ke total_rating penitip
         await pool.query(
-            "UPDATE penitip SET total_rating = total_rating + ? WHERE id_penitip = ?",
+            `UPDATE penitip 
+            SET total_rating = total_rating + ?,
+            jml_barang_terjual = jml_barang_terjual + 1,
+            jml_barang_terjual_bulanan = jml_barang_terjual_bulanan + 1 
+            WHERE id_penitip = ?`,
             [rating, id_penitip]
         );
 
