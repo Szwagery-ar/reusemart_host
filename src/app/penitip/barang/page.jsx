@@ -378,6 +378,7 @@ export default function PenitipBarangPage() {
                             <p><strong>Status Titip:</strong> {selectedBarang.status_titip}</p>
                             <p><strong>Tanggal Masuk:</strong> {formatDate(selectedBarang.tanggal_masuk)}</p>
                             <p><strong>Tanggal Keluar:</strong> {selectedBarang.tanggal_keluar ? formatDate(selectedBarang.tanggal_keluar) : "-"}</p>
+                            <p><strong>Tanggal Expire:</strong> {selectedBarang.tanggal_expire ? formatDate(selectedBarang.tanggal_expire) : "-"}</p>
                             <p><strong>Tanggal Garansi:</strong> {selectedBarang.tanggal_garansi ? formatDate(selectedBarang.tanggal_garansi) : "-"}</p>
                             <p><strong>Penitip:</strong> {selectedBarang.penitip_name}</p>
 
