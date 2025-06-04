@@ -6,7 +6,7 @@
   "scripts": {
     "full": "concurrently \"next dev\" \"node src/cron/cronMaster.js\"",
     "dev": "next dev",
-    "cron": "node src/cron/cronMaster.js",
+    "cron": "node --no-deprecation src/cron/cronMaster.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

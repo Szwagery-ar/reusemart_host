@@ -34,10 +34,29 @@ export async function GET(request) {
         `;
 
         let values = [];
-
         if (search) {
-            query += ` AND (b.nama_barang LIKE ? OR b.kode_produk LIKE ?)`;
-            values.push(`%${search}%`, `%${search}%`);
+            query += `
+                AND (
+                    LOWER(b.id_barang) LIKE ? OR
+                    LOWER(b.kode_produk) LIKE ? OR
+                    LOWER(b.nama_barang) LIKE ? OR
+                    LOWER(b.deskripsi_barang) LIKE ? OR
+                    LOWER(b.harga_barang) LIKE ? OR
+                    LOWER(b.status_titip) LIKE ? OR
+                    LOWER(b.tanggal_masuk) LIKE ? OR
+                    LOWER(b.tanggal_keluar) LIKE ? OR
+                    LOWER(b.tanggal_garansi) LIKE ? OR
+                    LOWER(p.nama) LIKE ? OR
+                    LOWER(p.id_penitip) LIKE ? OR
+                    LOWER(kb.nama_kategori) LIKE ? OR
+                    LOWER(gb.src_img) LIKE ?
+                )
+            `;
+            const keyword = `%${search.toLowerCase()}%`;
+            values.push(
+                keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword,
+                keyword, keyword, keyword, keyword
+            );
         }
 
         const [barang] = await pool.query(query, values);

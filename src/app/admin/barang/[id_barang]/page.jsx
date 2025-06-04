@@ -10,12 +10,12 @@ export default function DetailBarangAdminPage() {
 
     const [barang, setBarang] = useState(null);
     const [previewImg, setPreviewImg] = useState("");
-    const [uniqueImages, setUniqueImages] = useState([]);
+    // const [uniqueImages, setUniqueImages] = useState([]);
+    const [oldImages, setOldImages] = useState([]);
     const [showSidebar, setShowSidebar] = useState(false);
     const [formData, setFormData] = useState({});
     const [previewImages, setPreviewImages] = useState([]);
     const [penitipOptions, setPenitipOptions] = useState([]);
-
 
 
     useEffect(() => {
@@ -32,7 +32,7 @@ export default function DetailBarangAdminPage() {
                     ).map((src_img) =>
                         data.barang.gambar_barang.find((item) => item.src_img === src_img)
                     );
-                    setUniqueImages(uniqueImgs);
+                    setOldImages(uniqueImgs);
                 }
             } catch (err) {
                 console.error("Gagal memuat barang:", err);
@@ -71,6 +71,8 @@ export default function DetailBarangAdminPage() {
 
 
         form.append("status_titip", "AVAILABLE");
+
+        form.append("gambar_lama", JSON.stringify(oldImages.map(g => g.id_gambar)));
 
         if (formData.gambar instanceof FileList) {
             Array.from(formData.gambar).forEach((file) => {
@@ -142,6 +144,23 @@ export default function DetailBarangAdminPage() {
         fetchPenitip();
     }, []);
 
+    const handleRemovePreview = (index) => {
+        const newPreviews = previewImages.filter((_, i) => i !== index);
+        const newFiles = Array.from(formData.gambar).filter((_, i) => i !== index);
+
+        const dt = new DataTransfer();
+        newFiles.forEach(file => dt.items.add(file));
+
+        setFormData((prev) => ({ ...prev, gambar: dt.files }));
+        setPreviewImages(newPreviews);
+    };
+
+    const handleRemoveOldImage = (index) => {
+        const updated = [...oldImages];
+        updated.splice(index, 1);
+        setOldImages(updated);
+    };
+
 
 
     if (!barang) return <div className="p-6">Loading...</div>;
@@ -164,7 +183,7 @@ export default function DetailBarangAdminPage() {
                     />
 
                     <div className="flex gap-2">
-                        {uniqueImages.map((gambar, index) => (
+                        {oldImages.map((gambar, index) => (
                             <img
                                 key={index}
                                 src={gambar.src_img}
@@ -287,7 +306,8 @@ export default function DetailBarangAdminPage() {
                             <label htmlFor="gambar" className="text-sm font-bold text-black-700">
                                 Foto Barang :
                             </label>
-                            <input
+
+                            {/* <input
                                 type="file"
                                 name="gambar"
                                 multiple
@@ -302,10 +322,10 @@ export default function DetailBarangAdminPage() {
                                     setPreviewImages(previews);
                                 }}
                                 className="border px-3 py-2 rounded"
-                            />
+                            /> */}
 
                             {/* Preview gambar baru */}
-                            <div className="flex gap-2 mt-2 flex-wrap">
+                            {/* <div className="flex gap-2 mt-2 flex-wrap">
                                 {previewImages.map((src, idx) => (
                                     <img
                                         key={idx}
@@ -314,6 +334,57 @@ export default function DetailBarangAdminPage() {
                                         className="w-24 h-24 object-cover rounded border"
                                     />
                                 ))}
+                            </div> */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {/* Gambar lama dari server */}
+                                {oldImages.map((img, i) => (
+                                    <div key={`old-${i}`} className="relative w-20 h-20">
+                                        <img src={img.src_img} className="w-full h-full object-cover rounded" />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveOldImage(i)}
+                                            className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded-tr rounded-bl"
+                                        >
+                                            X
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {/* Preview gambar baru */}
+                                {previewImages.map((src, i) => (
+                                    <div key={`preview-${i}`} className="relative w-20 h-20">
+                                        <img src={src} className="w-full h-full object-cover rounded" />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemovePreview(i)}
+                                            className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded-tr rounded-bl"
+                                        >
+                                            X
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {/* Tombol tambah gambar */}
+                                <label className="w-20 h-20 border border-dashed rounded flex items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-100">
+                                    +
+                                    <input
+                                        type="file"
+                                        name="gambar"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const files = e.target.files;
+                                            const previews = Array.from(files).map((file) => URL.createObjectURL(file));
+
+                                            const dt = new DataTransfer();
+                                            Array.from(files).forEach(file => dt.items.add(file));
+
+                                            setFormData((prev) => ({ ...prev, gambar: dt.files }));
+                                            setPreviewImages(previews);
+                                        }}
+                                        className="hidden"
+                                    />
+                                </label>
                             </div>
 
                             {/* 2. Nama Barang */}
