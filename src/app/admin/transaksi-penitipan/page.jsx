@@ -158,14 +158,14 @@ export default function TransaksiPenitipanPage() {
                     onClick={() => setShowSidebar(true)}
                     // className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
                     className="bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] text-white px-6 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition"
-                   //w-full text-white py-3 rounded-full font-semibold bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]
+                //w-full text-white py-3 rounded-full font-semibold bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]
                 >
                     Tambah Penitipan Barang
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {barangList.map((barang) => (
+            <div className="grid grid-cols-1 md:grid-cols-2  lg:grid-cols-3 gap-6">
+                {/* {barangList.map((barang) => (
                     <div
                         key={barang.id_barang}
                         // onClick={() => router.push(`/admin/barang/${barang.id_barang}`)}
@@ -195,16 +195,51 @@ export default function TransaksiPenitipanPage() {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                      router.push(`/admin/transaksi-penitipan/nota-penitipan/${encodeURIComponent(barang.id_penitipan)}`);
+                                    router.push(`/admin/transaksi-penitipan/nota-penitipan/${encodeURIComponent(barang.id_penitipan)}`);
                                 }}
                                 className="text-sm text-blue-600 underline hover:text-blue-800"
                             >
                                 Lihat Nota
                             </button>
                         </div>
+                    </div>
+                ))} */}
 
+                {barangList.map((penitipan) => (
+                    <div key={penitipan.id_penitipan} className="border p-4 rounded-lg shadow bg-white mb-4">
+                        <h2 className="text-lg font-bold mb-1">Nota #{penitipan.id_penitipan}</h2>
+                        <p className="text-sm text-gray-600 text-xs">Tanggal Masuk: {penitipan.tanggal_masuk?.split('T')[0]}</p>
+                        <p className="text-sm text-gray-600 mb-2 text-xs">Penitip: {penitipan.penitip_name}</p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {penitipan.barang.map((barang, index) => (
+                                <div key={index} className="border p-3 rounded bg-gray-50">
+                                    {Array.isArray(barang.gambar_barang) && barang.gambar_barang.length > 0 ? (
+                                        <img src={barang.gambar_barang[0].src_img} alt="" className="w-full h-20 object-cover rounded mb-2" />
+                                    ) : (
+                                        <div className="w-full h-40 bg-gray-200 flex items-center justify-center text-gray-400 rounded mb-2">
+                                            Tidak ada gambar
+                                        </div>
+                                    )}
+                                    <h3 className="font-semibold text-xs">{barang.nama_barang}</h3>
+                                    <p className="text-sm text-gray-600 text-xs">Kode: {barang.kode_produk}</p>
+                                    <p className="text-sm text-gray-600 text-xs">Harga: Rp{parseInt(barang.harga_barang).toLocaleString("id-ID")}</p>
+                                    <p className="text-sm text-gray-600 text-xs">Status: {barang.status_titip}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="text-right mt-4">
+                            <button
+                                onClick={() => router.push(`/admin/transaksi-penitipan/nota-penitipan/${encodeURIComponent(penitipan.id_penitipan)}`)}
+                                className="text-sm text-blue-600 underline hover:text-blue-800"
+                            >
+                                Lihat Nota
+                            </button>
+                        </div>
                     </div>
                 ))}
+
             </div>
 
             {showSidebar && (

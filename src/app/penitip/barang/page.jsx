@@ -171,6 +171,39 @@ export default function PenitipBarangPage() {
         }
     };
 
+    const handleAjukanPengembalian = async (id_barang) => {
+        try {
+            const res = await fetch(`/api/barang/by-penitip/picked/${id_barang}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    status_titip: "READY_PICK_UP"
+                }),
+            });
+
+            if (!res.ok) throw new Error("Gagal mengajukan pengembalian");
+
+            alert("Barang siap dikembalikan. Status telah diperbarui ke READY_PICK_UP.");
+            setShowDetailModal(false);
+
+            setBarangList(prev =>
+                prev.map(item =>
+                    item.id_barang === id_barang
+                        ? { ...item, status_titip: "READY_PICK_UP" }
+                        : item
+                )
+            );
+        } catch (err) {
+            console.error("Error pengembalian:", err);
+            alert("Terjadi kesalahan saat mengajukan pengembalian.");
+        }
+    };
+
+
+
+
 
     return (
         <div className="p-6 relative">
@@ -345,6 +378,7 @@ export default function PenitipBarangPage() {
                             <p><strong>Status Titip:</strong> {selectedBarang.status_titip}</p>
                             <p><strong>Tanggal Masuk:</strong> {formatDate(selectedBarang.tanggal_masuk)}</p>
                             <p><strong>Tanggal Keluar:</strong> {selectedBarang.tanggal_keluar ? formatDate(selectedBarang.tanggal_keluar) : "-"}</p>
+                            <p><strong>Tanggal Expire:</strong> {selectedBarang.tanggal_expire ? formatDate(selectedBarang.tanggal_expire) : "-"}</p>
                             <p><strong>Tanggal Garansi:</strong> {selectedBarang.tanggal_garansi ? formatDate(selectedBarang.tanggal_garansi) : "-"}</p>
                             <p><strong>Penitip:</strong> {selectedBarang.penitip_name}</p>
 
@@ -357,31 +391,62 @@ export default function PenitipBarangPage() {
                             )}
                         </div>
 
-                        {isClient && (() => {
-                            const expireDate = new Date(selectedBarang.tanggal_expire);
-                            const today = new Date(currentTime);
-                            expireDate.setHours(0, 0, 0, 0);
-                            today.setHours(0, 0, 0, 0);
-                            const selisihHari = Math.ceil((expireDate - today) / (1000 * 60 * 60 * 24));
 
-                            const isH3OrLess = selisihHari <= 3;
-                            const isAvailable = selectedBarang.status_titip?.toLowerCase() === "available";
+                        <div className="flex gap-5">
+                            {isClient && (() => {
+                                const expireDate = new Date(selectedBarang.tanggal_expire);
+                                const today = new Date(currentTime);
+                                expireDate.setHours(0, 0, 0, 0);
+                                today.setHours(0, 0, 0, 0);
+                                const selisihHari = Math.ceil((expireDate - today) / (1000 * 60 * 60 * 24));
 
-                            return isH3OrLess && isAvailable;
-                        })() && (
-                                <div className="mt-6">
-                                    <button
-                                        onClick={() => handleAjukanPerpanjangan(selectedBarang.id_barang)}
-                                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                                    >
-                                        Ajukan Perpanjangan
-                                    </button>
-                                </div>
-                            )}
+                                const isH3OrLess = selisihHari <= 3;
+                                const isAvailable = selectedBarang.status_titip?.toLowerCase() === "available";
 
+                                return isH3OrLess && isAvailable;
+                            })() && (
+                                    <div className="mt-6">
+                                        <button
+                                            onClick={() => handleAjukanPerpanjangan(selectedBarang.id_barang)}
+                                            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                                        >
+                                            Ajukan Perpanjangan
+                                        </button>
+                                    </div>
+                                )}
+
+                            {isClient && (() => {
+                                const allowedStatuses = ["available", "extended", "expired"];
+                                const status = selectedBarang.status_titip?.toLowerCase();
+
+                                if (!allowedStatuses.includes(status)) return false;
+
+                                const expireDate = new Date(selectedBarang.tanggal_expire);
+                                const today = new Date(currentTime);
+                                expireDate.setHours(0, 0, 0, 0);
+                                today.setHours(0, 0, 0, 0);
+
+                                const daysSinceExpire = Math.floor((today - expireDate) / (1000 * 60 * 60 * 24));
+
+                                if (status === "expired" && daysSinceExpire > 7) return false;
+
+                                return true;
+                            })() && (
+                                    <div className="mt-6">
+                                        <button
+                                            onClick={() => handleAjukanPengembalian(selectedBarang.id_barang)}
+                                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                                        >
+                                            Ajukan Pengembalian
+                                        </button>
+                                    </div>
+                                )}
+
+                        </div>
 
 
                         <div className="mt-4 text-right">
+
                             <button
                                 onClick={() => {
                                     setShowDetailModal(false);
