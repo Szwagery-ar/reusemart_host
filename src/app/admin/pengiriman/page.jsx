@@ -129,14 +129,6 @@ export default function AdminPengirimanPage() {
     switch (status) {
       case "DALAM PROSES":
         return "bg-gray-100 text-gray-800";
-      case "SEDANG DIKIRIM":
-        return "bg-cyan-100 text-cyan-800";
-      case "BISA DIAMBIL":
-        return "bg-blue-100 text-blue-800";
-      case "SELESAI":
-        return "bg-green-100 text-green-800";
-      case "GAGAL":
-        return "bg-red-100 text-red-800";
       case "BUTUH KURIR":
         return "bg-yellow-100 text-yellow-800";
       case "ATUR TANGGAL KIRIM":
@@ -145,6 +137,14 @@ export default function AdminPengirimanPage() {
         return "bg-yellow-100 text-yellow-800";
       case "KIRIM KURIR":
         return "bg-orange-100 text-orange-800";
+      case "SEDANG DIKIRIM":
+        return "bg-cyan-100 text-cyan-800";
+      case "BISA DIAMBIL":
+        return "bg-blue-100 text-blue-800";
+      case "SELESAI":
+        return "bg-green-100 text-green-800";
+      case "GAGAL":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -188,21 +188,31 @@ export default function AdminPengirimanPage() {
     }
   };
 
-  const getPengirimanMin = (tanggalPesanStr) => {
-    const pesanDate = new Date(tanggalPesanStr);
+  const getPengirimanMin = () => {
     const now = new Date();
+    now.setHours(0, 0, 0, 0); // set ke awal hari ini
     const offset = now.getTimezoneOffset();
-
-    if (pesanDate.getHours() >= 16) {
-      pesanDate.setDate(pesanDate.getDate() + 1);
-    }
-
-    pesanDate.setHours(0, 0, 0, 0);
-    const iso = new Date(pesanDate.getTime() - offset * 60000)
+    const localISO = new Date(now.getTime() - offset * 60000)
       .toISOString()
       .slice(0, 16);
-    return iso;
+    return localISO;
   };
+
+  //   const getPengirimanMin = (tanggalPesanStr) => {
+  //     const pesanDate = new Date(tanggalPesanStr);
+  //     const now = new Date();
+  //     const offset = now.getTimezoneOffset();
+
+  //     if (pesanDate.getHours() >= 16) {
+  //       pesanDate.setDate(pesanDate.getDate() + 1);
+  //     }
+
+  //     pesanDate.setHours(0, 0, 0, 0);
+  //     const iso = new Date(pesanDate.getTime() - offset * 60000)
+  //       .toISOString()
+  //       .slice(0, 16);
+  //     return iso;
+  //   };
 
   const handleDetailClick = async (transaksi) => {
     setSelectedTransaksi(transaksi);
@@ -245,22 +255,24 @@ export default function AdminPengirimanPage() {
   };
 
   const handleAturJadwalAmbil = async () => {
-    if (!selectedPickupDate) {
-      toast.error("Tanggal ambil harus diisi.");
+    if (!selectedPickupDate) return toast.error("Tanggal ambil harus diisi.");
+
+    const selected = new Date(selectedPickupDate);
+    const now = new Date();
+
+    if (selected < new Date(now.setHours(0, 0, 0, 0))) {
+      toast.error("Tanggal pengambilan tidak boleh di masa lalu.");
       return;
     }
 
-    const selected = new Date(selectedPickupDate);
-    const lunas = new Date(transaksiDetail.tanggal_lunas);
-    const batasMax = new Date(lunas);
-    batasMax.setDate(batasMax.getDate() + 2);
-
-    // if (selected > batasMax) {
-    //   toast.error(
-    //     "Jadwal pengambilan tidak boleh lebih dari 2 hari setelah tanggal lunas."
-    //   );
-    //   return;
-    // }
+    const isSameDay = selected.toDateString() === new Date().toDateString();
+    const currentHour = new Date().getHours();
+    if (isSameDay && currentHour >= 16) {
+      toast.error(
+        "Sudah lewat jam 4 sore. Pengambilan tidak bisa dilakukan hari ini."
+      );
+      return;
+    }
 
     try {
       const res = await fetch(
@@ -272,30 +284,33 @@ export default function AdminPengirimanPage() {
         }
       );
 
-      if (!res.ok) throw new Error("Gagal mengatur jadwal ambil");
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Gagal mengatur jadwal ambil.");
+        return;
+      }
 
       toast.success("Jadwal pengambilan berhasil diatur.");
       setShowSidebar(false);
       fetchPengiriman();
     } catch (err) {
       console.error(err);
-      toast.error("Terjadi kesalahan saat menyimpan jadwal.");
+      toast.error("Gagal mengatur jadwal ambil.");
     }
   };
 
-  const handlePenjadwalan = async () => {
+  const handlePenjadwalanKurir = async () => {
     if (!selectedDate) return toast.error("Tanggal wajib diisi.");
 
-    const pesanDate = new Date(selectedTransaksi.tanggal_pesan);
     const selected = new Date(selectedDate);
+    const now = new Date();
 
-    const afterCutoff =
-      pesanDate.toDateString() === selected.toDateString() &&
-      pesanDate.getHours() >= 16;
-
-    if (afterCutoff) {
+    const isSameDay = selected.toDateString() === now.toDateString();
+    const currentHour = new Date().getHours();
+    if (isSameDay && currentHour >= 16) {
       toast.error(
-        "Pembelian setelah jam 4 sore tidak bisa dijadwalkan di hari yang sama."
+        "Sudah lewat jam 4 sore. Jadwal hari ini tidak diperbolehkan."
       );
       return;
     }
@@ -315,15 +330,16 @@ export default function AdminPengirimanPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Gagal menyimpan tanggal kirim.");
+        toast.error(data.error || "Gagal mengatur jadwal kirim.");
         return;
       }
 
-      toast.success("Tanggal kirim berhasil disimpan.");
+      toast.success("Jadwal pengiriman berhasil diatur.");
       setShowSidebar(false);
       fetchPengiriman();
     } catch (err) {
-      toast.error("Gagal menyimpan tanggal kirim.");
+      console.error(err);
+      toast.error("Gagal mengatur jadwal kirim.");
     }
   };
 
@@ -407,11 +423,13 @@ export default function AdminPengirimanPage() {
   const statusOptions = [
     { label: "Semua", value: "ALL" },
     { label: "Butuh Kurir", value: "BUTUH KURIR" },
-    { label: "Menunggu Bayar", value: "MENUNGGU BAYAR" },
-    { label: "Dalam Pengiriman", value: "Dalam Pengiriman" },
-    { label: "Akan Diambil", value: "Akan Diambil" },
-    { label: "Selesai", value: "Selesai" },
-    { label: "Gagal", value: "Gagal" },
+    { label: "Atur Tanggal Kirim", value: "ATUR TANGGAL KIRIM" },
+    { label: "Atur Jadwal Ambil", value: "ATUR JADWAL AMBIL" },
+    { label: "Kirim Kurir", value: "KIRIM KURIR" },
+    { label: "Sedang Dikirim", value: "SEDANG DIKIRIM" },
+    { label: "Bisa Diambil", value: "BISA DIAMBIL" },
+    { label: "Selesai", value: "SELESAI" },
+    { label: "Gagal", value: "GAGAL" },
   ];
 
   const handleSetDone = async (id) => {
@@ -438,15 +456,16 @@ export default function AdminPengirimanPage() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Manajemen Pengiriman</h1>
 
-      <div className="flex justify-between mb-4">
+      <div className="flex flex-col justify-between gap-3 mb-4">
         <div>
           <Tabs defaultValue="ALL">
-            <TabsList className="flex gap-4">
+            <TabsList className="flex gap-4 w-full bg-white shadow-none">
               {statusOptions.map(({ label, value }) => (
                 <TabsTrigger
                   key={value}
                   value={value}
                   onClick={() => setStatusFilter(value)}
+                  className="flex-1 text-center rounded-none border-transparent border-b-2 data-[state=active]:border-b-blue-600 data-[state=active]:shadow-none "
                 >
                   {label}
                 </TabsTrigger>
@@ -468,13 +487,12 @@ export default function AdminPengirimanPage() {
       </div>
 
       <div className="w-full overflow-x-auto">
-        <div className="inline-grid grid-cols-[100px_180px_160px_160px_160px_120px_110px_140px_100px] gap-2 text-white p-4 rounded-xl font-semibold text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
+        <div className="inline-grid grid-cols-[100px_180px_160px_160px_160px_110px_140px_100px] gap-2 text-white p-4 rounded-xl font-semibold text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
           <div>Nota</div>
           <div>Nama Kurir</div>
           <div>Tanggal Pesan</div>
           <div>Tanggal Kirim/Ambil</div>
           <div>Tanggal Terima</div>
-          <div>Harga</div>
           <div>Jenis</div>
           <div>Status</div>
           <div className="flex justify-center">Action</div>
@@ -484,13 +502,15 @@ export default function AdminPengirimanPage() {
           .sort((a, b) => {
             const priority = {
               "BUTUH KURIR": 1,
-              "Atur Jadwal": 2,
-              "Menunggu Bayar": 3,
-              "Sedang Diproses": 4,
-              "Akan Diambil": 5,
-              "Dalam Pengiriman": 6,
-              Selesai: 7,
-              Gagal: 8,
+              "ATUR TANGGAL KIRIM": 2,
+              "ATUR JADWAL AMBIL": 3,
+              "KIRIM KURIR": 4,
+              "BISA DIAMBIL": 6,
+              "SEDANG DIKIRIM": 5,
+              "DALAM PROSES": 0,
+              "MENUNGGU PEMBAYARAN": 0,
+              SELESAI: 7,
+              GAGAL: 8,
             };
 
             const labelA = getStatusLabel(a);
@@ -504,15 +524,13 @@ export default function AdminPengirimanPage() {
           .map((item) => (
             <div
               key={item.id_pengiriman || `${item.no_nota}-${item.nama_pembeli}`}
-              className="inline-grid grid-cols-[100px_180px_160px_160px_160px_120px_110px_140px_100px] gap-2 px-4 py-2 mt-3 rounded-xl border border-black text-sm"
+              className="inline-grid grid-cols-[100px_180px_160px_160px_160px_110px_140px_100px] gap-2 px-4 py-2 mt-3 rounded-xl border border-black text-sm"
             >
               <div className="truncate flex items-center">{item.no_nota}</div>
               <div className="truncate flex items-center">
                 {item.jenis_pengiriman === "SELF_PICKUP"
-                  ? item.tanggal_terima
-                    ? "Diambil Pembeli"
-                    : "-"
-                  : item.nama_kurir || "-"}
+                  ? "-"
+                  : item.nama_kurir}
               </div>
               <div className="flex items-center">
                 {formatDateTime(item.tanggal_pesan)}
@@ -524,9 +542,6 @@ export default function AdminPengirimanPage() {
                 {item.tanggal_terima
                   ? formatDateTime(item.tanggal_terima)
                   : "-"}
-              </div>
-              <div className="flex items-center">
-                {formatRupiah(item.harga_akhir)}
               </div>
               <div
                 className={`flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getJenisStyle(
@@ -608,129 +623,122 @@ export default function AdminPengirimanPage() {
               </button>
             </div>
             <div className="p-6">
-              <div className="space-y-2">
-                <p className="font-bold">ReUse Mart</p>
-                <p>Jl. Green Eco Park No. 456 Yogyakarta</p>
-
-                <hr className="my-2" />
-
-                <p>
-                  <strong>No Nota:</strong> {transaksiDetail.no_nota}
-                </p>
-                <p>
-                  <strong>Tanggal Pesan:</strong>{" "}
-                  {formatDateTime(transaksiDetail.tanggal_pesan)}
-                </p>
-                <p>
-                  <strong>Lunas pada:</strong>{" "}
-                  {formatDateTime(transaksiDetail.tanggal_lunas)}
-                </p>
-                <p>
-                  <strong>
-                    {transaksiDetail.jenis_pengiriman === "COURIER"
-                      ? "Tanggal Kirim"
-                      : "Tanggal Ambil"}
-                    :
-                  </strong>{" "}
-                  {transaksiDetail.jenis_pengiriman === "COURIER"
-                    ? transaksiDetail.tanggal_kirim
-                      ? formatDateTime(transaksiDetail.tanggal_kirim)
-                      : "-"
-                    : transaksiDetail.tanggal_terima
-                    ? formatDateTime(transaksiDetail.tanggal_terima)
-                    : "-"}
-                </p>
-
-                <hr className="my-2" />
-
-                <p>
-                  <strong>Pembeli:</strong> {transaksiDetail.email_pembeli} /{" "}
-                  {transaksiDetail.nama_pembeli}
-                </p>
-                <p>{transaksiDetail.alamat_pembeli || "-"}</p>
-                <p>
-                  <strong>Delivery:</strong>{" "}
-                  {transaksiDetail.jenis_pengiriman === "COURIER"
-                    ? `Kurir ReUseMart (${transaksiDetail.nama_kurir || "-"})`
-                    : "Diambil sendiri"}
-                </p>
-
-                <hr className="my-2" />
-
-                <div>
-                  {Array.isArray(transaksiDetail.produk) &&
-                    transaksiDetail.produk.map((p, i) => (
-                      <p key={i}>
-                        {p.nama_barang || "-"} - {formatRupiah(p.harga_barang)}
-                      </p>
-                    ))}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="justify-center text-indigo-900 text-3xl font-normal font-['Montage'] cursor-pointer">
+                    Ceritanya Logo
+                  </div>
+                  <p className="text-sm">
+                    Jl. Green Eco Park No. 456 Yogyakarta
+                  </p>
                 </div>
 
                 <hr className="my-2" />
 
-                <p>
-                  <strong>Total:</strong>{" "}
-                  {formatRupiah(Number(transaksiDetail.harga_awal || 0))}
-                </p>
-                <p>
-                  <strong>Ongkos Kirim:</strong>{" "}
-                  {formatRupiah(Number(transaksiDetail.ongkos_kirim || 0))}
-                </p>
-                <p>
-                  <strong>Total:</strong>{" "}
-                  {formatRupiah(
-                    Number(transaksiDetail.harga_awal || 0) +
-                      Number(transaksiDetail.ongkos_kirim || 0)
-                  )}
-                </p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="font-semibold">No Nota:</div>
+                  <div>{transaksiDetail.no_nota}</div>
 
-                {Number(transaksiDetail.diskon || 0) > 0 && (
-                  <p>
-                    <strong>
-                      Potongan {Number(transaksiDetail.diskon) / 10000} poin:
-                    </strong>{" "}
-                    -{formatRupiah(transaksiDetail.diskon)}
-                  </p>
-                )}
+                  <div className="font-semibold">Tanggal Pesan:</div>
+                  <div>{formatDateTime(transaksiDetail.tanggal_pesan)}</div>
 
-                <p className="font-bold">
-                  <strong>Total Bayar:</strong>{" "}
-                  {formatRupiah(transaksiDetail.harga_akhir)}
-                </p>
+                  <div className="font-semibold">Lunas pada:</div>
+                  <div>{formatDateTime(transaksiDetail.tanggal_lunas)}</div>
 
-                <hr className="my-2" />
-
-                <p>
-                  <strong>Poin dari pesanan ini:</strong>{" "}
-                  {transaksiDetail.tambahan_poin || "-"}
-                </p>
-                <p>
-                  <strong>Total poin customer:</strong>{" "}
-                  {transaksiDetail.poin_loyalitas || "-"}
-                </p>
-
-                <hr className="my-2" />
-
-                <p>
-                  <strong>QC oleh:</strong>{" "}
-                  {transaksiDetail.nama_petugas_cs || "-"} (
-                  {transaksiDetail.kode_petugas || "-"})
-                </p>
-                <p>
-                  <strong>
+                  <div className="font-semibold">
                     {transaksiDetail.jenis_pengiriman === "COURIER"
-                      ? "Diterima oleh:"
-                      : "Diambil oleh:"}
-                  </strong>{" "}
-                  {transaksiDetail.nama_pembeli}
-                </p>
-                <p>
-                  <strong>Tanggal:</strong>{" "}
-                  {transaksiDetail.tanggal_terima
-                    ? formatDateTime(transaksiDetail.tanggal_terima)
-                    : "-"}
-                </p>
+                      ? "Tanggal Kirim"
+                      : "Tanggal Ambil"}
+                    :
+                  </div>
+                  <div>
+                    {transaksiDetail.jenis_pengiriman === "COURIER"
+                      ? transaksiDetail.tanggal_kirim
+                        ? formatDateTime(transaksiDetail.tanggal_kirim)
+                        : "-"
+                      : transaksiDetail.tanggal_terima
+                      ? formatDateTime(transaksiDetail.tanggal_terima)
+                      : "-"}
+                  </div>
+                </div>
+
+                <hr className="my-2" />
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="font-semibold">Pembeli:</div>
+                  <div>
+                    {transaksiDetail.email_pembeli} /{" "}
+                    {transaksiDetail.nama_pembeli}
+                  </div>
+
+                  <div className="font-semibold">Alamat:</div>
+                  <div>{transaksiDetail.alamat_pembeli || "-"}</div>
+
+                  <div className="font-semibold">Delivery:</div>
+                  <div>
+                    {transaksiDetail.jenis_pengiriman === "COURIER" ? (
+                      `Kurir ReUseMart (${transaksiDetail.nama_kurir || "-"})`
+                    ) : (
+                      <em>Diambil sendiri</em>
+                    )}
+                  </div>
+                </div>
+
+                <hr className="my-2" />
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="font-semibold">Total:</div>
+                  <div>
+                    {formatRupiah(Number(transaksiDetail.harga_awal || 0))}
+                  </div>
+
+                  <div className="font-semibold">Ongkos Kirim:</div>
+                  <div>
+                    {formatRupiah(Number(transaksiDetail.ongkos_kirim || 0))}
+                  </div>
+
+                  <div className="font-semibold">Total Bayar:</div>
+                  <div className="font-bold">
+                    {formatRupiah(transaksiDetail.harga_akhir)}
+                  </div>
+
+                  {Number(transaksiDetail.diskon || 0) > 0 && (
+                    <>
+                      <div className="font-semibold">
+                        Potongan {Number(transaksiDetail.diskon) / 10000} poin:
+                      </div>
+                      <div>-{formatRupiah(transaksiDetail.diskon)}</div>
+                    </>
+                  )}
+
+                  <div className="font-semibold">Poin dari pesanan ini:</div>
+                  <div>{transaksiDetail.tambahan_poin || "-"}</div>
+
+                  <div className="font-semibold">Total poin customer:</div>
+                  <div>{transaksiDetail.poin_loyalitas || "-"}</div>
+
+                  <div className="font-semibold">
+                    Pembayaran diverifikasi oleh:
+                  </div>
+                  <div>
+                    {transaksiDetail.nama_petugas_cs || "-"} (
+                    {transaksiDetail.kode_petugas || "-"})
+                  </div>
+                </div>
+
+                <hr className="my-2" />
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="font-semibold">Tanggal Diterima:</div>
+                  <div>
+                    {transaksiDetail.tanggal_terima
+                      ? formatDateTime(transaksiDetail.tanggal_terima)
+                      : "-"}
+                  </div>
+                </div>
               </div>
+
+              <hr className="my-2" />
 
               <button
                 onClick={() =>
@@ -776,18 +784,28 @@ export default function AdminPengirimanPage() {
                 selectedTransaksi.status_pembayaran === "CONFIRMED" &&
                 getStatusLabel(selectedTransaksi) === "ATUR TANGGAL KIRIM" && (
                   <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-bold text-gray-700 mb-1">
                       Atur Tanggal Kirim
                     </label>
                     <input
                       type="datetime-local"
                       value={selectedDate}
-                      min={getPengirimanMin(selectedTransaksi.tanggal_pesan)}
+                      min={getPengirimanMin()}
+                      max={(() => {
+                        const maxDate = new Date(transaksiDetail.tanggal_lunas);
+                        maxDate.setDate(maxDate.getDate() + 9);
+                        return new Date(
+                          maxDate.getTime() -
+                            maxDate.getTimezoneOffset() * 60000
+                        )
+                          .toISOString()
+                          .slice(0, 16);
+                      })()}
                       onChange={(e) => setSelectedDate(e.target.value)}
                       className="w-full border px-3 py-2 rounded mb-3"
                     />
                     <button
-                      onClick={handlePenjadwalan}
+                      onClick={handlePenjadwalanKurir}
                       className="w-full px-4 py-2 bg-indigo-600 text-white rounded"
                     >
                       Simpan Tanggal Kirim
@@ -820,10 +838,10 @@ export default function AdminPengirimanPage() {
                     <input
                       type="datetime-local"
                       value={selectedPickupDate}
-                      min={transaksiDetail.tanggal_lunas?.slice(0, 16)}
+                      min={getPengirimanMin()}
                       max={(() => {
                         const maxDate = new Date(transaksiDetail.tanggal_lunas);
-                        maxDate.setDate(maxDate.getDate() + 2);
+                        maxDate.setDate(maxDate.getDate() + 8);
                         return new Date(
                           maxDate.getTime() -
                             maxDate.getTimezoneOffset() * 60000
