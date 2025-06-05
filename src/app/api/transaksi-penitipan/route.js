@@ -268,13 +268,24 @@ export async function GET(request) {
                 ) AS barang_json
             FROM barang b
             LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
-            WHERE LOWER(b.nama_barang) LIKE ? OR LOWER(b.kode_produk) LIKE ?
+            WHERE 
+                LOWER(b.nama_barang) LIKE ? OR 
+                LOWER(b.kode_produk) LIKE ? OR 
+                LOWER(b.status_titip) LIKE ? OR
+                LOWER(IFNULL(b.tanggal_garansi, '')) LIKE ? OR
+                LOWER(IFNULL(b.tanggal_keluar, '')) LIKE ? OR
+                LOWER(IFNULL(p.nama, '')) LIKE ? OR
+                LOWER(DATE_FORMAT(b.tanggal_masuk, '%Y-%m-%d')) LIKE ? OR
+                CAST(b.harga_barang AS CHAR) LIKE ?
             GROUP BY b.id_penitipan
             ORDER BY tanggal_masuk DESC
             `,
-            [`%${q}%`, `%${q}%`]
+            [
+                `%${q}%`, `%${q}%`, `%${q}%`,
+                `%${q}%`, `%${q}%`, `%${q}%`,
+                `%${q}%`, `%${q}%`
+            ]
         );
-
 
 
         const parsed = rows.map(row => ({
