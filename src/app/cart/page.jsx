@@ -27,7 +27,7 @@ export default function CartPage() {
       return sum + (isNaN(harga) ? 0 : harga);
     }, 0);
 
-  const potonganPoin = Math.min(poinDigunakan * 10000, totalHarga);
+  const potonganPoin = Math.min(poinDigunakan * 100, totalHarga);
   const totalAkhir = totalHarga - potonganPoin;
 
   useEffect(() => {
@@ -376,20 +376,32 @@ export default function CartPage() {
               <p className="text-sm text-gray-700 mb-2">
                 Kamu punya <strong>{user?.poin_loyalitas || 0}</strong> poin
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <label className="text-sm">Gunakan</label>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPoinDigunakan((prev) => Math.max(0, prev - 100));
+                  }}
+                  disabled={poinDigunakan <= 0}
+                  className={`px-2 py-1 border rounded text-sm font-bold ${
+                    poinDigunakan <= 0 ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  −
+                </button>
+
                 <input
                   type="text"
+                  readOnly
                   value={poinDigunakan}
-                  onChange={(e) => {
-                    let val = parseInt(e.target.value);
-                    if (isNaN(val) || val <= 0) {
-                      setPoinDigunakan(0);
-                      return;
-                    }
+                  className="w-20 text-center border border-gray-300 rounded px-2 py-1 text-sm"
+                />
 
-                    val = Math.floor(val / 100) * 100;
-
+                <button
+                  type="button"
+                  onClick={() => {
                     const maxPoinFromLoyalty = user?.poin_loyalitas || 0;
                     const maxPoinFromPrice =
                       Math.floor(totalHarga / 10000) * 100;
@@ -397,13 +409,39 @@ export default function CartPage() {
                       maxPoinFromLoyalty,
                       maxPoinFromPrice
                     );
-
-                    setPoinDigunakan(Math.min(val, maxValidPoin));
+                    setPoinDigunakan((prev) =>
+                      Math.min(prev + 100, maxValidPoin)
+                    );
                   }}
-                  className="w-24 border border-gray-300 rounded px-2 py-1 text-sm"
-                />
+                  disabled={(() => {
+                    const maxPoinFromLoyalty = user?.poin_loyalitas || 0;
+                    const maxPoinFromPrice =
+                      Math.floor(totalHarga / 10000) * 100;
+                    const maxValidPoin = Math.min(
+                      maxPoinFromLoyalty,
+                      maxPoinFromPrice
+                    );
+                    return poinDigunakan + 100 > maxValidPoin;
+                  })()}
+                  className={`px-2 py-1 border rounded text-sm font-bold ${(() => {
+                    const maxPoinFromLoyalty = user?.poin_loyalitas || 0;
+                    const maxPoinFromPrice =
+                      Math.floor(totalHarga / 10000) * 100;
+                    const maxValidPoin = Math.min(
+                      maxPoinFromLoyalty,
+                      maxPoinFromPrice
+                    );
+                    return poinDigunakan + 100 > maxValidPoin
+                      ? "opacity-50 cursor-not-allowed"
+                      : "";
+                  })()}`}
+                >
+                  +
+                </button>
+
                 <span className="text-sm">poin</span>
               </div>
+
               <p className="text-xs text-gray-500 mt-1">
                 Sisa poin: {(user?.poin_loyalitas || 0) - poinDigunakan}
               </p>
