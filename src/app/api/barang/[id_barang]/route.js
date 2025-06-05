@@ -14,7 +14,7 @@ export async function GET(_, { params }) {
             SELECT 
                 b.id_barang, b.kode_produk, b.nama_barang, b.deskripsi_barang,
                 b.harga_barang, b.status_titip, b.tanggal_masuk, b.tanggal_keluar,
-                b.tanggal_garansi, b.berat_barang, p.id_penitip, p.nama AS penitip_name,
+                b.tanggal_garansi, b.tanggal_expire, b.berat_barang, p.id_penitip, p.nama AS penitip_name,
                 p.total_rating,
                 (
                     SELECT COUNT(*) FROM barang b2 WHERE b2.id_penitip = p.id_penitip
