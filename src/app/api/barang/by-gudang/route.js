@@ -33,9 +33,9 @@ export async function GET(request) {
             WHERE 1=1
         `;
 
-        let values = [];
-        if (search) {
-            query += `
+    let values = [];
+    if (search) {
+      query += `
                 AND (
                     LOWER(b.id_barang) LIKE ? OR
                     LOWER(b.kode_produk) LIKE ? OR
@@ -52,55 +52,22 @@ export async function GET(request) {
                     LOWER(gb.src_img) LIKE ?
                 )
             `;
-            const keyword = `%${search.toLowerCase()}%`;
-            values.push(
-                keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword, keyword,
-                keyword, keyword, keyword, keyword
-            );
-        }
-
-        const [barang] = await pool.query(query, values);
-
-        const groupedBarang = barang.reduce((acc, item) => {
-            if (!acc[item.id_barang]) {
-                acc[item.id_barang] = {
-                    id_barang: item.id_barang,
-                    kode_produk: item.kode_produk,
-                    nama_barang: item.nama_barang,
-                    deskripsi_barang: item.deskripsi_barang,
-                    harga_barang: item.harga_barang,
-                    status_titip: item.status_titip,
-                    tanggal_masuk: item.tanggal_masuk,
-                    tanggal_keluar: item.tanggal_keluar,
-                    tanggal_garansi: item.tanggal_garansi,
-                    id_penitip: item.id_penitip,
-                    penitip_name: item.penitip_name,
-                    gambar_barang: [],
-                    kategori_barang: []
-                };
-            }
-
-            if (item.id_gambar) {
-                acc[item.id_barang].gambar_barang.push({
-                    id_gambar: item.id_gambar,
-                    src_img: item.src_img,
-                });
-            }
-
-            if (item.nama_kategori) {
-                acc[item.id_barang].kategori_barang.push(item.nama_kategori);
-            }
-
-            return acc;
-        }, {});
-
-        const result = Object.values(groupedBarang);
-
-        return NextResponse.json({ barang: result }, { status: 200 });
-
-    } catch (error) {
-        console.error('Error fetching barang:', error);
-        return NextResponse.json({ error: "Failed to fetch Barang" }, { status: 500 });
+      const keyword = `%${search.toLowerCase()}%`;
+      values.push(
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword,
+        keyword
+      );
     }
 
     const [barang] = await pool.query(query, values);
