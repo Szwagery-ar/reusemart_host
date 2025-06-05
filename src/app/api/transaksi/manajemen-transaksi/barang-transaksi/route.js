@@ -22,6 +22,8 @@ export async function GET(request) {
                 g.src_img
             FROM barang b
             LEFT JOIN gambarbarang g ON b.id_barang = g.id_barang
+            LEFT JOIN bridgetransaksibarang bt ON b.id_barang = bt.id_barang
+            LEFT JOIN transaksi t ON bt.id_transaksi = t.id_transaksi
             WHERE b.id_transaksi = ?
         `;
 
