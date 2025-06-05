@@ -253,7 +253,7 @@ export default function DetailBarangAdminPage() {
                 });
 
                 const data = await res.json();
-                setPenitipOptions(data.penitip || []); // pastikan endpointnya mengirim array penitip
+                setPenitipOptions(data.penitip || []); 
             } catch (err) {
                 console.error("Gagal memuat data penitip:", err);
             }

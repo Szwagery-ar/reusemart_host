@@ -222,12 +222,11 @@ export default function CartPage() {
                     />
                     <div
                       className={`w-5 h-5 rounded-sm border-2 border-black flex items-center justify-center transition p-1
-                                            ${
-                                              selectedItems.length ===
-                                              cartItems.length
-                                                ? "bg-[radial-gradient(ellipse_130.87%_130.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-none"
-                                                : "border-black bg-white"
-                                            }`}
+                        ${
+                          selectedItems.length === cartItems.length
+                            ? "bg-[radial-gradient(ellipse_130.87%_130.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-none"
+                            : "border-black bg-white"
+                        }`}
                     >
                       {selectedItems.length === cartItems.length && (
                         <svg
@@ -265,11 +264,9 @@ export default function CartPage() {
                       <div
                         className={`w-5 h-5 rounded-sm border-2 border-black flex items-center justify-center transition p-1
                         ${
-                            items.every((item) =>
-                            selectedItems.includes(
-                                item.id_bridge_barang
-                            )
-                            )
+                          items.every((item) =>
+                            selectedItems.includes(item.id_bridge_barang)
+                          )
                             ? "bg-[radial-gradient(ellipse_130.87%_130.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-none"
                             : "border-black bg-white"
                         }`}
@@ -312,9 +309,7 @@ export default function CartPage() {
                             <div
                               className={`w-5 h-5 rounded-sm border-2 border-black flex items-center justify-center transition p-1
                                 ${
-                                    selectedItems.includes(
-                                    item.id_bridge_barang
-                                    )
+                                  selectedItems.includes(item.id_bridge_barang)
                                     ? "bg-[radial-gradient(ellipse_130.87%_130.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)] border-none"
                                     : "border-black bg-white"
                                 }`}
@@ -387,14 +382,23 @@ export default function CartPage() {
                   type="text"
                   value={poinDigunakan}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    const maxPoin = Math.min(
-                      user?.poin_loyalitas || 0,
-                      Math.floor(totalHarga / 100)
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val) || val <= 0) {
+                      setPoinDigunakan(0);
+                      return;
+                    }
+
+                    val = Math.floor(val / 100) * 100;
+
+                    const maxPoinFromLoyalty = user?.poin_loyalitas || 0;
+                    const maxPoinFromPrice =
+                      Math.floor(totalHarga / 10000) * 100;
+                    const maxValidPoin = Math.min(
+                      maxPoinFromLoyalty,
+                      maxPoinFromPrice
                     );
-                    setPoinDigunakan(
-                      isNaN(val) ? 0 : Math.max(0, Math.min(val, maxPoin))
-                    );
+
+                    setPoinDigunakan(Math.min(val, maxValidPoin));
                   }}
                   className="w-24 border border-gray-300 rounded px-2 py-1 text-sm"
                 />
