@@ -14,7 +14,7 @@ export async function GET(_, { params }) {
             SELECT 
                 b.id_barang, b.kode_produk, b.nama_barang, b.deskripsi_barang,
                 b.harga_barang, b.status_titip, b.tanggal_masuk, b.tanggal_keluar,
-                b.tanggal_garansi, b.berat_barang, p.id_penitip, p.nama AS penitip_name,
+                b.tanggal_garansi, b.tanggal_expire, b.berat_barang, p.id_penitip, p.nama AS penitip_name,
                 p.total_rating,
                 (
                     SELECT COUNT(*) FROM barang b2 WHERE b2.id_penitip = p.id_penitip
@@ -111,8 +111,26 @@ export async function PUT(request, { params }) {
         const files = formData.getAll("gambar");
         if (files.length > 0 && files[0]?.name) {
             // Hapus gambar lama dari DB (opsional, jika tidak ingin menumpuk)
-            await pool.query(`DELETE FROM gambarbarang WHERE id_barang = ?`, [id_barang]);
+            const gambarLamaRaw = formData.get("gambar_lama");
+            const gambarLama = gambarLamaRaw ? JSON.parse(gambarLamaRaw) : [];
 
+            // await pool.query(
+            //     `DELETE FROM gambarbarang WHERE id_barang = ? AND id_gambar NOT IN (${gambarLama.length > 0 ? gambarLama.map(() => '?').join(',') : 'NULL'})`,
+            //     [id_barang, ...gambarLama]
+            // );
+
+            if (gambarLama.length > 0) {
+                await pool.query(
+                    `DELETE FROM gambarbarang WHERE id_barang = ? AND id_gambar NOT IN (${gambarLama.map(() => '?').join(',')})`,
+                    [id_barang, ...gambarLama]
+                );
+            } else {
+                // jika tidak ada gambar lama, hapus semua gambar
+                await pool.query(
+                    `DELETE FROM gambarbarang WHERE id_barang = ?`,
+                    [id_barang]
+                );
+            }
 
             for (const file of files) {
                 const buffer = Buffer.from(await file.arrayBuffer());
@@ -121,7 +139,6 @@ export async function PUT(request, { params }) {
 
                 fs.writeFileSync(filePath, buffer);
 
-                // Simpan path ke DB
                 await pool.query(
                     `INSERT INTO gambarbarang (id_barang, src_img) VALUES (?, ?)`,
                     [id_barang, `/uploads/${fileName}`]

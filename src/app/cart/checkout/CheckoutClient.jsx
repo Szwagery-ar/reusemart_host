@@ -2,23 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { TriangleAlert } from "lucide-react";
 
 import RippleButton from "@/components/RippleButton/RippleButton";
 import AlamatModal from "@/components/AlamatModal/AlamatModal";
+import { format } from "path";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const [timeLeft, setTimeLeft] = useState(120); // 2 menit
   const searchParams = useSearchParams();
+
   const [processing, setProcessing] = useState(false);
   const id_transaksi = searchParams.get("id_transaksi");
 
   const [pembeli, setPembeli] = useState(null);
   const [transaksi, setTransaksi] = useState(null);
+
   const [barangList, setBarangList] = useState([]);
   const [alamatList, setAlamatList] = useState([]);
   const [selectedAlamat, setSelectedAlamat] = useState(null);
   const [jenisPengiriman, setJenisPengiriman] = useState("COURIER");
   const [ongkir, setOngkir] = useState(0);
+  const [showWarning, setShowWarning] = useState(false);
 
   const formatRupiah = (value) =>
     new Intl.NumberFormat("id-ID", {
@@ -26,6 +32,30 @@ export default function CheckoutPage() {
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(value);
+
+  useEffect(() => {
+    if (timeLeft <= 0 && id_transaksi && !processing && transaksi) {
+      setProcessing(true);
+
+      fetch(`/api/transaksi/${id_transaksi}/reset-checkout`, {
+        method: "PATCH",
+      }).then(() => {
+        alert("Waktu habis! Checkout dibatalkan.");
+        router.push("/cart");
+      });
+
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeLeft, id_transaksi, processing, transaksi, router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +91,55 @@ export default function CheckoutPage() {
   }, [id_transaksi, router]);
 
   useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = ""; // Chrome dan lainnya akan menampilkan konfirmasi default
+    };
+
+    if (transaksi && !processing) {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [transaksi, processing]);
+
+  useEffect(() => {
+    const cancelCheckout = async () => {
+      if (transaksi && !processing) {
+        try {
+          await fetch(`/api/transaksi/${id_transaksi}/reset-checkout`, {
+            method: "PATCH",
+          });
+        } catch (err) {
+          console.error("❌ Gagal batalkan checkout saat unload:", err);
+        }
+      }
+    };
+
+    const handlePageHide = (e) => {
+      if (e.persisted === false) {
+        cancelCheckout(); // untuk browser modern
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        cancelCheckout(); // fallback untuk browser lain
+      }
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [transaksi, processing, id_transaksi]);
+
+  useEffect(() => {
     if (transaksi && jenisPengiriman === "COURIER") {
       const ongkos = transaksi.harga_awal >= 1500000 ? 0 : 100000;
       setOngkir(ongkos);
@@ -83,6 +162,12 @@ export default function CheckoutPage() {
 
   const handleBayar = async () => {
     if (processing) return;
+
+    if (jenisPengiriman === "COURIER" && !selectedAlamat) {
+      setShowWarning(true);
+      return;
+    }
+
     setProcessing(true);
 
     try {
@@ -108,6 +193,14 @@ export default function CheckoutPage() {
     }
   };
 
+  const formatTimer = (seconds) => {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
   if (!transaksi || !pembeli) return <div className="p-6">Loading...</div>;
 
   return (
@@ -118,6 +211,13 @@ export default function CheckoutPage() {
 
       <div className="p-6 md:p-12 bg-[#EDF6FF] min-h-screen">
         <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+        <div className="text-sm text-gray-600">
+          Selesaikan checkout dalam waktu{" "}
+          <strong>
+            {formatTimer(timeLeft)} sebelum transaksi dibatalkan secara
+            otomatis.
+          </strong>
+        </div>
 
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
@@ -240,6 +340,24 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      {showWarning && (
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
+          <div className="bg-white border p-6 rounded shadow-lg text-center max-w-sm w-full">
+            <div className="flex justify-center mb-4 text-red-600 text-4xl">
+              <TriangleAlert />
+            </div>
+            <p className="text-md text-red-800 font-semibold mb-4">
+              Tolong isi alamat pengiriman terlebih dahulu.
+            </p>
+            <button
+              onClick={() => setShowWarning(false)}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

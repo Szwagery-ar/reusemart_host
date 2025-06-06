@@ -10,6 +10,8 @@ import { v4 as uuidv4 } from "uuid";
 export default function TransaksiPenitipanPage() {
     const [barangList, setBarangList] = useState([]);
     const [penitipOptions, setPenitipOptions] = useState([]);
+    const [selectedPenitip, setSelectedPenitip] = useState('');
+
     const [showSidebar, setShowSidebar] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const router = useRouter();
@@ -32,17 +34,40 @@ export default function TransaksiPenitipanPage() {
         }
     ]);
 
+    // const handleChange = (index, e) => {
+    //     const { name, value, type, files } = e.target;
+    //     setFormDataList((prev) => {
+    //         const newList = [...prev];
+    //         newList[index] = {
+    //             ...newList[index],
+    //             [name]: type === 'file' ? files : value,
+    //         };
+    //         return newList;
+    //     });
+    // };
+
     const handleChange = (index, e) => {
         const { name, value, type, files } = e.target;
         setFormDataList((prev) => {
             const newList = [...prev];
-            newList[index] = {
-                ...newList[index],
-                [name]: type === 'file' ? files : value,
-            };
+            const item = { ...newList[index] };
+
+            if (type === 'file') {
+                const newFiles = Array.from(files);
+                const existing = item[name] ? Array.from(item[name]) : [];
+
+                // Gabungkan file lama dan baru
+                const combined = [...existing, ...newFiles];
+                item[name] = new FileListItems(combined);
+            } else {
+                item[name] = value;
+            }
+
+            newList[index] = item;
             return newList;
         });
     };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -58,7 +83,13 @@ export default function TransaksiPenitipanPage() {
         const token = document.cookie.split('; ').find((row) => row.startsWith('token='))?.split('=')[1];
 
         const form = new FormData();
-        form.append("items", JSON.stringify(formDataList));
+        const finalItems = formDataList.map(item => ({
+            ...item,
+            id_penitip: selectedPenitip,
+        }));
+        form.append("items", JSON.stringify(finalItems));
+
+        // form.append("items", JSON.stringify(formDataList));
 
         formDataList.forEach((item, index) => {
             Array.from(item.gambar || []).forEach(file => {
@@ -142,6 +173,13 @@ export default function TransaksiPenitipanPage() {
         setQcOptions(data.qc || []);
     };
 
+    function FileListItems(files) {
+        const dataTransfer = new DataTransfer();
+        files.forEach((file) => dataTransfer.items.add(file));
+        return dataTransfer.files;
+    }
+
+
 
     return (
         <div className="p-6">
@@ -206,7 +244,10 @@ export default function TransaksiPenitipanPage() {
                 ))} */}
 
                 {barangList.map((penitipan) => (
-                    <div key={penitipan.id_penitipan} className="border p-4 rounded-lg shadow bg-white mb-4">
+                    <div key={penitipan.id_penitipan}
+                        className="border p-4 rounded-lg shadow bg-white mb-4"
+
+                    >
                         <h2 className="text-lg font-bold mb-1">Nota #{penitipan.id_penitipan}</h2>
                         <p className="text-sm text-gray-600 text-xs">Tanggal Masuk: {penitipan.tanggal_masuk?.split('T')[0]}</p>
                         <p className="text-sm text-gray-600 mb-2 text-xs">Penitip: {penitipan.penitip_name}</p>
@@ -229,14 +270,30 @@ export default function TransaksiPenitipanPage() {
                             ))}
                         </div>
 
-                        <div className="text-right mt-4">
+                        {/* <div className="text-right mt-4">
                             <button
                                 onClick={() => router.push(`/admin/transaksi-penitipan/nota-penitipan/${encodeURIComponent(penitipan.id_penitipan)}`)}
                                 className="text-sm text-blue-600 underline hover:text-blue-800"
                             >
                                 Lihat Nota
                             </button>
+                        </div> */}
+                        <div className="text-right mt-4 flex justify-end gap-2">
+                            <button
+                                onClick={() => router.push(`/admin/transaksi-penitipan/nota-penitipan/detail/${penitipan.id_penitipan}`)}
+                                className="px-4 py-2 rounded bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            >
+                                Lihat Detail
+                            </button>
+                            <button
+                                onClick={() => router.push(`/admin/transaksi-penitipan/nota-penitipan/${penitipan.id_penitipan}`)}
+                                className="px-4 py-2 rounded bg-blue-600 text-sm text-white font-medium hover:bg-blue-700"
+                            >
+                                Lihat Nota
+                            </button>
                         </div>
+
+
                     </div>
                 ))}
 
@@ -250,6 +307,24 @@ export default function TransaksiPenitipanPage() {
                             <h2 className="text-lg">Form Titip Beberapa Barang</h2>
                         </div>
                         <form className="flex flex-col gap-6 p-6" onSubmit={handleSubmit}>
+
+                            <div className="mb-4">
+                                <label className="font-semibold">Pilih Penitip :</label>
+                                <select
+                                    value={selectedPenitip}
+                                    onChange={(e) => setSelectedPenitip(e.target.value)}
+                                    className="border px-3 py-2 rounded w-full max-w-sm mt-1"
+                                    required
+                                >
+                                    <option value="">Daftar Nama</option>
+                                    {penitipOptions.map(p => (
+                                        <option key={p.id_penitip} value={p.id_penitip}>
+                                            {p.id_penitip} - {p.nama}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {formDataList.map((item, index) => (
                                 <div key={index} className="border p-4 rounded-md bg-gray-50">
                                     <div className="flex justify-between items-center">
@@ -267,7 +342,7 @@ export default function TransaksiPenitipanPage() {
                                     {item.isEditing && (
                                         <div className="mt-4 grid gap-2">
                                             {/* 1. Gambar */}
-                                            <div>
+                                            {/* <div>
                                                 <label className="font-semibold text-sm">Gambar Barang:</label>
                                                 <input name="gambar" type="file" multiple onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" />
                                                 {item.gambar && (
@@ -282,6 +357,48 @@ export default function TransaksiPenitipanPage() {
                                                         ))}
                                                     </div>
                                                 )}
+                                            </div> */}
+
+                                            <div>
+                                                <label className="font-semibold text-sm">Gambar Barang:</label>
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {/* Preview gambar */}
+                                                    {item.gambar &&
+                                                        Array.from(item.gambar).map((file, i) => (
+                                                            <div key={i} className="relative w-20 h-20">
+                                                                <img
+                                                                    src={URL.createObjectURL(file)}
+                                                                    alt={`preview-${i}`}
+                                                                    className="w-full h-full object-cover rounded"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newList = [...formDataList];
+                                                                        const newGambar = Array.from(newList[index].gambar).filter((_, j) => j !== i);
+                                                                        newList[index].gambar = new FileListItems(newGambar);
+                                                                        setFormDataList(newList);
+                                                                    }}
+                                                                    className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded-tr rounded-bl"
+                                                                >
+                                                                    X
+                                                                </button>
+                                                            </div>
+                                                        ))}
+
+                                                    {/* Tombol + untuk menambah file */}
+                                                    <label className="w-20 h-20 border border-dashed rounded flex items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-100">
+                                                        +
+                                                        <input
+                                                            type="file"
+                                                            name="gambar"
+                                                            multiple
+                                                            accept="image/*"
+                                                            onChange={(e) => handleChange(index, e)}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
+                                                </div>
                                             </div>
 
 
@@ -334,7 +451,7 @@ export default function TransaksiPenitipanPage() {
 
 
                                             {/* 6. Penitip */}
-                                            <div>
+                                            {/* <div>
                                                 <label className="font-semibold text-sm">Penitip:</label>
                                                 <select name="id_penitip" value={item.id_penitip} onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" required>
                                                     <option value="">---</option>
@@ -342,8 +459,7 @@ export default function TransaksiPenitipanPage() {
                                                         <option key={p.id_penitip} value={p.id_penitip}>{p.id_penitip} - {p.nama}</option>
                                                     ))}
                                                 </select>
-                                            </div>
-
+                                            </div> */}
 
                                             {/* 7. QC */}
                                             <div>

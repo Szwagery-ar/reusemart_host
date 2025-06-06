@@ -36,6 +36,7 @@ export async function GET(request) {
                 t.tambahan_poin,
                 p.status_pembayaran, 
                 p.img_bukti_transfer, 
+                t.is_rated,
                 peg.nama AS petugas_name,
                 peng.jenis_pengiriman, 
                 peng.tanggal_kirim,

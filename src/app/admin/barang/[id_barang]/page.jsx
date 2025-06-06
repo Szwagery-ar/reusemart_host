@@ -16,8 +16,6 @@ export default function DetailBarangAdminPage() {
     const [previewImages, setPreviewImages] = useState([]);
     const [penitipOptions, setPenitipOptions] = useState([]);
 
-
-
     useEffect(() => {
         const fetchBarang = async () => {
             try {
@@ -79,8 +77,10 @@ export default function DetailBarangAdminPage() {
         }
 
         const res = await fetch(`/api/barang/${id_barang}`, {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${token}` }, // jangan pasang Content-Type!
+            method: 'PUT',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
             body: form,
         });
 
@@ -169,7 +169,7 @@ export default function DetailBarangAdminPage() {
                                 key={index}
                                 src={gambar.src_img}
                                 onClick={() => setPreviewImg(gambar.src_img)}
-                                className={`w-20 h-20 object-cover rounded cursor-pointer ${previewImg === gambar.src_img ? "ring-2 ring-indigo-600" : ""}`}
+                                className={`w-20 h-20 object-cover rounded cursor-pointer ${previewImg === gambar.src_img ? "ring-2 ring-indigo-600" : ""} `}
                             />
                         ))}
                     </div>
@@ -235,7 +235,12 @@ export default function DetailBarangAdminPage() {
                         <p><strong>Garansi:</strong> {barang.tanggal_garansi ? formatDate(barang.tanggal_garansi) : '-'}</p>
                         <p><strong>Tanggal Masuk:</strong> {formatDate(barang.tanggal_masuk)}</p>
                         <p><strong>Tanggal Keluar:</strong> {barang.tanggal_keluar ? formatDate(barang.tanggal_keluar) : '-'}</p>
-                        <p><strong>Penitip:</strong> {barang.id_penitip ? `P${barang.id_penitip} - ${barang.penitip_name}` : barang.penitip_name}</p>
+                        <p>
+                            <strong>Penitip:</strong>{" "}
+                            {barang.id_penitip
+                                ? `${barang.id_penitip} - ${barang.penitip_name}`
+                                : barang.penitip_name}
+                        </p>
                         <p><strong>Deskripsi:</strong></p>
                         <div className="text-sm whitespace-pre-line leading-relaxed">
                             {barang.deskripsi_barang || 'Tidak ada deskripsi.'}
@@ -277,7 +282,7 @@ export default function DetailBarangAdminPage() {
                         className="fixed inset-y-0 right-0 z-50 bg-white w-3/5 h-full shadow-xl overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
+                        <div className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%392.78%_at_121.67%_0.00%,#26C2FF_0%,_#220593_90%)]">
                             <h2 className="text-lg">Edit Barang</h2>
                         </div>
 
@@ -310,7 +315,7 @@ export default function DetailBarangAdminPage() {
                                     <img
                                         key={idx}
                                         src={src}
-                                        alt={`Preview ${idx}`}
+                                        alt={Preview `${idx}`}
                                         className="w-24 h-24 object-cover rounded border"
                                     />
                                 ))}

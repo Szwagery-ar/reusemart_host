@@ -13,7 +13,9 @@ export async function PUT(request, context) {
         }
 
         const [result] = await pool.query(
-            `UPDATE barang SET status_titip = ? WHERE id_barang = ?`,
+            `UPDATE barang SET status_titip = ?,
+            tanggal_keluar = NOW() 
+            WHERE id_barang = ?`,
             [status_titip, id]
         );
 

@@ -6,7 +6,7 @@
   "scripts": {
     "full": "concurrently \"next dev\" \"node src/cron/cronMaster.js\"",
     "dev": "next dev",
-    "cron": "node src/cron/cronMaster.js",
+    "cron": "node --no-deprecation src/cron/cronMaster.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -40,6 +40,7 @@
     "react": "^19.0.0",
     "react-datepicker": "^8.4.0",
     "react-dom": "^19.0.0",
+    "react-to-print": "^3.1.0",
     "react-toastify": "^11.0.5",
     "tailwind-merge": "^3.2.0",
     "tailwind-scrollbar": "^4.0.2",
