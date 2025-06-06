@@ -10,7 +10,7 @@ import { format } from "path";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const [timeLeft, setTimeLeft] = useState(2); // 2 menit
+  const [timeLeft, setTimeLeft] = useState(120); // 2 menit
   const searchParams = useSearchParams();
 
   const [processing, setProcessing] = useState(false);
@@ -35,7 +35,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (timeLeft <= 0 && id_transaksi && !processing && transaksi) {
-      setProcessing(true); 
+      setProcessing(true);
 
       fetch(`/api/transaksi/${id_transaksi}/reset-checkout`, {
         method: "PATCH",
@@ -49,7 +49,7 @@ export default function CheckoutPage() {
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 0) return 0; 
+        if (prev <= 0) return 0;
         return prev - 1;
       });
     }, 1000);
@@ -89,6 +89,55 @@ export default function CheckoutPage() {
 
     fetchData();
   }, [id_transaksi, router]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = ""; // Chrome dan lainnya akan menampilkan konfirmasi default
+    };
+
+    if (transaksi && !processing) {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [transaksi, processing]);
+
+  useEffect(() => {
+    const cancelCheckout = async () => {
+      if (transaksi && !processing) {
+        try {
+          await fetch(`/api/transaksi/${id_transaksi}/reset-checkout`, {
+            method: "PATCH",
+          });
+        } catch (err) {
+          console.error("❌ Gagal batalkan checkout saat unload:", err);
+        }
+      }
+    };
+
+    const handlePageHide = (e) => {
+      if (e.persisted === false) {
+        cancelCheckout(); // untuk browser modern
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        cancelCheckout(); // fallback untuk browser lain
+      }
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [transaksi, processing, id_transaksi]);
 
   useEffect(() => {
     if (transaksi && jenisPengiriman === "COURIER") {
