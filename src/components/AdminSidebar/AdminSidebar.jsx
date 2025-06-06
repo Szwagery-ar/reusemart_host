@@ -42,6 +42,7 @@ const menuByRole = {
         { name: 'Transaksi Penitipan', path: '/admin/transaksi-penitipan', icon: FolderPlus },
         { name: 'Data Transaksi', path: '/admin/transaksi', icon: Handshake },
         { name: 'Data Pengiriman', path: '/admin/pengiriman', icon: Truck },
+        { name: 'Penilaian 2 Pasha', path: '/admin/pengiriman/penilaian', icon: Truck },
     ],
     CS: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
