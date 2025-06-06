@@ -16,12 +16,10 @@ export default function DetailBarangAdminPage() {
     const [previewImages, setPreviewImages] = useState([]);
     const [penitipOptions, setPenitipOptions] = useState([]);
 
-
-
     useEffect(() => {
         const fetchBarang = async () => {
             try {
-                const res = await fetch(/api/barang/${id_barang});
+                const res = await fetch(`/api/barang/${id_barang}`);
                 const data = await res.json();
                 setBarang(data.barang);
 
@@ -78,9 +76,11 @@ export default function DetailBarangAdminPage() {
             });
         }
 
-        const res = await fetch(`/api/barang/${id_barang}, {
-            method: "PUT",
-            headers: { Authorization: Bearer ${token} }, // jangan pasang Content-Type!
+        const res = await fetch(`/api/barang/${id_barang}`, {
+            method: 'PUT',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
             body: form,
         });
 
@@ -104,7 +104,7 @@ export default function DetailBarangAdminPage() {
 
     const handleKonfirmasiPengambilan = async (id_barang) => {
         try {
-            const res = await fetch(/api/barang/by-gudang/picked/${id_barang}, {
+            const res = await fetch(`/api/barang/by-gudang/picked/${id_barang}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -201,7 +201,7 @@ export default function DetailBarangAdminPage() {
                                     method: "DELETE",
                                     headers: {
                                         "Content-Type": "application/json",
-                                        Authorization: Bearer ${token},
+                                        Authorization: `Bearer ${token}`,
                                     },
                                     body: JSON.stringify({ id_barang: barang.id_barang }),
                                 });
@@ -235,7 +235,12 @@ export default function DetailBarangAdminPage() {
                         <p><strong>Garansi:</strong> {barang.tanggal_garansi ? formatDate(barang.tanggal_garansi) : '-'}</p>
                         <p><strong>Tanggal Masuk:</strong> {formatDate(barang.tanggal_masuk)}</p>
                         <p><strong>Tanggal Keluar:</strong> {barang.tanggal_keluar ? formatDate(barang.tanggal_keluar) : '-'}</p>
-                        <p><strong>Penitip:</strong> {barang.id_penitip ? P${barang.id_penitip} - ${barang.penitip_name} : barang.penitip_name}</p>
+                        <p>
+                            <strong>Penitip:</strong>{" "}
+                            {barang.id_penitip
+                                ? `${barang.id_penitip} - ${barang.penitip_name}`
+                                : barang.penitip_name}
+                        </p>
                         <p><strong>Deskripsi:</strong></p>
                         <div className="text-sm whitespace-pre-line leading-relaxed">
                             {barang.deskripsi_barang || 'Tidak ada deskripsi.'}
@@ -310,7 +315,7 @@ export default function DetailBarangAdminPage() {
                                     <img
                                         key={idx}
                                         src={src}
-                                        alt={Preview ${idx}}
+                                        alt={Preview `${idx}`}
                                         className="w-24 h-24 object-cover rounded border"
                                     />
                                 ))}

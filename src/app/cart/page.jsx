@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
 import RippleButton from "@/components/RippleButton/RippleButton";
-import ReuseButton from "@/components/ReuseButton/ReuseButton";
 import ReduseButton from "@/components/ReduseButton/ReduseButton";
 
 export default function CartPage() {
