@@ -33,9 +33,9 @@ export async function GET(request) {
             WHERE 1=1
         `;
 
-        let values = [];
-        if (search) {
-            query += `
+    let values = [];
+    if (search) {
+      query += `
                 AND (
                     LOWER(b.id_barang) LIKE ? OR
                     LOWER(b.kode_produk) LIKE ? OR
