@@ -338,7 +338,7 @@ export default function PenitipBarangPage() {
                                                 }}
 
                                             >
-                                                Edit
+                                                Detail
                                             </button>
                                             <button
                                                 className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
