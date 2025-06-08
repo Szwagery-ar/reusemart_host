@@ -36,11 +36,13 @@ export async function GET(request) {
       FROM transaksi t
       JOIN barang b ON b.id_transaksi = t.id_transaksi
       JOIN pembeli p ON t.id_pembeli = p.id_pembeli
+      JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+      JOIN penitip pt ON pb.id_penitip = pt.id_penitip
       LEFT JOIN (
         SELECT DISTINCT id_transaksi, komisi_penitip
         FROM komisi
       ) k ON t.id_transaksi = k.id_transaksi
-      WHERE b.id_penitip = ?
+      WHERE pt.id_penitip = ?
     `;
 
     let values = [id_penitip];

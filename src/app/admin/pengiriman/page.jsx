@@ -454,7 +454,9 @@ export default function AdminPengirimanPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Manajemen Pengiriman</h1>
+      <h1 className="text-4xl font-[Montage-Demo] mb-4">
+        Manajemen Pengiriman
+      </h1>
 
       <div className="flex flex-col justify-between gap-3 mb-4">
         <div>

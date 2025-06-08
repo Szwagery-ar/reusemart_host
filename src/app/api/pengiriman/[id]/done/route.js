@@ -62,7 +62,8 @@ export async function PATCH(request, context) {
        FROM transaksi t
        JOIN bridgebarangtransaksi bbt ON bbt.id_transaksi = t.id_transaksi
        JOIN barang b ON b.id_barang = bbt.id_barang
-       JOIN penitip p ON b.id_penitip = p.id_penitip
+       JOIN penitipanbarang pb ON pb.id_penitipan = b.id_penitipan
+       JOIN penitip p ON pb.id_penitip = p.id_penitip
        WHERE t.id_transaksi = ?`,
       [idTransaksi]
     );

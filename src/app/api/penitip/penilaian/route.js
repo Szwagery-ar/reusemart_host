@@ -18,7 +18,8 @@ export async function GET(request) {
             p.nama, 
             d.tanggal_donasi
         FROM penitip p 
-        LEFT JOIN barang b ON p.id_penitip = b.id_penitip 
+        LEFT JOIN penitipanbarang pb ON p.id_penitip = pb.id_penitip
+        LEFT JOIN barang b ON b.id_penitipan = pb.id_penitipan
         LEFT JOIN donasi d ON b.id_donasi = d.id_donasi 
         WHERE 
             b.id_donasi IS NOT NULL 

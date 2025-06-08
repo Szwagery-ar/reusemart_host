@@ -14,8 +14,9 @@ export default function AdminPenitipPage() {
 
   const dropdownRef = useRef(null);
 
-  const [showModal, setShowModal] = useState(false);
-  const [showEditSidebar, setShowEditSidebar] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+
   const [editData, setEditData] = useState(null);
 
   const defaultFormData = {
@@ -108,8 +109,20 @@ export default function AdminPenitipPage() {
   };
 
   const handleEdit = (penitip) => {
-    setEditData({ ...penitip, password: "" });
-    setShowEditSidebar(true);
+    setFormData({
+      ...penitip,
+      password: "",
+      foto_ktp: penitip.foto_ktp || null,
+    });
+    setIsEditMode(true);
+    setShowSidebar(true);
+  };
+
+  const handleAddNew = () => {
+    setFormData(defaultFormData);
+    setPreviewKTP(null);
+    setIsEditMode(false);
+    setShowSidebar(true);
   };
 
   const handleUpdate = async (e) => {
@@ -133,12 +146,12 @@ export default function AdminPenitipPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (editData) {
-      setEditData((prev) => ({ ...prev, [name]: value }));
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  useEffect(() => {
+    console.log("formData berubah:", formData);
+  }, [formData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -167,14 +180,14 @@ export default function AdminPenitipPage() {
     const data = await res.json();
     if (res.ok) {
       setPenitipList((prev) => [...prev, data.penitipBaru]);
-      setShowModal(false);
+      setShowSidebar(false);
       setFormData({
         nama: "",
         email: "",
         no_ktp: "",
         no_telepon: "",
         password: "",
-        foro_ktp: null,
+        foto_ktp: null,
       });
       alert("Penitip berhasil ditambahkan");
     } else {
@@ -208,9 +221,7 @@ export default function AdminPenitipPage() {
   return (
     <div className="p-6 relative">
       <WithRole allowed={["CS", "Superuser"]}>
-        <h1 className="text-2xl font-bold mb-4 text-indigo-700">
-          Data Penitip
-        </h1>
+        <h1 className="text-4xl font-[Montage-Demo] mb-4">Barang Titipan</h1>
         <div className="flex justify-between mb-4">
           <input
             type="text"
@@ -220,7 +231,7 @@ export default function AdminPenitipPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleAddNew}
             className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
           >
             Tambah Penitip
@@ -319,7 +330,7 @@ export default function AdminPenitipPage() {
           </table>
         </div>
 
-        {showModal && (
+        {/* {showModal && (
           <div className="fixed inset-0 bg-black/20 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg w-full max-w-lg h-120 max-h-screen overflow-y-auto">
               <h2 className="text-lg font-bold mb-4">Tambah Penitip</h2>
@@ -429,9 +440,9 @@ export default function AdminPenitipPage() {
               </form>
             </div>
           </div>
-        )}
+        )} */}
 
-        {showEditSidebar && editData && (
+        {/* {showEditSidebar && editData && (
           <>
             <div
               className="fixed inset-0 z-40 bg-black opacity-20"
@@ -532,6 +543,138 @@ export default function AdminPenitipPage() {
                   <button
                     type="button"
                     onClick={() => setShowEditSidebar(false)}
+                    className="px-4 py-2 bg-gray-200 rounded"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded"
+                  >
+                    Simpan
+                  </button>
+                </div>
+              </form>
+            </div>
+          </>
+        )} */}
+        {showSidebar && (
+          <>
+            <div
+              className="fixed inset-0 z-40 bg-black opacity-20"
+              onClick={() => setShowSidebar(false)}
+            />
+            <div className="fixed inset-y-0 right-0 z-50 bg-white w-full max-w-md h-full p-6 shadow-xl transition-transform duration-300">
+              <h2 className="text-lg font-bold mb-4">
+                {isEditMode ? "Edit Penitip" : "Tambah Penitip"}
+              </h2>
+              <form
+                onSubmit={isEditMode ? handleUpdate : handleSubmit}
+                className="space-y-4 overflow-y-auto max-h-[90vh]"
+                encType="multipart/form-data"
+              >
+                {/* isi form tetap, tapi semua input pakai formData */}
+                <input
+                  name="nama"
+                  onChange={handleChange}
+                  value={formData.nama}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Nama"
+                />
+                <input
+                  name="email"
+                  onChange={handleChange}
+                  value={formData.email}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Email"
+                />
+                <input
+                  name="no_telepon"
+                  onChange={handleChange}
+                  value={formData.no_telepon}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="No. Telepon"
+                />
+                <input
+                  name="password"
+                  type="password"
+                  onChange={handleChange}
+                  value={formData.password}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="Password"
+                />
+
+                {/* foto KTP */}
+                <label className="font-semibold text-gray-500">Foto KTP</label>
+                <label
+                  htmlFor="foto_ktp"
+                  className="inline-block w-full px-4 py-2 border text-GR rounded cursor-pointer hover:bg-gray-200 transition"
+                >
+                  Pilih Foto KTP
+                </label>
+                <input
+                  id="foto_ktp"
+                  type="file"
+                  accept="image/*"
+                  name="foto_ktp"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    setFormData((prev) => ({ ...prev, foto_ktp: file }));
+
+                    if (file) {
+                      setPreviewKTP(URL.createObjectURL(file));
+                    } else {
+                      setPreviewKTP(null);
+                    }
+                  }}
+                  className="hidden"
+                />
+                {previewKTP && (
+                  <img
+                    src={previewKTP}
+                    alt="Preview KTP"
+                    className="w-full max-h-64 object-contain border rounded mt-2"
+                  />
+                )}
+
+                <input
+                  name="no_ktp"
+                  onChange={handleChange}
+                  value={formData.no_ktp}
+                  className="w-full border px-3 py-2 rounded"
+                  placeholder="No. KTP"
+                />
+
+                {isEditMode && (
+                  <>
+                    <label className="font-semibold text-gray-500">
+                      Status Verifikasi
+                    </label>
+                    <select
+                      name="is_verified"
+                      onChange={handleChange}
+                      value={formData.is_verified}
+                      className="w-full border px-3 py-2 rounded"
+                    >
+                      <option value={0}>Belum Terverifikasi</option>
+                      <option value={1}>Terverifikasi</option>
+                    </select>
+
+                    <label className="font-semibold text-gray-500">
+                      Badge Level
+                    </label>
+                    <input
+                      value={formData.badge_level}
+                      disabled
+                      className="w-full border px-3 py-2 rounded bg-gray-100 text-gray-700 cursor-not-allowed"
+                    />
+                  </>
+                )}
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowSidebar(false)}
                     className="px-4 py-2 bg-gray-200 rounded"
                   >
                     Batal
