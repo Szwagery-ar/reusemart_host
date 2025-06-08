@@ -176,13 +176,43 @@ export async function PUT(request, { params }) {
           fileName
         );
 
-        fs.writeFileSync(filePath, buffer);
+        // Ambil dan proses gambar lama
+        const gambarLamaRaw = formData.get("gambar_lama");
+        const gambarLama = gambarLamaRaw ? JSON.parse(gambarLamaRaw) : [];
 
-        await pool.query(
-          `INSERT INTO gambarbarang (id_barang, src_img) VALUES (?, ?)`,
-          [id_barang, `/uploads/${fileName}`]
-        );
-      }
+        if (gambarLama.length > 0) {
+            await pool.query(
+                `DELETE FROM gambarbarang WHERE id_barang = ? AND id_gambar NOT IN (${gambarLama.map(() => '?').join(',')})`,
+                [id_barang, ...gambarLama]
+            );
+        } else {
+            await pool.query(
+                `DELETE FROM gambarbarang WHERE id_barang = ?`,
+                [id_barang]
+            );
+        }
+
+        // Simpan gambar baru (jika ada)
+        const files = formData.getAll("gambar");
+        if (files.length > 0 && files[0]?.name) {
+            for (const file of files) {
+                const buffer = Buffer.from(await file.arrayBuffer());
+                const fileName = `${uuidv4()}-${file.name}`;
+                const filePath = path.join(process.cwd(), "public", "uploads", fileName);
+
+                fs.writeFileSync(filePath, buffer);
+
+                await pool.query(
+                    `INSERT INTO gambarbarang (id_barang, src_img) VALUES (?, ?)`,
+                    [id_barang, `/uploads/${fileName}`]
+                );
+            }
+        }
+
+        return NextResponse.json({ message: "Barang & gambar berhasil diupdate!" }, { status: 200 });
+    } catch (err) {
+        console.error("Error updating barang:", err);
+        return NextResponse.json({ error: "Gagal mengupdate barang" }, { status: 500 });
     }
 
     return NextResponse.json(
