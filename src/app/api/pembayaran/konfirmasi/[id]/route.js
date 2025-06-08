@@ -72,7 +72,8 @@ export async function PATCH(request, { params }) {
       const [penitipRows] = await pool.query(
         `SELECT DISTINCT p.expo_push_token, p.nama AS nama_penitip, b.nama_barang
           FROM barang b
-          JOIN penitip p ON b.id_penitip = p.id_penitip
+          JOIN penitipanbarang pb ON pb.id_penitipan = b.id_penitipan
+          JOIN penitip p ON pb.id_penitip = p.id_penitip
           JOIN bridgebarangtransaksi bt ON bt.id_barang = b.id_barang
           WHERE bt.id_transaksi = ? AND p.expo_push_token IS NOT NULL`,
         [id_transaksi]

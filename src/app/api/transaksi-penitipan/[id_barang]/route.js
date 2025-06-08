@@ -29,7 +29,8 @@ export async function GET(_, { params }) {
                     )
                 ) AS gambar_barang
             FROM barang b
-            LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+            LEFT JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+            LEFT JOIN penitip p ON pb.id_penitip = p.id_penitip
             LEFT JOIN gambarbarang g ON b.id_barang = g.id_barang
             WHERE b.id_transaksi = ?
             GROUP BY b.id_barang`,

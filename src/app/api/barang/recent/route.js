@@ -17,9 +17,10 @@ export async function GET(request) {
                 b.tanggal_masuk, 
                 b.tanggal_keluar, 
                 b.tanggal_garansi, 
-                p.nama AS penitip_name
+                pt.nama AS penitip_name
             FROM barang b
-            LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+            LEFT JOIN penitipanbarang pb ON pb.id_penitipan = b.id_penitipan
+            LEFT JOIN penitip pt ON pb.id_penitip = pt.id_penitip
             ORDER BY b.tanggal_masuk DESC
             LIMIT ?
         `;
