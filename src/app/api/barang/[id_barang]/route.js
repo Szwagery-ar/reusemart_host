@@ -106,32 +106,25 @@ export async function PUT(request, { params }) {
             [nama_barang, deskripsi_barang, harga_barang, berat_barang, tanggal_garansi, status_titip, id_penitip, tanggal_masuk, tanggal_keluar, id_barang]
         );
 
+        // Ambil dan proses gambar lama
+        const gambarLamaRaw = formData.get("gambar_lama");
+        const gambarLama = gambarLamaRaw ? JSON.parse(gambarLamaRaw) : [];
+
+        if (gambarLama.length > 0) {
+            await pool.query(
+                `DELETE FROM gambarbarang WHERE id_barang = ? AND id_gambar NOT IN (${gambarLama.map(() => '?').join(',')})`,
+                [id_barang, ...gambarLama]
+            );
+        } else {
+            await pool.query(
+                `DELETE FROM gambarbarang WHERE id_barang = ?`,
+                [id_barang]
+            );
+        }
 
         // Simpan gambar baru (jika ada)
         const files = formData.getAll("gambar");
         if (files.length > 0 && files[0]?.name) {
-            // Hapus gambar lama dari DB (opsional, jika tidak ingin menumpuk)
-            const gambarLamaRaw = formData.get("gambar_lama");
-            const gambarLama = gambarLamaRaw ? JSON.parse(gambarLamaRaw) : [];
-
-            // await pool.query(
-            //     `DELETE FROM gambarbarang WHERE id_barang = ? AND id_gambar NOT IN (${gambarLama.length > 0 ? gambarLama.map(() => '?').join(',') : 'NULL'})`,
-            //     [id_barang, ...gambarLama]
-            // );
-
-            if (gambarLama.length > 0) {
-                await pool.query(
-                    `DELETE FROM gambarbarang WHERE id_barang = ? AND id_gambar NOT IN (${gambarLama.map(() => '?').join(',')})`,
-                    [id_barang, ...gambarLama]
-                );
-            } else {
-                // jika tidak ada gambar lama, hapus semua gambar
-                await pool.query(
-                    `DELETE FROM gambarbarang WHERE id_barang = ?`,
-                    [id_barang]
-                );
-            }
-
             for (const file of files) {
                 const buffer = Buffer.from(await file.arrayBuffer());
                 const fileName = `${uuidv4()}-${file.name}`;
