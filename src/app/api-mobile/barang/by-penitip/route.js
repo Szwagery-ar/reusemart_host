@@ -34,9 +34,10 @@ export async function GET(request) {
         gb.id_gambar, 
         gb.src_img
       FROM barang b
-      LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+      LEFT JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+      LEFT JOIN penitip p ON pb.id_penitip = p.id_penitip
       LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
-      WHERE b.id_penitip = ?
+      WHERE p.id_penitip = ?
       ORDER BY b.tanggal_masuk DESC`,
       [id_penitip]
     );

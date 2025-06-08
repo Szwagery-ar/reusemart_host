@@ -86,7 +86,7 @@ export async function POST(request) {
       `
       SELECT 
         b.id_barang,
-        b.id_penitip,
+        pt.id_penitip,
         b.id_petugas_hunter,
         b.harga_barang,
         b.tanggal_masuk,
@@ -94,6 +94,8 @@ export async function POST(request) {
         b.is_extended
       FROM bridgebarangtransaksi bt
       JOIN barang b ON bt.id_barang = b.id_barang
+      JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+      JOIN penitip pt ON pb.id_penitip = pt.id_penitip
       WHERE bt.id_transaksi = ?
       `,
       [id_transaksi]

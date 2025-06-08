@@ -239,7 +239,7 @@ export default function AdminBarangPage() {
   return (
     <div className="p-6">
       <WithRole allowed={["Gudang", "Superuser"]}>
-        <h1 className="text-2xl font-bold mb-4">Data Barang</h1>
+        <h1 className="text-4xl font-[Montage-Demo] mb-4">Data Barang</h1>
         <div className="flex justify-between mb-4">
           <input
             type="text"
@@ -288,7 +288,7 @@ export default function AdminBarangPage() {
                 <p>{barang.status_titip}</p>
 
                 <p className="font-medium">Garansi</p>
-                <p>{barang.tanggal_garansi || "-"}</p>
+                <p>{barang.tanggal_garansi?.split("T")[0]}</p>
 
                 <p className="font-medium">Tanggal Masuk</p>
                 <p>{barang.tanggal_masuk?.split("T")[0]}</p>

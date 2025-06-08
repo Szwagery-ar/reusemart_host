@@ -23,7 +23,7 @@ export async function PATCH(request, { params }) {
             SELECT bc.id_bridge_barang
             FROM barang b
             JOIN bridgebarangcart bc ON b.id_barang = bc.id_barang
-            WHERE b.id_transaksi = ?;
+            WHERE bc.id_transaksi = ?;
         `, [id_transaksi]);
 
         if (bridgeItems.length > 0) {

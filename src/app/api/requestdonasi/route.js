@@ -170,7 +170,8 @@ export async function PUT(request) {
               `
                 SELECT p.expo_push_token, p.nama AS nama_penitip, b.nama_barang
                 FROM barang b
-                JOIN penitip p ON b.id_penitip = p.id_penitip
+                LEFT JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+                LEFT JOIN penitip p ON pb.id_penitip = p.id_penitip
                 WHERE b.id_barang = ?
               `,
               [id_barang]
