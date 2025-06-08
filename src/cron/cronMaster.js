@@ -9,7 +9,7 @@ import { hanguskanTransaksiSelfPickup } from "./pengiriman/hanguskanPengambilan.
 console.log("🚀 Cron Master dijalankan");
 
 setTimeout(() => {
-  cron.schedule("8 * * * *", async () => { // Dikirim setiap hari jam 06:00
+  cron.schedule("0 6 * * *", async () => { // Dikirim setiap hari jam 06:00
     console.log(`[${new Date().toISOString()}] ⏰ Menjalankan semua cron pukul 06.00...`);
     await cronTitipanH3();
     await cronTitipanHariH();
