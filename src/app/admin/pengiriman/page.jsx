@@ -197,23 +197,7 @@ export default function AdminPengirimanPage() {
       .slice(0, 16);
     return localISO;
   };
-
-  //   const getPengirimanMin = (tanggalPesanStr) => {
-  //     const pesanDate = new Date(tanggalPesanStr);
-  //     const now = new Date();
-  //     const offset = now.getTimezoneOffset();
-
-  //     if (pesanDate.getHours() >= 16) {
-  //       pesanDate.setDate(pesanDate.getDate() + 1);
-  //     }
-
-  //     pesanDate.setHours(0, 0, 0, 0);
-  //     const iso = new Date(pesanDate.getTime() - offset * 60000)
-  //       .toISOString()
-  //       .slice(0, 16);
-  //     return iso;
-  //   };
-
+  
   const handleDetailClick = async (transaksi) => {
     setSelectedTransaksi(transaksi);
     setSelectedDate("");
