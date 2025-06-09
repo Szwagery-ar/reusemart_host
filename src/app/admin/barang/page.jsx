@@ -1,529 +1,517 @@
 "use client";
 
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import WithRole from "@/components/WithRole/WithRole";
-import { EllipsisVertical } from "lucide-react";
-import { useRouter } from "next/navigation";
+import ReuseButton from "@/components/ReuseButton/ReuseButton";
 
-export default function AdminBarangPage() {
-  const [barangList, setBarangList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  // const [showModal, setShowModal] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [penitipOptions, setPenitipOptions] = useState([]);
-  const router = useRouter();
+export default function DetailBarangAdminPage() {
+    const { id_barang } = useParams();
+    const router = useRouter();
 
-  const [formData, setFormData] = useState({
-    nama_barang: "",
-    kode_produk: "",
-    harga_barang: "",
-    deskripsi_barang: "",
-    berat_barang: "",
-    status_titip: "AVAILABLE",
-    tanggal_garansi: "",
-    tanggal_masuk: "",
-    id_penitip: "",
-    gambar: null,
-  });
+    const [barang, setBarang] = useState(null);
+    // const [barangList, setBarangList] = useState([]);
+    const [previewImg, setPreviewImg] = useState("");
+    const [uniqueImages, setUniqueImages] = useState([]);
+    const [oldImages, setOldImages] = useState([]);
+    const [showSidebar, setShowSidebar] = useState(false);
+    const [formData, setFormData] = useState({});
+    const [previewImages, setPreviewImages] = useState([]);
+    const [penitipOptions, setPenitipOptions] = useState([]);
 
-  const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
-    if (type === "file") {
-      setFormData((prev) => ({ ...prev, [name]: files[0] }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
+    useEffect(() => {
+        const fetchBarang = async () => {
+            try {
+                const res = await fetch(`/api/barang/${id_barang}`);
+                const data = await res.json();
+                setBarang(data.barang);
 
-  // const handleSubmit = async (e) => {
-  //     e.preventDefault();
+                if (data.barang.gambar_barang?.length > 0) {
+                    setOldImages(data.barang.gambar_barang); // ← ini yang penting
+                }
 
-  //     const token = document.cookie
-  //         .split("; ")
-  //         .find((row) => row.startsWith("token="))
-  //         ?.split("=")[1];
-
-  //     const form = new FormData();
-  //     form.append("nama_barang", formData.nama_barang);
-  //     form.append("harga_barang", formData.harga_barang);
-  //     form.append("deskripsi_barang", formData.deskripsi_barang);
-  //     form.append("berat_barang", formData.berat_barang);
-  //     form.append("tanggal_garansi", formData.tanggal_garansi);
-  //     form.append("id_penitip", formData.id_penitip);
-
-  //     // Append multiple images
-  //     if (formData.gambar) {
-  //         Array.from(formData.gambar).forEach((file) => {
-  //             form.append("gambar", file);
-  //         });
-  //     }
-
-  //     const res = await fetch("/api/barang", {
-  //         method: "POST",
-  //         headers: {
-  //             Authorization: `Bearer ${token}`,
-  //         },
-  //         body: form,
-  //     });
-
-  //     const data = await res.json();
-
-  //     if (res.ok) {
-  //         setBarangList((prev) => [
-  //             ...prev,
-  //             {
-  //                 ...data.barangBaru,
-  //                 gambar_barang: [],
-  //             }
-  //         ]);
-  //         setShowSidebar(false);
-  //         setFormData({
-  //         nama_barang: "",
-  //         harga_barang: "",
-  //         deskripsi_barang: "",
-  //         berat_barang: "",
-  //         tanggal_garansi: "",
-  //         tanggal_masuk: "",
-  //         id_penitip: "",
-  //         gambar: null,
-  //         });
-  //         alert("Barang berhasil ditambahkan");
-  //     } else {
-  //         alert(data.error || "Gagal menambahkan barang");
-  //     }
-  // };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const token = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("token="))
-      ?.split("=")[1];
-
-    const form = new FormData();
-    form.append("nama_barang", formData.nama_barang);
-    form.append("harga_barang", formData.harga_barang);
-    form.append("deskripsi_barang", formData.deskripsi_barang);
-    form.append("berat_barang", formData.berat_barang);
-    form.append("tanggal_garansi", formData.tanggal_garansi);
-    form.append("id_penitip", formData.id_penitip);
-
-    if (formData.gambar) {
-      Array.from(formData.gambar).forEach((file) => {
-        form.append("gambar", file);
-      });
-    }
-
-    const res = await fetch("/api/barang/by-gudang", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: form,
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      await fetchBarang(); // fetch ulang agar dapat barang dengan id_barang, gambar_barang, dll.
-      setShowSidebar(false);
-      setFormData({
-        nama_barang: "",
-        harga_barang: "",
-        deskripsi_barang: "",
-        berat_barang: "",
-        tanggal_garansi: "",
-        tanggal_masuk: "",
-        id_penitip: "",
-        gambar: null,
-      });
-      alert("Barang berhasil ditambahkan");
-    } else {
-      alert(data.error || "Gagal menambahkan barang");
-    }
-  };
-
-  const fetchBarang = async () => {
-    try {
-      const res = await fetch("/api/barang/by-gudang");
-      const data = await res.json();
-      if (res.ok) {
-        setBarangList(data.barang);
-      } else {
-        setError(data.error || "Gagal mengambil data barang");
-      }
-    } catch (err) {
-      setError("Terjadi kesalahan saat mengambil data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // useEffect(() => {
-  //     const fetchBarang = async () => {
-  //         try {
-  //             const res = await fetch('/api/barang');
-  //             const data = await res.json();
-  //             if (res.ok) {
-  //                 setBarangList(data.barang);
-  //             } else {
-  //                 setError(data.error || 'Gagal mengambil data barang');
-  //             }
-  //         } catch (err) {
-  //             setError('Terjadi kesalahan saat mengambil data');
-  //         } finally {
-  //             setLoading(false);
-  //         }
-  //     };
-
-  //     fetchBarang();
-  // }, []);
-
-  // DROPDOWN
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (!event.target.closest(".dropdown-action")) {
-        setActiveDropdown(null);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
-    const fetchPenitip = async () => {
-      try {
-        const res = await fetch("/api/penitip"); // buat endpoint /api/penitip (GET all)
-        const data = await res.json();
-        setPenitipOptions(data.penitip || []);
-      } catch (err) {
-        console.error("Gagal mengambil data penitip");
-      }
-    };
-    fetchPenitip();
-  }, []);
-
-  useEffect(() => {
-    const fetchBarang = async () => {
-      try {
-        const res = await fetch(
-          `/api/barang/by-gudang?q=${encodeURIComponent(searchQuery)}`
-        );
-        const data = await res.json();
-        if (res.ok) {
-          setBarangList(data.barang);
-        } else {
-          setError(data.error || "Gagal mengambil data barang");
-        }
-      } catch (err) {
-        console.error("Error fetching barang:", err);
-        setError("Terjadi kesalahan saat mengambil data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBarang();
-  }, [searchQuery]);
-
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
-
-  return (
-    <div className="p-6">
-      <WithRole allowed={["Gudang", "Superuser"]}>
-        <h1 className="text-4xl font-[Montage-Demo] mb-4">Data Barang</h1>
-        <div className="flex justify-between mb-4">
-          <input
-            type="text"
-            placeholder="Cari barang..."
-            className="px-4 py-2 border border-gray-300 rounded-md w-full max-w-md"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {/* <button
-                onClick={() => setShowSidebar(true)}
-                className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-            >
-                Tambah Barang
-            </button> */}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {barangList.map((barang) => (
-            <div
-              key={barang.id_barang}
-              onClick={() => router.push(`/admin/barang/${barang.id_barang}`)}
-              className="border p-4 rounded-lg shadow-sm bg-white cursor-pointer hover:shadow-md transition"
-            >
-              {Array.isArray(barang.gambar_barang) &&
-              barang.gambar_barang.length > 0 ? (
-                <img
-                  src={barang.gambar_barang[0].src_img}
-                  alt={barang.nama_barang}
-                  className="w-full aspect-square object-cover rounded"
-                />
-              ) : (
-                <div className="w-full h-48 bg-gray-200 rounded flex items-center justify-center text-gray-400">
-                  Tidak ada gambar
-                </div>
-              )}
-              <h2 className="text-lg font-semibold my-2">
-                {barang.nama_barang}
-              </h2>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600">
-                <p className="font-medium">Kode</p>
-                <p>{barang.kode_produk}</p>
-
-                <p className="font-medium">Harga</p>
-                <p>Rp{parseInt(barang.harga_barang).toLocaleString("id-ID")}</p>
-
-                <p className="font-medium">Status Titip</p>
-                <p>{barang.status_titip}</p>
-
-                <p className="font-medium">Garansi</p>
-                <p>{barang.tanggal_garansi?.split("T")[0]}</p>
-
-                <p className="font-medium">Tanggal Masuk</p>
-                <p>{barang.tanggal_masuk?.split("T")[0]}</p>
-
-                <p className="font-medium">Tanggal Keluar</p>
-                <p>{barang.tanggal_keluar?.split("T")[0] || "-"}</p>
-
-                <p className="font-medium mb-2">Penitip</p>
-                <p className="mb-2">{barang.penitip_name || "-"}</p>
-              </div>
-
-              <div className="flex flex-row gap-3 mt-3">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/admin/barang/${barang.id_barang}`);
-                  }}
-                  className="w-1/2 rounded-full bg-gradient-to-r from-blue-800 to-blue-400 text-white font-semibold py-2 hover:opacity-90 transition"
-                >
-                  Lihat Detail
-                </button>
-
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    const confirmDelete = confirm(
-                      "Yakin ingin menghapus barang ini?"
+                if (data.barang && data.barang.gambar_barang.length > 0) {
+                    setPreviewImg(data.barang.gambar_barang[0].src_img);
+                    const uniqueImgs = Array.from(
+                        new Set(data.barang.gambar_barang.map((item) => item.src_img))
+                    ).map((src_img) =>
+                        data.barang.gambar_barang.find((item) => item.src_img === src_img)
                     );
-                    if (!confirmDelete) return;
+                    setUniqueImages(uniqueImgs);
+                }
+            } catch (err) {
+                console.error("Gagal memuat barang:", err);
+            }
+        };
 
-                    const token = document.cookie
-                      .split("; ")
-                      .find((row) => row.startsWith("token="))
-                      ?.split("=")[1];
+        fetchBarang();
+    }, [id_barang]);
 
-                    const res = await fetch("/api/barang", {
-                      method: "DELETE",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({ id_barang: barang.id_barang }),
-                    });
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat("id-ID", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        }).format(date);
+    };
 
-                    const data = await res.json();
-                    if (res.ok) {
-                      alert("Barang berhasil dihapus");
-                      setBarangList((prev) =>
-                        prev.filter(
-                          (item) => item.id_barang !== barang.id_barang
-                        )
-                      );
-                    } else {
-                      alert(data.error || "Gagal menghapus barang");
-                    }
-                  }}
-                  className="w-1/2 rounded-full bg-gradient-to-r from-red-700 to-red-400 text-white font-semibold py-2 hover:opacity-90 transition"
-                >
-                  Hapus
-                </button>
-              </div>
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+
+        const totalImages = oldImages.length + (formData.gambar?.length || 0);
+        if (totalImages < 2) {
+            alert("Minimal harus ada 2 gambar barang.");
+            return;
+        }
+
+        const token = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("token="))
+            ?.split("=")[1];
+
+        const form = new FormData();
+        form.append("nama_barang", formData.nama_barang);
+        form.append("deskripsi_barang", formData.deskripsi_barang);
+        form.append("harga_barang", formData.harga_barang);
+        form.append("berat_barang", formData.berat_barang);
+        form.append("tanggal_garansi", formData.tanggal_garansi);
+        form.append("id_penitip", formData.id_penitip);
+        form.append("tanggal_masuk", formData.tanggal_masuk || "");
+        form.append("tanggal_keluar", formData.tanggal_keluar || "");
+
+        form.append("status_titip", "AVAILABLE");
+
+        const gambarLamaIds = oldImages.map((img) => img.id_gambar); // Ambil ID gambar lama yang masih dipertahankan
+        form.append("gambar_lama", JSON.stringify(gambarLamaIds));
+
+        if (formData.gambar instanceof FileList) {
+            Array.from(formData.gambar).forEach((file) => {
+                form.append("gambar", file);
+            });
+        }
+
+        const res = await fetch(`/api/barang/${id_barang}`, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` }, // jangan pasang Content-Type!
+            body: form,
+        });
+
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
+
+        if (res.ok) {
+            alert("Barang berhasil diupdate");
+            setShowSidebar(false);
+            router.refresh();
+        } else {
+            alert(data.error || "Gagal mengupdate barang");
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            previewImages.forEach((src) => URL.revokeObjectURL(src));
+        };
+    }, [previewImages]);
+
+    const handleKonfirmasiPengambilan = async (id_barang) => {
+        try {
+            const res = await fetch(`/api/barang/by-gudang/picked/${id_barang}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    status_titip: "PICKED_UP"
+                }),
+            });
+
+            if (!res.ok) throw new Error("Gagal mengkonfirmasi pengambilan");
+
+            alert("Status diperbarui ke PICKED_UP.");
+
+            // Update state barang yang sedang dilihat
+            setBarang((prev) => ({
+                ...prev,
+                status_titip: "PICKED_UP"
+            }));
+        } catch (error) {
+            console.error("Error konfirmasi pengambilan:", error);
+            alert("Terjadi kesalahan saat mengkonfirmasi.");
+        }
+    };
+
+    const handleRemoveOldImage = (index) => {
+        setOldImages((prev) => prev.filter((_, i) => i !== index));
+    };
+
+
+    useEffect(() => {
+        const fetchPenitip = async () => {
+            try {
+                const res = await fetch("/api/penitip");
+                const data = await res.json();
+                setPenitipOptions(data.penitip || []); // pastikan endpointnya mengirim array penitip
+            } catch (err) {
+                console.error("Gagal memuat data penitip:", err);
+            }
+        };
+        fetchPenitip();
+    }, []);
+
+
+    if (!barang) return <div className="p-6">Loading...</div>;
+
+    return (
+        <div className="p-6">
+            <button
+                onClick={() => router.back()}
+                className="mb-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            >
+                Kembali
+            </button>
+
+            <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                    <img
+                        src={previewImg || "/images/default-image.jpg"}
+                        alt={barang.nama_barang}
+                        className="w-full h-[400px] object-cover rounded-xl mb-4"
+                    />
+
+                    <div className="flex gap-2">
+                        {uniqueImages.map((gambar, index) => (
+                            <img
+                                key={index}
+                                src={gambar.src_img}
+                                onClick={() => setPreviewImg(gambar.src_img)}
+                                className={`w-20 h-20 object-cover rounded cursor-pointer ${previewImg === gambar.src_img ? "ring-2 ring-indigo-600" : ""} `}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="mt-4 flex justify-start gap-3">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setFormData(barang); // ← inisialisasi form
+                                setShowSidebar(true);
+                            }}
+                            className="w-28 rounded-full bg-gradient-to-r from-blue-800 to-blue-400 text-white font-semibold py-2 hover:opacity-90 transition"
+                        >
+                            Edit
+                        </button>
+
+                        <button
+                            onClick={async (e) => {
+                                e.stopPropagation();
+                                const confirmDelete = confirm("Yakin ingin menghapus barang ini?");
+                                if (!confirmDelete) return;
+
+                                const token = document.cookie
+                                    .split("; ")
+                                    .find((row) => row.startsWith("token="))
+                                    ?.split("=")[1];
+
+                                const res = await fetch("/api/barang", {
+                                    method: "DELETE",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        Authorization: `Bearer ${token}`,
+                                    },
+                                    body: JSON.stringify({ id_barang: barang.id_barang }),
+                                });
+
+                                const data = await res.json();
+                                if (res.ok) {
+                                    alert("Barang berhasil dihapus");
+                                    router.push("/admin/barang");
+                                } else {
+                                    alert(data.error || "Gagal menghapus barang");
+                                }
+                            }}
+                            className="w-28 rounded-full bg-gradient-to-r from-red-700 to-red-400 text-white font-semibold py-2 hover:opacity-90 transition"
+                        >
+                            Hapus
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h1 className="text-2xl font-bold mb-2">{barang.nama_barang}</h1>
+                    <p className="text-lg font-semibold text-indigo-700 mb-4">
+                        Rp{parseInt(barang.harga_barang).toLocaleString("id-ID")}
+                    </p>
+
+                    <div className="grid gap-2 text-sm">
+                        <p><strong>Kode Produk:</strong> {barang.kode_produk}</p>
+                        <p><strong>Status Titip:</strong> {barang.status_titip}</p>
+                        <p><strong>Garansi:</strong> {barang.tanggal_garansi ? formatDate(barang.tanggal_garansi) : '-'}</p>
+                        <p><strong>Tanggal Masuk:</strong> {formatDate(barang.tanggal_masuk)}</p>
+                        <p><strong>Tanggal Keluar:</strong> {barang.tanggal_keluar ? formatDate(barang.tanggal_keluar) : '-'}</p>
+                        <p>
+                            <strong>Penitip:</strong>{" "}
+                            {barang.id_penitip
+                                ? `${barang.id_penitip} - ${barang.penitip_name}`
+                                : barang.penitip_name}
+                        </p>
+                        <p><strong>Deskripsi:</strong></p>
+                        <div className="text-sm whitespace-pre-line leading-relaxed">
+                            {barang.deskripsi_barang || 'Tidak ada deskripsi.'}
+                        </div>
+
+                        {["READY_PICK_UP"].includes(barang?.status_titip?.toUpperCase()) && (
+                            <ReuseButton className="mt-4">
+                                <button
+                                    className="p-2 text-lg font-medium"
+                                    onClick={() => handleKonfirmasiPengambilan(barang.id_barang)}
+                                >
+                                    Barang Telah Diambil Penitip
+                                </button>
+                            </ReuseButton>
+                        )}
+
+
+                    </div>
+
+                    {/* <div className="mt-6">
+                        <h2 className="font-semibold mb-2">Deskripsi Barang</h2>
+                        <p className="text-sm whitespace-pre-line bg-gray-50 p-3 rounded border">
+                        {barang.deskripsi_barang || '-'}
+                        </p>
+                    </div> */}
+
+                </div>
             </div>
-          ))}
+            {showSidebar && (
+                <>
+                    {/* Overlay gelap */}
+                    <div
+                        className="fixed inset-0 z-40 bg-black opacity-20"
+                        onClick={() => setShowSidebar(false)}
+                    />
+
+                    {/* Sidebar kanan */}
+                    <div
+                        className="fixed inset-y-0 right-0 z-50 bg-white w-3/5 h-full shadow-xl overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%392.78%_at_121.67%_0.00%,#26C2FF_0%,_#220593_90%)]">
+                            <h2 className="text-lg">Edit Barang</h2>
+                        </div>
+
+                        <form className="flex flex-col gap-6 p-6" onSubmit={handleUpdate}>
+
+                            {/* 1. Foto Barang */}
+                            <label htmlFor="gambar" className="text-sm font-bold text-black-700">
+                                Foto Barang :
+                            </label>
+
+                            {/* <input
+                                type="file"
+                                name="gambar"
+                                multiple
+                                onChange={(e) => {
+                                    const files = e.target.files;
+                                    setFormData({ ...formData, gambar: files });
+
+                                    const previews = Array.from(files).map((file) => {
+                                        return URL.createObjectURL(file);
+                                    });
+
+                                    setPreviewImages(previews);
+                                }}
+                                className="border px-3 py-2 rounded"
+                            /> */}
+
+                            {/* Preview gambar baru */}
+                            {/* <div className="flex gap-2 mt-2 flex-wrap">
+                                {previewImages.map((src, idx) => (
+                                    <img
+                                        key={idx}
+                                        src={src}
+                                        alt={Preview`${idx}`}
+                                        className="w-24 h-24 object-cover rounded border"
+                                    />
+                                ))}
+                            </div> */}
+
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {/* Gambar lama dari server */}
+                                {oldImages.map((img, i) => (
+                                    <div key={`old-${i}`} className="relative w-20 h-20">
+                                        <img src={img.src_img} className="w-full h-full object-cover rounded" />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveOldImage(i)}
+                                            className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded-tr rounded-bl"
+                                        >
+                                            X
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {/* Preview gambar baru */}
+                                {previewImages.map((src, i) => (
+                                    <div key={`preview-${i}`} className="relative w-20 h-20">
+                                        <img src={src} className="w-full h-full object-cover rounded" />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemovePreview(i)}
+                                            className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded-tr rounded-bl"
+                                        >
+                                            X
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {/* Tombol tambah gambar */}
+                                <label className="w-20 h-20 border border-dashed rounded flex items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-100">
+                                    +
+                                    <input
+                                        type="file"
+                                        name="gambar"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const files = e.target.files;
+                                            const previews = Array.from(files).map((file) => URL.createObjectURL(file));
+
+                                            const dt = new DataTransfer();
+                                            Array.from(files).forEach(file => dt.items.add(file));
+
+                                            setFormData((prev) => ({ ...prev, gambar: dt.files }));
+                                            setPreviewImages(previews);
+                                        }}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+
+                            {/* 2. Nama Barang */}
+                            <label htmlFor="nama_barang" className="text-sm font-bold text-black-700">
+                                Nama Barang :
+                            </label>
+                            <input
+                                type="text"
+                                name="nama_barang"
+                                value={formData.nama_barang || ""}
+                                onChange={(e) => setFormData({ ...formData, nama_barang: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                                placeholder="Nama Barang"
+                            />
+
+                            {/* 3. Harga Barang */}
+                            <label htmlFor="harga_barang" className="text-sm font-bold text-black-700">
+                                Harga Barang :
+                            </label>
+                            <input
+                                type="number"
+                                name="harga_barang"
+                                value={formData.harga_barang || ""}
+                                onChange={(e) => setFormData({ ...formData, harga_barang: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                                placeholder="Harga Barang"
+                            />
+
+                            {/* 4. Berat Barang */}
+                            <label htmlFor="berat_barang" className="text-sm font-bold text-black-700">
+                                Berat Barang :
+                            </label>
+                            <input
+                                type="number"
+                                name="berat_barang"
+                                value={formData.berat_barang || ""}
+                                onChange={(e) => setFormData({ ...formData, berat_barang: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                                placeholder="Berat (gram)"
+                            />
+
+                            {/* 5. Tanggal Garansi (jika kategori barang elektronik) */}
+
+                            {barang?.kategori_barang?.includes("Elektronik") && (
+                                <>
+                                    <label htmlFor="tanggal_garansi" className="text-sm font-bold text-black-700">
+                                        Tanggal Garansi Barang :
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="tanggal_garansi"
+                                        value={formData.tanggal_garansi?.split("T")[0] || ""}
+                                        onChange={(e) => setFormData({ ...formData, tanggal_garansi: e.target.value })}
+                                        className="border px-3 py-2 rounded"
+                                    />
+                                </>
+                            )}
+
+                            {/* 5.1 Tanggal Masuk */}
+                            <label htmlFor="tanggal_masuk" className="text-sm font-bold text-black-700">
+                                Tanggal Masuk :
+                            </label>
+                            <input
+                                type="date"
+                                name="tanggal_masuk"
+                                value={formData.tanggal_masuk?.split("T")[0] || ""}
+                                onChange={(e) => setFormData({ ...formData, tanggal_masuk: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                            />
+
+                            {/* 5.2 Tanggal Keluar */}
+                            <label htmlFor="tanggal_keluar" className="text-sm font-bold text-black-700">
+                                Tanggal Keluar :
+                            </label>
+                            <input
+                                type="date"
+                                name="tanggal_keluar"
+                                value={formData.tanggal_keluar?.split("T")[0] || ""}
+                                onChange={(e) => setFormData({ ...formData, tanggal_keluar: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                            />
+
+                            {/* Pilih Penitip */}
+                            <label htmlFor="nama_barang" className="text-sm font-bold text-black-700">
+                                Pilih Penitip :
+                            </label>
+                            <select
+                                value={formData.id_penitip || ""}
+                                onChange={(e) => setFormData({ ...formData, id_penitip: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                            >
+                                <option value=""></option>
+                                {penitipOptions.map((penitip) => (
+                                    <option key={penitip.id_penitip} value={penitip.id_penitip}>
+                                        {penitip.id_penitip} - {penitip.nama}
+                                    </option>
+                                ))}
+                            </select>
+
+
+                            {/* 6. Deskripsi Barang */}
+
+                            <label htmlFor="deskripsi_barang" className="text-sm font-bold text-black-700">
+                                Deskripsi :
+                            </label>
+                            <textarea
+                                name="deskripsi_barang"
+                                value={formData.deskripsi_barang || ""}
+                                onChange={(e) => setFormData({ ...formData, deskripsi_barang: e.target.value })}
+                                className="border px-3 py-2 rounded"
+                                placeholder="Deskripsi Barang"
+                            />
+
+                            <div className="flex justify-end gap-2">
+                                <button type="button" onClick={() => setShowSidebar(false)} className="px-4 py-2 bg-gray-200 rounded">
+                                    Batal
+                                </button>
+                                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded">
+                                    Simpan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </>
+            )}
         </div>
 
-        {showSidebar && (
-          <>
-            {/* Overlay */}
-            <div
-              className="fixed inset-0 z-40 bg-black opacity-20"
-              onClick={() => {
-                setShowSidebar(false);
-              }}
-            />
-
-            {/* Sidebar kanan */}
-            <div className="fixed inset-y-0 right-0 z-50 bg-white w-3/5 h-full shadow-xl overflow-y-auto max-h-screen transition-transform duration-300">
-              {/* Header Sidebar */}
-              <div className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
-                <h2 className="text-lg font-semibold">
-                  Tambah Penitipan Barang
-                </h2>
-              </div>
-
-              {/* Form */}
-              <form className="flex flex-col gap-6 p-6" onSubmit={handleSubmit}>
-                <div>
-                  <label className="block mb-1 font-medium text-sm">
-                    Gambar Barang
-                  </label>
-                  <input
-                    name="gambar"
-                    type="file"
-                    multiple
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        gambar: e.target.files,
-                      }))
-                    }
-                    className="w-full border px-3 py-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1 font-medium text-sm">
-                    Nama Barang
-                  </label>
-                  <input
-                    name="nama_barang"
-                    onChange={handleChange}
-                    value={formData.nama_barang}
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder="Nama Barang"
-                  />
-                </div>
-
-                {/* <div>
-                                    <label className="block mb-1 font-medium text-sm">Kode Produk</label>
-                                    <input name="kode_produk" onChange={handleChange} value={formData.kode_produk} className="w-full border px-3 py-2 rounded" placeholder="Kode Produk" />
-                                </div> */}
-
-                <div>
-                  <label className="block mb-1 font-medium text-sm">
-                    Harga Barang
-                  </label>
-                  <input
-                    name="harga_barang"
-                    onChange={handleChange}
-                    value={formData.harga_barang}
-                    type="number"
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder="Harga Barang"
-                  />
-                </div>
-
-                {/* <div>
-                                    <label className="block mb-1 font-medium text-sm">Status Titip</label>
-                                    <input name="status_titip" onChange={handleChange} value={formData.status_titip} className="w-full border px-3 py-2 rounded" placeholder="Status Titip (e.g. AVAILABLE)" />
-                                </div> */}
-                <div>
-                  <label className="block mb-1 font-medium text-sm">
-                    Deskripsi Barang
-                  </label>
-                  <textarea
-                    name="deskripsi_barang"
-                    onChange={handleChange}
-                    value={formData.deskripsi_barang}
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder="Deskripsi lengkap barang"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1 font-medium text-sm">
-                    Berat Barang (gram)
-                  </label>
-                  <input
-                    type="number"
-                    name="berat_barang"
-                    onChange={handleChange}
-                    value={formData.berat_barang}
-                    className="w-full border px-3 py-2 rounded"
-                    placeholder="Contoh: 1200"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1 font-medium text-sm">
-                    Tanggal Garansi
-                  </label>
-                  <input
-                    name="tanggal_garansi"
-                    onChange={handleChange}
-                    value={formData.tanggal_garansi}
-                    type="date"
-                    className="w-full border px-3 py-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1 font-medium text-sm">
-                    Tanggal Masuk
-                  </label>
-                  <input
-                    name="tanggal_masuk"
-                    onChange={handleChange}
-                    value={formData.tanggal_masuk}
-                    type="date"
-                    className="w-full border px-3 py-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block mb-1 font-medium text-sm">
-                    Penitip
-                  </label>
-                  <select
-                    name="id_penitip"
-                    onChange={handleChange}
-                    value={formData.id_penitip}
-                    className="w-full border px-3 py-2 rounded"
-                  >
-                    <option value="">-- Pilih Penitip --</option>
-                    {penitipOptions.map((p) => (
-                      <option key={p.id_penitip} value={p.id_penitip}>
-                        {p.id_penitip} - {p.nama}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Tombol */}
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowSidebar(false)}
-                    className="px-4 py-2 bg-gray-200 rounded"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-700 text-white rounded"
-                  >
-                    Simpan
-                  </button>
-                </div>
-              </form>
-            </div>
-          </>
-        )}
-      </WithRole>
-    </div>
-  );
+    );
 }

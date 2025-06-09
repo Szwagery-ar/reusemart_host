@@ -14,7 +14,7 @@ export async function GET(request) {
 
         let query = `
         SELECT penitip.id_penitip, penitip.id, penitip.nama, penitip.no_ktp, penitip.no_telepon, 
-               penitip.email, penitip.badge_level, foto_ktp, is_verified, penitip.komisi,
+               penitip.email, penitip.badge_level, foto_ktp, is_verified, penitip.poin_reward, penitip.komisi,
                COUNT(barang.id_barang) AS total_barang
         FROM penitip
         LEFT JOIN penitipanbarang ON penitip.id_penitip = penitipanbarang.id_penitip

@@ -7,10 +7,15 @@ export async function GET(request, context) {
   try {
     // Ambil detail transaksi + nama pembeli
     const [tx] = await pool.query(
-      `SELECT t.*, p.nama AS nama_pembeli
-       FROM transaksi t
-       JOIN pembeli p ON t.id_pembeli = p.id_pembeli
-       WHERE t.id_transaksi = ?`,
+        `SELECT 
+            t.*, 
+            p.nama AS nama_pembeli,
+            pg.jenis_pengiriman,
+            pg.lokasi
+        FROM transaksi t
+        JOIN pembeli p ON t.id_pembeli = p.id_pembeli
+        LEFT JOIN pengiriman pg ON pg.id_transaksi = t.id_transaksi
+        WHERE t.id_transaksi = ?`,
       [id_transaksi]
     );
 
