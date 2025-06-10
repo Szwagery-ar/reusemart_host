@@ -1,10 +1,9 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
-import { writeFile } from 'fs/promises';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { writeFile } from "fs/promises";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
-
 
 export async function GET(_, { params }) {
     const { id_barang } = await params;
@@ -17,13 +16,17 @@ export async function GET(_, { params }) {
                 b.tanggal_garansi, b.tanggal_expire, b.berat_barang, p.id_penitip, p.nama AS penitip_name,
                 p.total_rating,
                 (
-                    SELECT COUNT(*) FROM barang b2 WHERE b2.id_penitip = p.id_penitip
+                    SELECT COUNT(*) FROM barang b2 
+                    LEFT JOIN penitipanbarang pb2 ON pb.id_penitipan = b2.id_penitipan
+                    LEFT JOIN penitip p2 ON p2.id_penitip = pb2.id_penitip
+                    WHERE pb2.id_penitip = p.id_penitip
                 ) AS jumlah_barang,
 
                 gb.id_gambar, gb.src_img,
                 k.nama_kategori
             FROM barang b
-            LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+            LEFT JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+            LEFT JOIN penitip p ON pb.id_penitip = p.id_penitip
             LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
             LEFT JOIN bridgekategoribarang bk ON b.id_barang = bk.id_barang
             LEFT JOIN kategoribarang k ON bk.id_kategori = k.id_kategori
@@ -33,7 +36,10 @@ export async function GET(_, { params }) {
         const [barang] = await pool.query(query, [id_barang]);
 
         if (barang.length === 0) {
-            return NextResponse.json({ error: "Barang tidak ditemukan" }, { status: 404 });
+            return NextResponse.json(
+                { error: "Barang tidak ditemukan" },
+                { status: 404 }
+            );
         }
 
         const grouped = barang.reduce((acc, item) => {
@@ -51,7 +57,10 @@ export async function GET(_, { params }) {
                 });
             }
 
-            if (item.nama_kategori && !acc.kategori_barang.includes(item.nama_kategori)) {
+            if (
+                item.nama_kategori &&
+                !acc.kategori_barang.includes(item.nama_kategori)
+            ) {
                 acc.kategori_barang.push(item.nama_kategori);
             }
 
@@ -64,10 +73,12 @@ export async function GET(_, { params }) {
             grouped.rata_rata_rating = 0;
         }
         return NextResponse.json({ barang: grouped }, { status: 200 });
-
     } catch (error) {
         console.error("Error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal Server Error" },
+            { status: 500 }
+        );
     }
 }
 
@@ -77,7 +88,6 @@ export async function PUT(request, { params }) {
 
     try {
         const formData = await request.formData();
-        const id_penitip = formData.get("id_penitip");
         const nama_barang = formData.get("nama_barang");
         const deskripsi_barang = formData.get("deskripsi_barang");
         const harga_barang = formData.get("harga_barang");
@@ -88,24 +98,38 @@ export async function PUT(request, { params }) {
         const status_titip = formData.get("status_titip") || "AVAILABLE";
 
         // Validasi field
-        if (!nama_barang || !deskripsi_barang || !harga_barang || !berat_barang || !tanggal_garansi || !status_titip) {
-            return NextResponse.json({ error: "Semua field wajib diisi" }, { status: 400 });
+        if (
+            !nama_barang ||
+            !deskripsi_barang ||
+            !harga_barang ||
+            !berat_barang ||
+            !tanggal_garansi ||
+            !status_titip
+        ) {
+            return NextResponse.json(
+                { error: "Semua field wajib diisi" },
+                { status: 400 }
+            );
         }
-
-        if (!id_penitip) {
-            return NextResponse.json({ error: "Penitip wajib dipilih" }, { status: 400 });
-        }
-
 
         // Update data barang
         await pool.query(
             `UPDATE barang 
             SET nama_barang = ?, deskripsi_barang = ?, harga_barang = ?, berat_barang = ?, 
-                tanggal_garansi = ?, status_titip = ?, id_penitip = ?, tanggal_masuk = ?, tanggal_keluar = ?
+                tanggal_garansi = ?, status_titip = ?, tanggal_masuk = ?, tanggal_keluar = ?
             WHERE id_barang = ?`,
-            [nama_barang, deskripsi_barang, harga_barang, berat_barang, tanggal_garansi, status_titip, id_penitip, tanggal_masuk, tanggal_keluar, id_barang]
+            [
+                nama_barang,
+                deskripsi_barang,
+                harga_barang,
+                berat_barang,
+                tanggal_garansi,
+                status_titip,
+                tanggal_masuk,
+                tanggal_keluar,
+                id_barang,
+            ]
         );
-
 
         // Simpan gambar baru (jika ada)
         const files = formData.getAll("gambar");
@@ -121,21 +145,27 @@ export async function PUT(request, { params }) {
 
             if (gambarLama.length > 0) {
                 await pool.query(
-                    `DELETE FROM gambarbarang WHERE id_barang = ? AND id_gambar NOT IN (${gambarLama.map(() => '?').join(',')})`,
+                    `DELETE FROM gambarbarang WHERE id_barang = ? AND id_gambar NOT IN (${gambarLama
+                        .map(() => "?")
+                        .join(",")})`,
                     [id_barang, ...gambarLama]
                 );
             } else {
                 // jika tidak ada gambar lama, hapus semua gambar
-                await pool.query(
-                    `DELETE FROM gambarbarang WHERE id_barang = ?`,
-                    [id_barang]
-                );
+                await pool.query(`DELETE FROM gambarbarang WHERE id_barang = ?`, [
+                    id_barang,
+                ]);
             }
 
             for (const file of files) {
                 const buffer = Buffer.from(await file.arrayBuffer());
                 const fileName = `${uuidv4()}-${file.name}`;
-                const filePath = path.join(process.cwd(), "public", "uploads", fileName);
+                const filePath = path.join(
+                    process.cwd(),
+                    "public",
+                    "uploads",
+                    fileName
+                );
 
                 fs.writeFileSync(filePath, buffer);
 
@@ -146,10 +176,16 @@ export async function PUT(request, { params }) {
             }
         }
 
-        return NextResponse.json({ message: "Barang & gambar berhasil diupdate!" }, { status: 200 });
+        return NextResponse.json(
+            { message: "Barang & gambar berhasil diupdate!" },
+            { status: 200 }
+        );
     } catch (err) {
         console.error("Error updating barang:", err);
-        return NextResponse.json({ error: "Gagal mengupdate barang" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Gagal mengupdate barang" },
+            { status: 500 }
+        );
     }
 }
 
@@ -173,4 +209,3 @@ export async function PUT(request, { params }) {
 //         return NextResponse.json({ error: "Server error" }, { status: 500 });
 //     }
 // }
-

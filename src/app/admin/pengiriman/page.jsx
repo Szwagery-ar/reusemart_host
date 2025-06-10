@@ -197,23 +197,7 @@ export default function AdminPengirimanPage() {
       .slice(0, 16);
     return localISO;
   };
-
-  //   const getPengirimanMin = (tanggalPesanStr) => {
-  //     const pesanDate = new Date(tanggalPesanStr);
-  //     const now = new Date();
-  //     const offset = now.getTimezoneOffset();
-
-  //     if (pesanDate.getHours() >= 16) {
-  //       pesanDate.setDate(pesanDate.getDate() + 1);
-  //     }
-
-  //     pesanDate.setHours(0, 0, 0, 0);
-  //     const iso = new Date(pesanDate.getTime() - offset * 60000)
-  //       .toISOString()
-  //       .slice(0, 16);
-  //     return iso;
-  //   };
-
+  
   const handleDetailClick = async (transaksi) => {
     setSelectedTransaksi(transaksi);
     setSelectedDate("");
@@ -454,7 +438,9 @@ export default function AdminPengirimanPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Manajemen Pengiriman</h1>
+      <h1 className="text-4xl font-[Montage-Demo] mb-4">
+        Manajemen Pengiriman
+      </h1>
 
       <div className="flex flex-col justify-between gap-3 mb-4">
         <div>

@@ -26,7 +26,8 @@ export async function GET(request) {
                 gb.src_img,
                 kb.nama_kategori
             FROM barang b
-            LEFT JOIN penitip p ON b.id_penitip = p.id_penitip
+            LEFT JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+            LEFT JOIN penitip p ON pb.id_penitip = p.id_penitip
             LEFT JOIN gambarbarang gb ON b.id_barang = gb.id_barang
             LEFT JOIN bridgekategoribarang bkb ON b.id_barang = bkb.id_barang
             LEFT JOIN kategoribarang kb ON bkb.id_kategori = kb.id_kategori

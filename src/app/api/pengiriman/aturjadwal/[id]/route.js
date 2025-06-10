@@ -79,7 +79,8 @@ export async function PUT(request, { params }) {
     const [penitipRows] = await pool.query(
       `SELECT DISTINCT pt.expo_push_token, pt.nama AS nama_penitip, pg.tanggal_kirim
         FROM penitip pt
-        JOIN barang b ON b.id_penitip = pt.id_penitip
+        JOIN penitipanbarang pb ON pb.id_penitip = pt.id_penitip
+        JOIN barang b ON b.id_penitipan = pb.id_penitipan
         JOIN bridgebarangtransaksi bt ON bt.id_barang = b.id_barang
         JOIN transaksi t ON t.id_transaksi = bt.id_transaksi
         JOIN pengiriman pg ON pg.id_transaksi = t.id_transaksi
@@ -208,7 +209,8 @@ export async function PATCH(request, { params }) {
     const [penitipRows] = await pool.query(
       `SELECT DISTINCT pt.expo_push_token, pt.nama AS nama_penitip, pg.tanggal_kirim
         FROM penitip pt
-        JOIN barang b ON b.id_penitip = pt.id_penitip
+        JOIN penitipanbarang pb ON pb.id_penitip = pt.id_penitip
+        JOIN barang b ON b.id_penitipan = pb.id_penitipan
         JOIN bridgebarangtransaksi bt ON bt.id_barang = b.id_barang
         JOIN transaksi t ON t.id_transaksi = bt.id_transaksi
         JOIN pengiriman pg ON pg.id_transaksi = t.id_transaksi

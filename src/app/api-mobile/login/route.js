@@ -15,9 +15,9 @@ export async function POST(req) {
         `SELECT * FROM ${role} WHERE email = ?`,
         [email]
       );
-
+      
       if (result.length === 0) continue;
-
+      
       const user = result[0];
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) continue;

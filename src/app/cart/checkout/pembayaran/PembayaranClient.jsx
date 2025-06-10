@@ -12,10 +12,11 @@ export default function PembayaranPage() {
   const [transaksi, setTransaksi] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  // const [timeLeft, setTimeLeft] = useState(900);
+  const [isUploaded, setIsUploaded] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
 
   useEffect(() => {
+    if (isUploaded) return;
     if (timeLeft <= 0) {
       fetch(`/api/transaksi/${id_transaksi}/batal`, {
         method: "PATCH",
@@ -31,7 +32,7 @@ export default function PembayaranPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timeLeft, id_transaksi, router]);
+  }, [timeLeft, isUploaded, id_transaksi, router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,6 +75,7 @@ export default function PembayaranPage() {
     const uploadData = await uploadRes.json();
 
     alert("Bukti pembayaran berhasil dikirim!");
+    setIsUploaded(true);
     router.push("/profile/riwayat");
   };
 
