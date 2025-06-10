@@ -161,11 +161,10 @@ export async function POST(request) {
 
       const [insertResult] = await pool.query(
         `INSERT INTO barang (
-                    id_penitip, id_penitipan,kode_produk, nama_barang, deskripsi_barang,
+                    id_penitipan,kode_produk, nama_barang, deskripsi_barang,
                     berat_barang, harga_barang, tanggal_garansi, tanggal_masuk, tanggal_expire, status_titip, id_petugas_qc
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          id_penitip,
           id_penitipan,
           kode_produk,
           nama_barang,
