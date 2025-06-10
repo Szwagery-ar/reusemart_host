@@ -109,8 +109,8 @@ export async function PATCH(request, { params }) {
       // ❌ Pembayaran gagal → transaksi CANCELLED, barang AVAILABLE
       await pool.query(
         `UPDATE transaksi 
-                 SET status_transaksi = 'CANCELLED' 
-                 WHERE id_transaksi = ?`,
+          SET status_transaksi = 'CANCELLED' 
+          WHERE id_transaksi = ?`,
         [id_transaksi]
       );
 
