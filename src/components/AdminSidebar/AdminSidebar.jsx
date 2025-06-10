@@ -47,6 +47,8 @@ const menuByRole = {
     CS: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
+        { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
+        { name: 'Klaim Merchandise', path: '/admin/klaim-merch', icon: HandCoins },
         { name: 'Data Pembayaran', path: '/admin/konfirmasi-pembayaran', icon: Banknote },
         { name: 'Diskusi', path: '/admin/diskusi', icon: Handshake },
     ],
