@@ -104,6 +104,7 @@ export async function POST(request) {
     for (const barang of barangList) {
       const {
         id_penitip,
+        id_barang,
         id_petugas_hunter,
         harga_barang,
         tanggal_masuk,
@@ -146,14 +147,15 @@ export async function POST(request) {
         await pool.query(
           `
           INSERT INTO komisi (
-            id_transaksi, id_penitip, id_petugas_hunter,
+            id_transaksi, id_penitip, id_petugas_hunter, id_barang,
             komisi_penitip, komisi_reusemart, komisi_hunter
-          ) VALUES (?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
           [
             id_transaksi,
             id_penitip,
             id_petugas_hunter,
+            id_barang,
             komisi_penitip,
             komisi_reusemart,
             komisi_hunter,
@@ -169,10 +171,10 @@ export async function POST(request) {
         await pool.query(
           `
           INSERT INTO komisi (
-            id_transaksi, id_penitip, komisi_penitip, komisi_reusemart
-          ) VALUES (?, ?, ?, ?)
+            id_transaksi, id_penitip, id_barang, komisi_penitip, komisi_reusemart
+          ) VALUES (?, ?, ?, ?, ?)
         `,
-          [id_transaksi, id_penitip, komisi_penitip, komisi_reusemart]
+          [id_transaksi, id_penitip, id_barang, komisi_penitip, komisi_reusemart]
         );
       }
 

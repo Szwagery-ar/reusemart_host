@@ -88,7 +88,6 @@ export async function PUT(request, { params }) {
 
     try {
         const formData = await request.formData();
-        const id_penitip = formData.get("id_penitip");
         const nama_barang = formData.get("nama_barang");
         const deskripsi_barang = formData.get("deskripsi_barang");
         const harga_barang = formData.get("harga_barang");
@@ -113,18 +112,11 @@ export async function PUT(request, { params }) {
             );
         }
 
-        if (!id_penitip) {
-            return NextResponse.json(
-                { error: "Penitip wajib dipilih" },
-                { status: 400 }
-            );
-        }
-
         // Update data barang
         await pool.query(
             `UPDATE barang 
             SET nama_barang = ?, deskripsi_barang = ?, harga_barang = ?, berat_barang = ?, 
-                tanggal_garansi = ?, status_titip = ?, id_penitip = ?, tanggal_masuk = ?, tanggal_keluar = ?
+                tanggal_garansi = ?, status_titip = ?, tanggal_masuk = ?, tanggal_keluar = ?
             WHERE id_barang = ?`,
             [
                 nama_barang,
@@ -133,7 +125,6 @@ export async function PUT(request, { params }) {
                 berat_barang,
                 tanggal_garansi,
                 status_titip,
-                id_penitip,
                 tanggal_masuk,
                 tanggal_keluar,
                 id_barang,
