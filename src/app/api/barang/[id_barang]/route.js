@@ -209,3 +209,36 @@ export async function PUT(request, { params }) {
 //         return NextResponse.json({ error: "Server error" }, { status: 500 });
 //     }
 // }
+
+export async function PATCH(request, { params }) {
+    const { id_barang } = params;
+
+    try {
+        const [barang] = await pool.query(
+            "SELECT tanggal_expire FROM barang WHERE id_barang = ?",
+            [id_barang]
+        );
+
+        if (!barang.length) {
+            return NextResponse.json({ error: "Barang tidak ditemukan" }, { status: 404 });
+        }
+
+        const tanggal_expire = new Date(barang[0].tanggal_expire);
+        const hariIni = new Date();
+        const selisihHari = Math.floor((hariIni - tanggal_expire) / (1000 * 60 * 60 * 24));
+
+        if (selisihHari > 7) {
+            await pool.query(
+                "UPDATE barang SET status_titip = 'DONATABLE' WHERE id_barang = ?",
+                [id_barang]
+            );
+
+            return NextResponse.json({ message: "Status barang diubah ke DONATABLE" });
+        } else {
+            return NextResponse.json({ message: "Belum lebih dari 7 hari, tidak diubah" });
+        }
+    } catch (error) {
+        console.error("Gagal update status barang:", error);
+        return NextResponse.json({ error: "Gagal update status" }, { status: 500 });
+    }
+}
