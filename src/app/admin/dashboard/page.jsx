@@ -51,6 +51,24 @@ export default function AdminDashboardPage() {
     const chartRef = useRef(null);
     const chartInstanceRef = useRef(null);
 
+    const [selectedMonth, setSelectedMonth] = useState("ALL");
+    const monthOptions = [
+        { value: "ALL", label: "Semua Bulan" },
+        { value: "01", label: "Januari" },
+        { value: "02", label: "Februari" },
+        { value: "03", label: "Maret" },
+        { value: "04", label: "April" },
+        { value: "05", label: "Mei" },
+        { value: "06", label: "Juni" },
+        { value: "07", label: "Juli" },
+        { value: "08", label: "Agustus" },
+        { value: "09", label: "September" },
+        { value: "10", label: "Oktober" },
+        { value: "11", label: "November" },
+        { value: "12", label: "Desember" },
+    ];
+
+
     const formatCurrency = (value) => `Rp ${Math.round(value).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
     useEffect(() => {
@@ -62,9 +80,15 @@ export default function AdminDashboardPage() {
         setAvailableYears(years);
     }, []);
 
-    const fetchData = async (tahun) => {
+    const fetchData = async (tahun, bulan) => {
+        const url = new URL("/api/laporan/dashboard", window.location.origin);
+        url.searchParams.set("tahun", tahun);
+        if (bulan && bulan !== "ALL") {
+            url.searchParams.set("bulan", bulan);
+        }
+
         try {
-            const response = await fetch(`/api/laporan/dashboard?tahun=${tahun}`);
+            const response = await fetch(url.toString());
             const result = await response.json();
             setData(result);
         } catch (error) {
@@ -72,9 +96,11 @@ export default function AdminDashboardPage() {
         }
     };
 
+
     useEffect(() => {
-        fetchData(selectedYear);
-    }, [selectedYear]);
+        fetchData(selectedYear, selectedMonth);
+    }, [selectedYear, selectedMonth]);
+
 
     const formatToJuta = (value) => {
         const juta = value / 1_000_000;
@@ -86,12 +112,10 @@ export default function AdminDashboardPage() {
         return new Promise((resolve) => {
             const ctx = chartRef.current.getContext('2d');
 
-            // Destroy chart sebelumnya jika ada
             if (chartInstanceRef.current) {
                 chartInstanceRef.current.destroy();
             }
 
-            // Buat chart baru dan simpan referensinya
             chartInstanceRef.current = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -210,13 +234,15 @@ export default function AdminDashboardPage() {
         return `${day}/${month}/${year}`;
     };
 
-    const downloadPDFKomisi = (tableData) => {
+    const downloadPDFKomisi = (tableData, tahun, bulan = null) => {
         const doc = new jsPDF();
         const today = new Date().toLocaleDateString("id-ID", {
             day: "numeric",
             month: "long",
             year: "numeric",
         });
+
+        const bulanNama = bulan ? new Date(`${tahun}-${bulan}-01`).toLocaleString("id-ID", { month: "long" }) : "Semua Bulan";
 
         doc.setFontSize(12);
         doc.text("ReUse Mart", 14, 14);
@@ -225,7 +251,9 @@ export default function AdminDashboardPage() {
         doc.text("LAPORAN KOMISI PER PRODUK", 14, 30);
 
         doc.setFontSize(12);
-        doc.text(`Tanggal cetak: ${today}`, 14, 38);
+        doc.text(`Tahun : ${tahun}`, 14, 38);
+        doc.text(`Bulan : ${bulanNama}`, 14, 44);
+        doc.text(`Tanggal cetak: ${today}`, 14, 50);
 
         const formattedTable = tableData.map((d) => [
             d.kode_produk,
@@ -239,30 +267,22 @@ export default function AdminDashboardPage() {
         ]);
 
         const totalHarga = tableData.reduce((sum, d) => sum + (d.harga_jual || 0), 0);
+        const totalHunter = tableData.reduce((sum, d) => sum + (d.komisi_hunter || 0), 0);
+        const totalReusemart = tableData.reduce((sum, d) => sum + (d.komisi_reusemart || 0), 0);
+        const totalPenitip = tableData.reduce((sum, d) => sum + (d.bonus_penitip || 0), 0);
 
         autoTable(doc, {
-            startY: 50,
+            startY: 60,
             head: [[
-                "Kode Produk",
-                "Nama Produk",
-                "Harga Jual",
-                "Tanggal Masuk",
-                "Tanggal Laku",
-                "Komisi Hunter",
-                "Komisi ReUse Mart",
-                "Bonus Penitip",
+                "Kode Produk", "Nama Produk", "Harga Jual",
+                "Tanggal Masuk", "Tanggal Laku",
+                "Komisi Hunter", "Komisi ReUse Mart", "Bonus Penitip"
             ]],
             body: [
                 ...formattedTable,
                 [
-                    "Total",
-                    "",
-                    formatCurrency(totalHarga),
-                    "",
-                    "",
-                    "",
-                    "",
-                    "",
+                    "Total", "", formatCurrency(totalHarga),
+                    "", "", formatCurrency(totalHunter), formatCurrency(totalReusemart), formatCurrency(totalPenitip)
                 ],
             ],
             styles: { fontSize: 9 },
@@ -270,8 +290,9 @@ export default function AdminDashboardPage() {
             bodyStyles: { halign: "center" },
         });
 
-        doc.save("Laporan_Komisi_Per_Produk.pdf");
+        doc.save(`Laporan_Komisi_${tahun}_${bulan || 'Semua'}.pdf`);
     };
+
 
     const downloadPDFStok = (tableData) => {
         const doc = new jsPDF();
@@ -316,7 +337,7 @@ export default function AdminDashboardPage() {
         doc.save("Laporan_Stok_Gudang.pdf");
     };
 
-    const downloadPDFPenjualanPerKategori = (kategoriTable = []) => {
+    const downloadPDFPenjualanPerKategori = (kategoriTable = [], tahun) => {
         const doc = new jsPDF();
         const today = new Date().toLocaleDateString("id-ID", {
             day: "numeric",
@@ -331,7 +352,8 @@ export default function AdminDashboardPage() {
         doc.setFontSize(14);
         doc.text("LAPORAN PENJUALAN PER KATEGORI", 14, 30);
         doc.setFontSize(12);
-        doc.text(`Tanggal cetak: ${today}`, 14, 38);
+        doc.text(`Tahun : ${tahun}`, 14, 38);
+        doc.text(`Tanggal cetak: ${today}`, 14, 44);
 
         const totalTerjual = kategoriTable.reduce((sum, row) => sum + Number(row[1] || 0), 0);
         const totalGagal = kategoriTable.reduce((sum, row) => sum + Number(row[2] || 0), 0);
@@ -567,20 +589,23 @@ export default function AdminDashboardPage() {
     return (
         <div className="space-y-6">
             <h2 className="text-2xl font-bold text-indigo-800">Laporan Dashboard Admin</h2>
+            <div className="flex justify-end">
+                <div className="">
+                    <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                        className="block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="ALL">Semua Tahun</option>
+                        {availableYears.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <div className="mb-6">
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            className="block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        >
-                            {availableYears.map(year => (
-                                <option key={year} value={year}>{year}</option>
-                            ))}
-                        </select>
-                    </div>
 
                     <ChartWithTotal
                         title={`Penjualan Bulanan ${selectedYear}`}
@@ -666,7 +691,7 @@ export default function AdminDashboardPage() {
                         )
                     }
                     onDownload={() =>
-                        downloadPDFPenjualanPerKategori(data.kategoriTable || [])
+                        downloadPDFPenjualanPerKategori(data.kategoriTable || [], selectedYear)
                     }
                 />
             </div>
@@ -699,6 +724,55 @@ export default function AdminDashboardPage() {
 
                 {/* Kolom 2 - Stok & Komisi */}
                 <div className="col-span-2 flex flex-col gap-4">
+                    {/* Komisi per Produk */}
+                    <Card className="flex-grow">
+                        <CardContent className="p-4 flex flex-col h-full">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-semibold text-xl">Komisi per Produk</h3>
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        value={selectedMonth}
+                                        onChange={(e) => setSelectedMonth(e.target.value)}
+                                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                                    >
+                                        {monthOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        className="bg-indigo-600 text-white p-2 rounded flex items-center gap-2"
+                                        onClick={() =>
+                                            downloadPDFKomisi(data.komisiFullTable || [], selectedYear, selectedMonth !== "ALL" ? selectedMonth : null)
+                                        }
+                                    >
+                                        <Download size={20} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-[160px_1fr_200px] bg-gradient-to-r from-blue-400 to-indigo-600 text-white p-3 rounded-t-lg font-semibold text-sm">
+                                <div>Kode Produk</div>
+                                <div>Nama Barang</div>
+                                <div>Harga Jual</div>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto rounded-b-md border">
+                                {data.komisiTable && data.komisiTable.length > 0 ? (
+                                    data.komisiTable.map((item, i) => (
+                                        <div key={i} className="grid grid-cols-[160px_1fr_200px] p-3 border-b text-sm items-center">
+                                            <div>{item[0]}</div>
+                                            <div>{item[1]}</div>
+                                            <div>{formatCurrency(item[2])}</div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-gray-500">
+                                        Tidak ada data Komisi Produk
+                                    </div>
+                                )}
+
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Stok Gudang */}
                     <Card className="flex-grow">
                         <CardContent className="p-4 flex flex-col h-full">
@@ -729,42 +803,6 @@ export default function AdminDashboardPage() {
                                         Tidak ada data Stok Gudang
                                     </div>
                                 )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Komisi per Produk */}
-                    <Card className="flex-grow">
-                        <CardContent className="p-4 flex flex-col h-full">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-semibold text-xl">Komisi per Produk</h3>
-                                <button
-                                    className="bg-indigo-600 text-white p-2 rounded flex items-center gap-2"
-                                    onClick={() => downloadPDFKomisi(data.komisiFullTable || [])}
-                                >
-                                    <Download size={20} />
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-[160px_1fr_200px] bg-gradient-to-r from-blue-400 to-indigo-600 text-white p-3 rounded-t-lg font-semibold text-sm">
-                                <div>Kode Produk</div>
-                                <div>Nama Barang</div>
-                                <div>Harga Jual</div>
-                            </div>
-                            <div className="max-h-64 overflow-y-auto rounded-b-md border">
-                                {data.komisiTable && data.komisiTable.length > 0 ? (
-                                    data.komisiTable.map((item, i) => (
-                                        <div key={i} className="grid grid-cols-[160px_1fr_200px] p-3 border-b text-sm items-center">
-                                            <div>{item[0]}</div>
-                                            <div>{item[1]}</div>
-                                            <div>{formatCurrency(item[2])}</div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="p-4 text-center text-gray-500">
-                                        Tidak ada data Komisi Produk
-                                    </div>
-                                )}
-
                             </div>
                         </CardContent>
                     </Card>
