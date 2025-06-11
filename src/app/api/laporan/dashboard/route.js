@@ -11,6 +11,14 @@ export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
         const tahun = searchParams.get('tahun') || new Date().getFullYear();
+        const tahunNumber = parseInt(tahun);
+        const isAll = tahun === "ALL";
+
+        const bulan = searchParams.get("bulan");
+        const isAllYear = tahun === "ALL" || isNaN(parseInt(tahun));
+        const isAllMonth = !bulan || bulan === "ALL";
+        const bulanNumber = parseInt(bulan);
+
 
         // 1. Penjualan Bulanan
         const [penjualanRows] = await pool.query(`
@@ -20,10 +28,10 @@ export async function GET(request) {
                 SUM(DISTINCT t.harga_akhir) AS jumlah_penjualan
             FROM transaksi t
             JOIN bridgebarangtransaksi bt ON t.id_transaksi = bt.id_transaksi
-            WHERE t.status_transaksi = 'DONE' AND YEAR(t.tanggal_lunas) = ?
+            WHERE t.status_transaksi = 'DONE' ${isAll ? "" : "AND YEAR(t.tanggal_lunas) = ?"}
             GROUP BY MONTH(t.tanggal_lunas)
             ORDER BY MONTH(t.tanggal_lunas)
-        `, [tahun]);
+        `, isAll ? [] : [tahunNumber]);
 
         const penjualan = penjualanRows.map(row => ({
             name: row.bulan,
@@ -37,7 +45,7 @@ export async function GET(request) {
         ]);
 
         // 2. Komisi Produk (filtered by tahun)
-        const [komisiRows] = await pool.query(`
+        let komisiQuery = `
             SELECT 
                 b.kode_produk,
                 b.nama_barang,
@@ -53,8 +61,23 @@ export async function GET(request) {
             JOIN bridgebarangtransaksi bt ON t.id_transaksi = bt.id_transaksi
             JOIN barang b ON bt.id_barang = b.id_barang
             JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
-            WHERE b.status_titip = 'SOLD' AND YEAR(t.tanggal_lunas) = ?
-        `, [tahun]);
+            WHERE b.status_titip = 'SOLD'
+        `;
+
+        const komisiParams = [];
+
+        if (!isAllYear) {
+            komisiQuery += " AND YEAR(t.tanggal_lunas) = ?";
+            komisiParams.push(tahunNumber);
+        }
+
+        if (!isAllMonth) {
+            komisiQuery += " AND MONTH(t.tanggal_lunas) = ?";
+            komisiParams.push(bulanNumber);
+        }
+
+        const [komisiRows] = await pool.query(komisiQuery, komisiParams);
+
 
         const komisi = komisiRows.map(row => ({
             name: row.nama_barang,
@@ -80,28 +103,28 @@ export async function GET(request) {
 
         // 3. Stok Gudang (no filter)
         const [stokRows] = await pool.query(`
-            SELECT 
-                b.kode_produk,
-                b.nama_barang,
-                b.harga_barang,
-                b.status_titip,
-                b.is_extended,
-                pb.id_penitip,
-                p.id,
-                p.nama AS nama_penitip,
-                pb.tanggal_masuk,
-                b.id_petugas_hunter,
-                h.nama AS nama_hunter,
-                MIN(k.nama_kategori) AS nama_kategori
-            FROM barang b
-            JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
-            JOIN penitip p ON pb.id_penitip = p.id_penitip
-            LEFT JOIN pegawai h ON b.id_petugas_hunter = h.id_pegawai
-            JOIN bridgekategoribarang bk ON b.id_barang = bk.id_barang
-            JOIN kategoribarang k ON bk.id_kategori = k.id_kategori
-            WHERE b.status_titip IN ('AVAILABLE', 'EXTENDED', 'EXPIRED') AND YEAR(b.tanggal_masuk) = ?
-            GROUP BY b.id_barang
-        `, [tahun]);
+                SELECT 
+                    b.kode_produk,
+                    b.nama_barang,
+                    b.harga_barang,
+                    b.status_titip,
+                    b.is_extended,
+                    pb.id_penitip,
+                    p.id,
+                    p.nama AS nama_penitip,
+                    pb.tanggal_masuk,
+                    b.id_petugas_hunter,
+                    h.nama AS nama_hunter,
+                    MIN(k.nama_kategori) AS nama_kategori
+                FROM barang b
+                JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+                JOIN penitip p ON pb.id_penitip = p.id_penitip
+                LEFT JOIN pegawai h ON b.id_petugas_hunter = h.id_pegawai
+                JOIN bridgekategoribarang bk ON b.id_barang = bk.id_barang
+                JOIN kategoribarang k ON bk.id_kategori = k.id_kategori
+                WHERE b.status_titip IN ('AVAILABLE', 'EXTENDED', 'EXPIRED') ${isAll ? "" : "AND YEAR(b.tanggal_masuk) = ?"}
+                GROUP BY b.id_barang
+            `, isAll ? [] : [tahunNumber]);
 
         const stokTable = stokRows.map(row => [row.nama_barang, row.nama_kategori]);
 
@@ -121,15 +144,19 @@ export async function GET(request) {
         const [kategoriRows] = await pool.query(`
             SELECT 
                 k.nama_kategori AS kategori,
-                SUM(CASE WHEN t.status_transaksi = 'DONE' AND YEAR(t.tanggal_lunas) = ? THEN 1 ELSE 0 END) AS jumlah_terjual,
-                SUM(CASE WHEN t.status_transaksi = 'CANCELLED' AND YEAR(t.tanggal_lunas) = ? THEN 1 ELSE 0 END) AS jumlah_gagal
+                SUM(CASE 
+                    WHEN t.status_transaksi = 'DONE' ${isAll ? "" : "AND YEAR(t.tanggal_lunas) = ?"} 
+                    THEN 1 ELSE 0 END) AS jumlah_terjual,
+                SUM(CASE 
+                    WHEN t.status_transaksi = 'CANCELLED' ${isAll ? "" : "AND YEAR(t.tanggal_lunas) = ?"} 
+                    THEN 1 ELSE 0 END) AS jumlah_gagal
             FROM kategoribarang k
             LEFT JOIN bridgekategoribarang bk ON k.id_kategori = bk.id_kategori
             LEFT JOIN barang b ON bk.id_barang = b.id_barang
             LEFT JOIN bridgebarangtransaksi bt ON b.id_barang = bt.id_barang
             LEFT JOIN transaksi t ON bt.id_transaksi = t.id_transaksi
             GROUP BY k.id_kategori
-        `, [tahun, tahun]);
+        `, isAll ? [] : [tahunNumber, tahunNumber]);
 
         const kategori = kategoriRows.map(row => ({
             name: row.kategori,
@@ -144,19 +171,19 @@ export async function GET(request) {
 
         // 5. Barang Expired
         const [expiredRows] = await pool.query(`
-            SELECT 
-                b.kode_produk,
-                b.nama_barang,
-                p.id,
-                p.nama AS nama_penitip,
-                b.tanggal_masuk,
-                b.tanggal_expire,
-                DATE_ADD(b.tanggal_expire, INTERVAL 7 DAY) AS batas_ambil
-            FROM barang b
-            JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
-            JOIN penitip p ON pb.id_penitip = p.id_penitip
-            WHERE b.status_titip = 'EXPIRED'
-        `);
+                SELECT 
+                    b.kode_produk,
+                    b.nama_barang,
+                    p.id,
+                    p.nama AS nama_penitip,
+                    b.tanggal_masuk,
+                    b.tanggal_expire,
+                    DATE_ADD(b.tanggal_expire, INTERVAL 7 DAY) AS batas_ambil
+                FROM barang b
+                JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+                JOIN penitip p ON pb.id_penitip = p.id_penitip
+                WHERE b.status_titip = 'EXPIRED' ${isAll ? "" : "AND YEAR(b.tanggal_masuk) = ?"}
+            `, isAll ? [] : [tahunNumber]);
 
         const expiredTable = expiredRows.map(row => ({
             kode_produk: row.kode_produk,
@@ -175,22 +202,22 @@ export async function GET(request) {
 
         // 6. Donasi Barang (filtered by tahun)
         const [donasiRows] = await pool.query(`
-            SELECT 
-                b.kode_produk,
-                b.nama_barang,
-                p.id_penitip,
-                p.nama AS nama_penitip,
-                d.tanggal_donasi,
-                o.nama AS nama_organisasi,
-                d.nama_penerima
-            FROM barang b
-            JOIN donasi d ON b.id_donasi = d.id_donasi
-            JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
-            JOIN penitip p ON pb.id_penitip = p.id_penitip
-            JOIN requestdonasi r ON d.id_request = r.id_request
-            JOIN organisasi o ON r.id_organisasi = o.id_organisasi
-            WHERE YEAR(d.tanggal_donasi) = ?
-        `, [tahun]);
+                SELECT 
+                    b.kode_produk,
+                    b.nama_barang,
+                    p.id_penitip,
+                    p.nama AS nama_penitip,
+                    d.tanggal_donasi,
+                    o.nama AS nama_organisasi,
+                    d.nama_penerima 
+                FROM barang b
+                JOIN donasi d ON b.id_donasi = d.id_donasi
+                JOIN penitipanbarang pb ON b.id_penitipan = pb.id_penitipan
+                JOIN penitip p ON pb.id_penitip = p.id_penitip
+                JOIN requestdonasi r ON d.id_request = r.id_request
+                JOIN organisasi o ON r.id_organisasi = o.id_organisasi
+                ${isAll ? "" : "WHERE YEAR(d.tanggal_donasi) = ?"}
+            `, isAll ? [] : [tahunNumber]);
 
         const donasiTable = donasiRows.map(row => ({
             nama_organisasi: row.nama_organisasi,
@@ -209,16 +236,16 @@ export async function GET(request) {
 
         // 7. Request Donasi (tidak perlu filter tahun)
         const [reqRows] = await pool.query(`
-            SELECT 
-                o.id,
-                o.nama AS nama_organisasi,
-                o.alamat,
-                r.deskripsi,
-                r.status_request
-            FROM requestdonasi r
-            JOIN organisasi o ON r.id_organisasi = o.id_organisasi
-            WHERE r.status_request = 'PENDING'
-        `);
+                SELECT 
+                    o.id,
+                    o.nama AS nama_organisasi,
+                    o.alamat,
+                    r.deskripsi,
+                    r.status_request
+                FROM requestdonasi r
+                JOIN organisasi o ON r.id_organisasi = o.id_organisasi
+                WHERE r.status_request = 'PENDING' ${isAll ? "" : "AND YEAR(r.tanggal_request) = ?"}
+            `, isAll ? [] : [tahunNumber]);
 
         const reqdonasi = reqRows.map(row => ({
             nama_organisasi: row.nama_organisasi,
@@ -234,14 +261,14 @@ export async function GET(request) {
 
         // 8. Transaksi Penitip (semua data)
         const [transaksiRows] = await pool.query(`
-            SELECT 
-                pb.no_nota,
-                pb.id_penitip,
-                p.nama AS nama_penitip,
-                pb.tanggal_masuk
-            FROM penitipanbarang pb
-            JOIN penitip p ON pb.id_penitip = p.id_penitip
-        `);
+                SELECT 
+                    pb.no_nota,
+                    pb.id_penitip,
+                    p.nama AS nama_penitip,
+                    pb.tanggal_masuk
+                FROM penitipanbarang pb
+                JOIN penitip p ON pb.id_penitip = p.id_penitip
+            `);
 
         return NextResponse.json({
             success: true,
