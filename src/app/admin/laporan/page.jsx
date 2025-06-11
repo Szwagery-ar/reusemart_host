@@ -239,7 +239,7 @@ export default function LaporanPage() {
       ],
       body: filteredData.map((item) => [
         item.kode_produk,
-        item.nama_barang,
+        item.nama_produk,
         `Rp ${Number(item.harga_jual).toLocaleString("id-ID")}`,
         item.tanggal_masuk?.split("T")[0],
         item.tanggal_laku?.split("T")[0],
@@ -370,12 +370,14 @@ export default function LaporanPage() {
 
     autoTable(doc, {
       startY: 40,
-      head: [["Kode Produk", "Nama Barang", "Masuk", "Laku", "Pendapatan"]],
+      head: [["Kode Produk", "Nama Barang", "Tanggal Masuk", "Tanggal Laku", "Harga Jual Bersih", "Bonus terjual cepat", "Pendapatan"]],
       body: filteredData.map((item) => [
         item.kode_produk,
         item.nama_barang,
         item.tanggal_masuk,
         item.tanggal_laku,
+        `Rp ${item.harga_jual_bersih.toLocaleString("id-ID")}`,
+        `Rp ${item.bonus_terjual_cepat.toLocaleString("id-ID")}`,
         `Rp ${item.pendapatan.toLocaleString("id-ID")}`,
       ]),
       styles: { fontSize: 9 },
