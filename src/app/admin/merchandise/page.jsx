@@ -34,7 +34,7 @@ export default function AdminMerchandisePage() {
 
     return (
         <div className="p-6">
-            <WithRole allowed={["Admin", "Superuser"]}>
+            <WithRole allowed={["Admin", "CS", "Superuser"]}>
                 <h1 className="text-2xl font-bold mb-4 text-indigo-700">Data Merchandise</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {merchandiseList.map((item) => (
