@@ -5,6 +5,7 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 
+////GET LAMA///
 export async function GET(_, { params }) {
     const { id_barang } = await params;
 
@@ -81,6 +82,7 @@ export async function GET(_, { params }) {
         );
     }
 }
+
 
 // ✅ Ini benar — gunakan parameter kedua
 export async function PUT(request, { params }) {
