@@ -4,6 +4,7 @@ import pool from "@/lib/db";
 export async function GET() {
     const [result] = await pool.query(`
     SELECT 
+      b.kode_produk,
       b.nama_barang,
       pt.nama AS nama_penitip,
       b.tanggal_masuk,
