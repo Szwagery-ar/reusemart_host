@@ -10,6 +10,7 @@ export async function GET() {
         b.harga_barang,
         b.id_petugas_hunter,
         t.harga_akhir AS harga_jual,
+        b.tanggal_masuk,
         b.tanggal_keluar,
         t.tanggal_lunas AS tanggal_laku,
         k.komisi_hunter,

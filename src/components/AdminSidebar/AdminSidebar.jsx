@@ -40,6 +40,7 @@ const menuByRole = {
     GUDANG: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Barang', path: '/admin/barang', icon: Package },
+        { name: 'Penilaian', path: '/admin/penilaian', icon: Package },
         { name: 'Transaksi Penitipan', path: '/admin/transaksi-penitipan', icon: FolderPlus },
         { name: 'Data Transaksi', path: '/admin/transaksi', icon: Handshake },
         { name: 'Data Pengiriman', path: '/admin/pengiriman', icon: Truck },
