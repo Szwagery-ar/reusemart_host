@@ -11,6 +11,7 @@ export async function GET() {
         r.deskripsi AS request
       FROM requestdonasi r
       JOIN organisasi o ON r.id_organisasi = o.id_organisasi
+      WHERE r.status_request IN ('PENDING')
     `);
 
     const data = rows.map((row) => ({
