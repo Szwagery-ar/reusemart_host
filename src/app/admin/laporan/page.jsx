@@ -225,6 +225,28 @@ export default function LaporanPage() {
       );
     });
 
+    const tableBody =
+      filteredData.length > 0
+        ? filteredData.map((item) => [
+            item.kode_produk,
+            item.nama_produk,
+            `Rp ${Number(item.harga_jual).toLocaleString("id-ID")}`,
+            item.tanggal_masuk?.split("T")[0],
+            item.tanggal_laku?.split("T")[0],
+            `Rp ${Number(item.komisi_hunter).toLocaleString("id-ID")}`,
+            `Rp ${Number(item.komisi_reusemart).toLocaleString("id-ID")}`,
+            `Rp ${Number(item.bonus_penitip).toLocaleString("id-ID")}`,
+          ])
+        : [
+            [
+              {
+                content: "Tidak ada data pada filter ini",
+                colSpan: 8,
+                styles: { halign: "center", fontWeight: "bold" },
+              },
+            ],
+          ];
+
     autoTable(doc, {
       startY: 58,
       head: [
@@ -239,16 +261,7 @@ export default function LaporanPage() {
           "Bonus Penitip",
         ],
       ],
-      body: filteredData.map((item) => [
-        item.kode_produk,
-        item.nama_produk,
-        `Rp ${Number(item.harga_jual).toLocaleString("id-ID")}`,
-        item.tanggal_masuk?.split("T")[0],
-        item.tanggal_laku?.split("T")[0],
-        `Rp ${Number(item.komisi_hunter).toLocaleString("id-ID")}`,
-        `Rp ${Number(item.komisi_reusemart).toLocaleString("id-ID")}`,
-        `Rp ${Number(item.bonus_penitip).toLocaleString("id-ID")}`,
-      ]),
+      body: tableBody,
       styles: { fontSize: 9, halign: "center" },
       headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255] },
       margin: { left: 10, right: 10 },
@@ -657,7 +670,6 @@ export default function LaporanPage() {
             />
           </div>
         </div>
-
         <table className="mt-4 w-full border text-sm">
           <thead>
             <tr className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
@@ -776,6 +788,7 @@ export default function LaporanPage() {
               ))}
             </select>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Tahun
@@ -788,7 +801,6 @@ export default function LaporanPage() {
               onChange={(e) => setFilterTahun(e.target.value)}
             />
           </div>
-          b
         </div>
         <table className="mt-4 w-full border text-sm">
           <thead>
