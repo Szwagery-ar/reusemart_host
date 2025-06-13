@@ -29,6 +29,7 @@ const menuByRole = {
         { name: 'Laporan', path: '/admin/laporan', icon: FileChartColumnIncreasing },
         { name: 'Request Donasi', path: '/admin/reqdonasi', icon: ShoppingBag },
         { name: 'Donasi', path: '/admin/donasi', icon: HeartHandshake },
+        { name: 'Penilaian 3', path: '/admin/penilaian3', icon: HeartHandshake },
     ],
     ADMIN: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },

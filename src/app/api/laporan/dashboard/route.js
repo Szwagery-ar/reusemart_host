@@ -140,7 +140,7 @@ export async function GET(request) {
             harga_barang: row.harga_barang,
         }));
 
-        // 4. Penjualan per Kategori (filtered by tahun)
+        // 4. Penjualan per Kategori 
         const [kategoriRows] = await pool.query(`
             SELECT 
                 k.nama_kategori AS kategori,
