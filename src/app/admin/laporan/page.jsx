@@ -16,6 +16,8 @@ export default function LaporanPage() {
   const [filterTahun, setFilterTahun] = useState("");
   const [filterBulanKomisi, setFilterBulanKomisi] = useState("");
   const [filterTahunKomisi, setFilterTahunKomisi] = useState("");
+  const [filterTahunDonasi, setFilterTahunDonasi] = useState("");
+  const [filterBulan, setFilterBulan] = useState("");
 
   const [selectedMonth, setSelectedMonth] = useState("ALL");
   const monthOptions = [
@@ -273,20 +275,52 @@ export default function LaporanPage() {
     doc.text("ReUse Mart", 14, 14);
     doc.text("Jl. Green Eco Park No. 456 Yogyakarta", 14, 20);
     doc.setFontSize(14);
+
     doc.text("LAPORAN DONASI BARANG", 14, 30);
     doc.setFontSize(12);
-    doc.text(`Tanggal cetak: ${today}`, 14, 38);
+
+    const tahunDonasiTeks = filterTahunDonasi
+      ? `Tahun : ${filterTahunDonasi}`
+      : "Tahun : Semua Tahun";
+
+    doc.text(tahunDonasiTeks, 14, 38);
+    doc.text(`Tanggal cetak: ${today}`, 14, 44);
 
     // Tabel
-    const donasiPDFTable = barangDonasiList.map((item) => [
-      item.kode_produk,
-      item.nama_barang,
-      item.id_penitip,
-      item.nama_penitip,
-      item.tanggal_donasi,
-      item.nama_organisasi,
-      item.nama_penerima,
-    ]);
+    const filteredDonasi = barangDonasiList.filter((item) => {
+      if (!filterTahunDonasi) return true;
+      return (
+        new Date(item.tanggal_donasi).getFullYear().toString() ===
+        filterTahunDonasi
+      );
+    });
+
+    const donasiPDFTable =
+      filteredDonasi.length > 0
+        ? filteredDonasi.map((item) => [
+            item.kode_produk,
+            item.nama_barang,
+            item.id_penitip,
+            item.nama_penitip,
+            new Date(item.tanggal_donasi).toLocaleDateString("id-ID", {
+              weekday: "long",
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }),
+
+            item.nama_organisasi,
+            item.nama_penerima,
+          ])
+        : [
+            [
+              {
+                content: "Tidak ada data barang didonasikan pada tahun ini",
+                colSpan: 8,
+                styles: { halign: "center" },
+              },
+            ],
+          ];
 
     autoTable(doc, {
       startY: 50,
@@ -356,30 +390,80 @@ export default function LaporanPage() {
     const doc = new jsPDF();
     const today = new Date().toLocaleDateString("id-ID");
 
-    doc.setFontSize(14);
-    doc.text("LAPORAN TRANSAKSI PENITIP", 14, 15);
-    doc.setFontSize(11);
-    doc.text(`Nama Penitip: ${selectedPenitip.nama}`, 14, 25);
-    doc.text(`Tanggal Cetak: ${today}`, 14, 32);
+    const bulanIndo = [
+      "", // padding
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
+    ];
 
-    const filteredData = transaksiPenitipList.filter(
-      (item) =>
-        !filterTahun ||
-        new Date(item.tanggal_laku).getFullYear().toString() === filterTahun
-    );
+    const namaBulanCetak =
+      filterBulan && parseInt(filterBulan) >= 1
+        ? bulanIndo[parseInt(filterBulan)]
+        : "Semua Bulan";
+
+    const tahunCetak = filterTahun || "Semua Tahun";
+
+    const filteredData = transaksiPenitipList.filter((item) => {
+      const tanggalLaku = new Date(item.tanggal_laku);
+      const month = (tanggalLaku.getMonth() + 1).toString().padStart(2, "0");
+      const year = tanggalLaku.getFullYear().toString();
+
+      return (
+        (!filterBulan || month === filterBulan) &&
+        (!filterTahun || year === filterTahun)
+      );
+    });
+
+    const transaksiPDFTable =
+      filteredData.length > 0
+        ? filteredData.map((item) => [
+            item.kode_produk,
+            item.nama_barang,
+            item.tanggal_masuk,
+            item.tanggal_laku,
+            `Rp ${item.harga_jual_bersih.toLocaleString("id-ID")}`,
+            `Rp ${item.bonus_terjual_cepat.toLocaleString("id-ID")}`,
+            `Rp ${item.pendapatan.toLocaleString("id-ID")}`,
+          ])
+        : [["Tidak ada data pada filter ini", "", "", "", "", "", ""]];
+
+    doc.setFontSize(12);
+    doc.text("ReUse Mart", 14, 14);
+    doc.text("Jl. Green Eco Park No. 456 Yogyakarta", 14, 20);
+
+    doc.setFontSize(14);
+    doc.text("LAPORAN TRANSAKSI PENITIP", 14, 30);
+    doc.setFontSize(12);
+    doc.text(`ID Penitip : ${selectedPenitip.id}`, 14, 38);
+    doc.text(`Nama Penitip : ${selectedPenitip.nama}`, 14, 44);
+    doc.text(`Bulan : ${namaBulanCetak}`, 14, 50);
+    doc.text(`Tahun : ${tahunCetak}`, 14, 56);
+    doc.text(`Tanggal cetak: ${today}`, 14, 62);
 
     autoTable(doc, {
-      startY: 40,
-      head: [["Kode Produk", "Nama Barang", "Tanggal Masuk", "Tanggal Laku", "Harga Jual Bersih", "Bonus terjual cepat", "Pendapatan"]],
-      body: filteredData.map((item) => [
-        item.kode_produk,
-        item.nama_barang,
-        item.tanggal_masuk,
-        item.tanggal_laku,
-        `Rp ${item.harga_jual_bersih.toLocaleString("id-ID")}`,
-        `Rp ${item.bonus_terjual_cepat.toLocaleString("id-ID")}`,
-        `Rp ${item.pendapatan.toLocaleString("id-ID")}`,
-      ]),
+      startY: 70,
+      head: [
+        [
+          "Kode Produk",
+          "Nama Barang",
+          "Tanggal Masuk",
+          "Tanggal Laku",
+          "Harga Jual Bersih",
+          "Bonus Terjual Cepat",
+          "Pendapatan",
+        ],
+      ],
+      body: transaksiPDFTable,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255] },
       margin: { left: 10, right: 10 },
@@ -553,12 +637,27 @@ export default function LaporanPage() {
       {/* Donasi Barang */}
       <div className="mt-2">
         <h2 className="text-xl font-semibold mb-4">Laporan Donasi Barang</h2>
-        <button
-          onClick={generatePDFBarangDonasi}
-          className="px-4 py-2 bg-cyan-600 text-white rounded cursor-pointer"
-        >
-          Unduh PDF
-        </button>
+        <div className="flex items-center gap-4 mb-4 mt-2">
+          <button
+            onClick={generatePDFBarangDonasi}
+            className="px-4 py-2 bg-cyan-600 text-white rounded cursor-pointer"
+          >
+            Unduh PDF
+          </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Tahun Donasi
+            </label>
+            <input
+              type="number"
+              placeholder="Contoh: 2025"
+              className="border px-3 py-2 rounded text-sm w-full"
+              value={filterTahunDonasi}
+              onChange={(e) => setFilterTahunDonasi(e.target.value)}
+            />
+          </div>
+        </div>
+
         <table className="mt-4 w-full border text-sm">
           <thead>
             <tr className="p-5 font-semibold text-white text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
@@ -572,17 +671,27 @@ export default function LaporanPage() {
             </tr>
           </thead>
           <tbody>
-            {barangDonasiList.map((item, idx) => (
-              <tr key={idx} className="text-center">
-                <td className="text-left px-5 py-2">{item.kode_produk}</td>
-                <td className="text-left px-5 py-2">{item.nama_barang}</td>
-                <td className="text-left px-5 py-2">{item.id_penitip}</td>
-                <td className="text-left px-5 py-2">{item.nama_penitip}</td>
-                <td className="text-left px-5 py-2">{item.tanggal_donasi}</td>
-                <td className="text-left px-5 py-2">{item.nama_organisasi}</td>
-                <td className="text-left px-5 py-2">{item.nama_penerima}</td>
-              </tr>
-            ))}
+            {barangDonasiList
+              .filter((item) => {
+                if (!filterTahunDonasi) return true;
+                return (
+                  new Date(item.tanggal_donasi).getFullYear().toString() ===
+                  filterTahunDonasi
+                );
+              })
+              .map((item, idx) => (
+                <tr key={idx} className="text-center">
+                  <td className="text-left px-5 py-2">{item.kode_produk}</td>
+                  <td className="text-left px-5 py-2">{item.nama_barang}</td>
+                  <td className="text-left px-5 py-2">{item.id_penitip}</td>
+                  <td className="text-left px-5 py-2">{item.nama_penitip}</td>
+                  <td className="text-left px-5 py-2">{item.tanggal_donasi}</td>
+                  <td className="text-left px-5 py-2">
+                    {item.nama_organisasi}
+                  </td>
+                  <td className="text-left px-5 py-2">{item.nama_penerima}</td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
@@ -632,6 +741,23 @@ export default function LaporanPage() {
           </button>
           <div>
             <label className="block text-sm font-medium text-gray-700">
+              Bulan
+            </label>
+            <select
+              className="border px-3 py-2 rounded text-sm w-full"
+              value={filterBulan}
+              onChange={(e) => setFilterBulan(e.target.value)}
+            >
+              <option value="">-- Pilih Bulan --</option>
+              {monthOptions.slice(1).map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
               Pilih Penitip
             </label>
             <select
@@ -650,7 +776,6 @@ export default function LaporanPage() {
               ))}
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Tahun
@@ -663,6 +788,7 @@ export default function LaporanPage() {
               onChange={(e) => setFilterTahun(e.target.value)}
             />
           </div>
+          b
         </div>
         <table className="mt-4 w-full border text-sm">
           <thead>
@@ -683,10 +809,15 @@ export default function LaporanPage() {
           <tbody>
             {transaksiPenitipList
               .filter((item) => {
-                if (!filterTahun) return true;
+                const tanggalLaku = new Date(item.tanggal_laku);
+                const month = (tanggalLaku.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0");
+                const year = tanggalLaku.getFullYear().toString();
+
                 return (
-                  new Date(item.tanggal_laku).getFullYear().toString() ===
-                  filterTahun
+                  (!filterBulan || month === filterBulan) &&
+                  (!filterTahun || year === filterTahun)
                 );
               })
               .map((item, idx) => (
