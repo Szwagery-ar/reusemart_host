@@ -24,7 +24,7 @@ export default function AdminLogin() {
                     const role = data.user.role;
                     if (role === 'penitip') router.push('/penitip');
                     else if (role === 'pembeli') router.push('/home');
-                    else if (role === 'pegawai') router.push('/admin');
+                    else if (role === 'pegawai') router.push('/admin/profile');
                     else if (role === 'organisasi') router.push('/organisasi');
 
                 } else {
@@ -70,7 +70,7 @@ export default function AdminLogin() {
             }
 
             if (data.success) {
-                router.push('/admin');
+                router.push('/admin/profile');
             } else {
                 alert(data.message);
             }

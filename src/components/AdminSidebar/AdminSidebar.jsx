@@ -1,18 +1,19 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import LogoutButton from '../LogoutButton/LogoutButton';
-
-
-
-import { LayoutDashboard, Package, Gift, LogOut, ContactRound, ShoppingBag, HeartHandshake, HandCoins, Banknote, Truck, FolderPlus, FileChartColumnIncreasing } from 'lucide-react';
-import { UserRound, Handshake, Ribbon } from 'lucide-react';
+import {
+    LayoutDashboard, Package, Gift, LogOut, ContactRound,
+    ShoppingBag, HeartHandshake, HandCoins, Banknote,
+    Truck, FolderPlus, FileChartColumnIncreasing,
+    UserRound, Handshake, Ribbon
+} from 'lucide-react';
 
 import './AdminSidebar.css';
+
 const menuByRole = {
     SUPERUSER: [
-        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Barang', path: '/admin/barang', icon: Package },
         { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
         { name: 'Klaim Merchandise', path: '/admin/klaim-merch', icon: HandCoins },
@@ -24,11 +25,11 @@ const menuByRole = {
         { name: 'Donasi', path: '/admin/donasi', icon: HeartHandshake },
     ],
     OWNER: [
-        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+        { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Laporan', path: '/admin/laporan', icon: FileChartColumnIncreasing },
         { name: 'Request Donasi', path: '/admin/reqdonasi', icon: ShoppingBag },
         { name: 'Donasi', path: '/admin/donasi', icon: HeartHandshake },
-
+        { name: 'Penilaian 3', path: '/admin/penilaian3', icon: HeartHandshake },
     ],
     ADMIN: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -40,6 +41,7 @@ const menuByRole = {
     GUDANG: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Barang', path: '/admin/barang', icon: Package },
+        { name: 'Penilaian', path: '/admin/penilaian', icon: Package },
         { name: 'Transaksi Penitipan', path: '/admin/transaksi-penitipan', icon: FolderPlus },
         { name: 'Data Transaksi', path: '/admin/transaksi', icon: Handshake },
         { name: 'Data Pengiriman', path: '/admin/pengiriman', icon: Truck },
@@ -47,6 +49,8 @@ const menuByRole = {
     CS: [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Data Penitip', path: '/admin/penitip', icon: Handshake },
+        { name: 'Merchandise', path: '/admin/merchandise', icon: Gift },
+        { name: 'Klaim Merchandise', path: '/admin/klaim-merch', icon: HandCoins },
         { name: 'Data Pembayaran', path: '/admin/konfirmasi-pembayaran', icon: Banknote },
         { name: 'Diskusi', path: '/admin/diskusi', icon: Handshake },
     ],
@@ -56,36 +60,9 @@ const menuByRole = {
     ]
 };
 
-export default function AdminSidebar() {
-    const [jabatan, setJabatan] = useState(null);
-    const [loading, setLoading] = useState(true);
+export default function AdminSidebar({ user }) {
     const pathname = usePathname();
-    const router = useRouter();
-
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const res = await fetch('/api/auth/me');
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    setJabatan(data.user.jabatan?.toUpperCase());
-                } else {
-                    setError('Failed to fetch user data');
-                    if (res.status === 401) {
-                        router.push('/login/admin');
-                    }
-                }
-            } catch (err) {
-                console.error("Gagal mengambil jabatan:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUser();
-    }, []);
-
+    const jabatan = user?.jabatan?.toUpperCase();
     const menuItems = menuByRole[jabatan] || [];
 
     return (
@@ -98,8 +75,8 @@ export default function AdminSidebar() {
                         <a key={item.name} href={item.path} className='flex justify-end'>
                             <div
                                 className={`flex items-center gap-2 px-4 py-3 w-100 ml-6 text-sm ${pathname === item.path
-                                        ? 'sidebar-highlight font-semibold bg-white text-indigo-800'
-                                        : 'text-white hover:font-semibold hover:border-b-2 hover:border-white'
+                                    ? 'sidebar-highlight font-semibold bg-white text-indigo-800'
+                                    : 'text-white hover:font-semibold hover:border-b-2 hover:border-white'
                                     }`}
                             >
                                 <Icon className="w-5 h-5" />
