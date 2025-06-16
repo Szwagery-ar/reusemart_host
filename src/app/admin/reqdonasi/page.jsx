@@ -106,7 +106,6 @@ export default function AdminRequestDonasiPage() {
       id_request: editData.id_request,
       tanggal_request: editData.tanggal_request,
       deskripsi: editData.deskripsi,
-      // status_request: mode === 'reject' ? 'REJECTED' : editData.status_request,
       status_request: mode === "reject" ? "REJECTED" : "APPROVED",
       mode,
       daftarBarang: barangDonasiList.map((b) => b.id_barang),
@@ -182,18 +181,7 @@ export default function AdminRequestDonasiPage() {
       .replace(".", "");
   }
 
-  const [mode, setMode] = useState(null); // 'reject' | 'atur_barang'
-  const [barangDonasi, setBarangDonasi] = useState({
-    kode_barang: "",
-    nama_barang: "",
-    kategori_barang: "",
-  });
-
-  // Tambahkan fungsi handleChange untuk barang
-  const handleBarangChange = (e) => {
-    const { name, value } = e.target;
-    setBarangDonasi((prev) => ({ ...prev, [name]: value }));
-  };
+  const [mode, setMode] = useState(null);
 
   if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-600">{error}</div>;

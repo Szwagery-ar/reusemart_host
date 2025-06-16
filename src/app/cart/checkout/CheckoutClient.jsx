@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { TriangleAlert } from "lucide-react";
-
 import RippleButton from "@/components/RippleButton/RippleButton";
 import AlamatModal from "@/components/AlamatModal/AlamatModal";
-import { format } from "path";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -20,7 +18,6 @@ export default function CheckoutPage() {
   const [transaksi, setTransaksi] = useState(null);
 
   const [barangList, setBarangList] = useState([]);
-  const [alamatList, setAlamatList] = useState([]);
   const [selectedAlamat, setSelectedAlamat] = useState(null);
   const [jenisPengiriman, setJenisPengiriman] = useState("COURIER");
   const [ongkir, setOngkir] = useState(0);
@@ -71,7 +68,6 @@ export default function CheckoutPage() {
 
         const resAlamat = await fetch("/api/alamat");
         const dataAlamat = await resAlamat.json();
-        if (resAlamat.ok) setAlamatList(dataAlamat.alamat);
 
         if (id_transaksi) {
           const resTransaksi = await fetch(`/api/transaksi/${id_transaksi}`);
@@ -93,7 +89,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       e.preventDefault();
-      e.returnValue = ""; // Chrome dan lainnya akan menampilkan konfirmasi default
+      e.returnValue = ""; 
     };
 
     if (transaksi && !processing) {
@@ -120,13 +116,13 @@ export default function CheckoutPage() {
 
     const handlePageHide = (e) => {
       if (e.persisted === false) {
-        cancelCheckout(); // untuk browser modern
+        cancelCheckout();
       }
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        cancelCheckout(); // fallback untuk browser lain
+        cancelCheckout();
       }
     };
 

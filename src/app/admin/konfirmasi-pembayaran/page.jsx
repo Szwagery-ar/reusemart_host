@@ -1,12 +1,10 @@
 "use client";
 
-import { set } from "date-fns";
 import { useEffect, useState } from "react";
 
 export default function KonfirmasiPembayaranPage() {
   const [pembayarans, setPembayarans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [pegawai, setPegawai] = useState(null);
 
   useEffect(() => {
@@ -18,7 +16,6 @@ export default function KonfirmasiPembayaranPage() {
         if (res.ok && data.success) {
           setPegawai(data.user);
         } else {
-          setError("Failed to fetch user data");
           if (res.status === 401) {
             router.push("/login/admin");
           }
@@ -31,10 +28,6 @@ export default function KonfirmasiPembayaranPage() {
     fetchUser();
   }, []);
 
-  useEffect(() => {
-    fetchPembayarans();
-  }, []);
-
   const fetchPembayarans = async () => {
     try {
       const res = await fetch("/api/pembayaran/konfirmasi");
@@ -42,7 +35,6 @@ export default function KonfirmasiPembayaranPage() {
       if (!res.ok) {
         const text = await res.text();
         console.error("Error response:", text);
-        setError("Gagal mengambil data pembayaran");
         return;
       }
 
@@ -56,6 +48,10 @@ export default function KonfirmasiPembayaranPage() {
     }
   };
 
+  useEffect(() => {
+    fetchPembayarans();
+  }, []);
+  
   const handleKonfirmasi = async (id, status) => {
     try {
       if (!pegawai || !pegawai.id_pegawai) {
@@ -89,7 +85,9 @@ export default function KonfirmasiPembayaranPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-4xl font-[Montage-Demo] mb-4">Konfirmasi Pembayaran</h1>
+      <h1 className="text-4xl font-[Montage-Demo] mb-4">
+        Konfirmasi Pembayaran
+      </h1>
 
       {loading ? (
         <p>Memuat pembayaran...</p>
