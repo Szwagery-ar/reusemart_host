@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
 import RippleButton from '@/components/RippleButton/RippleButton';
 
 export default function AdminLogin() {
@@ -10,7 +9,6 @@ export default function AdminLogin() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
-
     const [checkingSession, setCheckingSession] = useState(true);
 
     useEffect(() => {
@@ -20,18 +18,16 @@ export default function AdminLogin() {
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    // Redirect user ke page sesuai role
                     const role = data.user.role;
                     if (role === 'penitip') router.push('/penitip');
                     else if (role === 'pembeli') router.push('/home');
                     else if (role === 'pegawai') router.push('/admin/profile');
                     else if (role === 'organisasi') router.push('/organisasi');
-
                 } else {
-                    setCheckingSession(false); // Boleh tampilkan halaman login
+                    setCheckingSession(false);
                 }
             } catch (err) {
-                setCheckingSession(false); // Error? Tetap tampilkan halaman login
+                setCheckingSession(false);
             }
         };
 
@@ -40,7 +36,6 @@ export default function AdminLogin() {
     if (checkingSession) {
         return <div className="flex justify-center items-center h-screen">Mengecek sesi login...</div>;
     }
-
 
     const handleLoginSubmit = async (e) => {
         setError('');
@@ -79,7 +74,6 @@ export default function AdminLogin() {
             setError('Terjadi kesalahan. Coba lagi nanti.');
         }
     };
-
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_130.87%_392.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">

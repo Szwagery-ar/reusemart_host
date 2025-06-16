@@ -19,7 +19,6 @@ export default function LaporanPage() {
   const [filterTahunDonasi, setFilterTahunDonasi] = useState("");
   const [filterBulan, setFilterBulan] = useState("");
 
-  const [selectedMonth, setSelectedMonth] = useState("ALL");
   const monthOptions = [
     { value: "ALL", label: "Semua Bulan" },
     { value: "01", label: "Januari" },
@@ -123,21 +122,6 @@ export default function LaporanPage() {
     fetchRequestDonasi();
     fetchPenitipList();
   }, []);
-
-  const generatePDFPenjualan = () => {
-    const doc = new jsPDF();
-    doc.text("Laporan Penjualan per Kategori", 14, 15);
-    autoTable(doc, {
-      startY: 20,
-      head: [["Kategori", "Jumlah Terjual", "Total Penjualan"]],
-      body: penjualan.map((p) => [
-        p.kategori,
-        p.total_terjual,
-        `Rp ${p.total_penjualan}`,
-      ]),
-    });
-    doc.save("Laporan_Penjualan_Kategori.pdf");
-  };
 
   const generatePDFExpired = () => {
     const doc = new jsPDF();

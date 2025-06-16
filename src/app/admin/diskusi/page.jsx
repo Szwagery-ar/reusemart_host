@@ -12,13 +12,7 @@ export default function AdminDiskusiPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-
   const [activeDropdown, setActiveDropdown] = useState(null);
-
-  const dropdownRef = useRef(null);
-
-  const [showEditSidebar, setShowEditSidebar] = useState(false);
-  const [editData, setEditData] = useState(null);
 
   useEffect(() => {
     const fetchDiskusi = async () => {
@@ -56,101 +50,6 @@ export default function AdminDiskusiPage() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  const handleDelete = async (id_penitip) => {
-    const confirm = window.confirm(
-      "Apakah Anda yakin ingin menghapus data ini?"
-    );
-    if (!confirm) return;
-
-    const res = await fetch("/api/diskusi", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_diskusi }),
-    });
-
-    if (res.ok) {
-      setdiskusiList((prev) => prev.filter((p) => p.id_diskusi !== id_diskusi));
-      alert("Data berhasil dihapus");
-    } else {
-      alert("Gagal menghapus data");
-    }
-  };
-
-  const handleEdit = (penitip) => {
-    setEditData({ ...penitip, password: "" });
-    setShowEditSidebar(true);
-  };
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    const res = await fetch("/api/diskusi", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editData),
-    });
-
-    if (res.ok) {
-      setdiskusiList((prev) =>
-        prev.map((p) => (p.id_diskusi === editData.id_diskusi ? editData : p))
-      );
-      setShowEditSidebar(false);
-      alert("Data berhasil diperbarui");
-    } else {
-      alert("Gagal memperbarui data");
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (editData) {
-      setEditData((prev) => ({ ...prev, [name]: value }));
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const token = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("token="))
-      ?.split("=")[1];
-
-    const form = new FormData();
-    form.append("nama", formData.nama);
-    form.append("email", formData.email);
-    form.append("no_ktp", formData.no_ktp);
-    form.append("no_telepon", formData.no_telepon);
-    form.append("password", formData.password);
-    form.append("foto_ktp", formData.foto_ktp);
-
-    const res = await fetch("/api/penitip", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: form,
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      setdiskusiList((prev) => [...prev, data.penitipBaru]);
-      setShowModal(false);
-      setFormData({
-        nama: "",
-        email: "",
-        no_ktp: "",
-        no_telepon: "",
-        password: "",
-        foro_ktp: null,
-      });
-      alert("Penitip berhasil ditambahkan");
-    } else {
-      alert(data.error || "Gagal menambahkan penitip");
-    }
-  };
 
   function formatDatetime(datetimeStr) {
     if (!datetimeStr) return "";

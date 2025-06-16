@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-
 import ReuseButton from "@/components/ReuseButton/ReuseButton";
 import ReduseButton from "@/components/ReduseButton/ReduseButton";
 
@@ -15,13 +13,10 @@ export default function Riwayat() {
   const [showAll, setShowAll] = useState(false);
   const [ratings, setRatings] = useState({});
   const [modalRatingOpen, setModalRatingOpen] = useState(false);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
-
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = history.slice(indexOfFirstItem, indexOfLastItem);
@@ -40,17 +35,14 @@ export default function Riwayat() {
 
   const formatRupiah = (angka) => {
     const angkaTerformat = Number(angka);
-
     if (isNaN(angkaTerformat)) {
       return "Rp 0";
     }
-
     return angkaTerformat.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   const formatTanggal = (tanggalString) => {
     const tanggal = new Date(tanggalString);
-
     const namaBulan = [
       "Jan",
       "Feb",
@@ -79,7 +71,6 @@ export default function Riwayat() {
   const deadlineBayar = (tanggalString) => {
     const tanggal = new Date(tanggalString);
 
-    // Menambahkan 15 menit
     tanggal.setMinutes(tanggal.getMinutes() + 15);
 
     const namaBulan = [
@@ -212,11 +203,6 @@ export default function Riwayat() {
       ...prev,
       [id_barang]: newRating,
     }));
-  };
-
-  const semuaBarangBelumRated = (id_transaksi) => {
-    const barangList = barangData[id_transaksi] || [];
-    return barangList.some((b) => b.is_rated === 0 || b.is_rated === null);
   };
 
   const submitRatings = async () => {
@@ -357,40 +343,10 @@ export default function Riwayat() {
             </div>
           ))}
         </div>
-
-        // <div className="border-1 border-[#220593] bg-white p-4 rounded-4xl">
-        //     <h1 className="text-2xl font-bold">Menunggu Pembayaran</h1>
-        //     {pending.map((item) => (
-        //         <div key={item.id_transaksi} className="rounded-4xl shadow-sm mb-4 p-4 text-sm">
-        //             <div className="flex justify-between">
-        //                 <div className="">
-        //                     <div className="">No. Nota {item.no_nota}</div>
-        //                     <div>Dipesan pada tanggal: {item.tanggal_pesan}</div>
-        //                 </div>
-        //                 <div className="flex items-center gap-4">
-        //                     <div className="font-semibold ">Total Bayar: Rp {formatRupiah(item.harga_akhir)}</div>
-        //                     <ReuseButton>
-        //                         <div className="px-4 py-2">
-        //                             Lihat Detail Transaksi
-        //                         </div>
-        //                     </ReuseButton>
-        //                     <ReduseButton>
-        //                         <div className="px-4 py-2">
-        //                             Batalkan Pesanan
-        //                         </div>
-        //                     </ReduseButton>
-        //                 </div>
-        //             </div>
-
-        //         </div>
-        //     ))}
-
-        // </div>
       )}
 
       <div className="border border-[#220593] mt-4 px-4 py-2 rounded-4xl text-xs">
         <h1 className="text-2xl font-bold mb-4">Daftar Transaksi</h1>
-
         {history.length === 0 ? (
           <p className="text-gray-600">Belum ada riwayat pembelian.</p>
         ) : (
@@ -406,30 +362,30 @@ export default function Riwayat() {
                       <div className="flex gap-3 items-center">
                         <div
                           className={`px-4 py-2 rounded-full text-xs font-semibold 
-                                                        ${
-                                                          item.status_transaksi ===
-                                                          "PENDING"
-                                                            ? "bg-[#FFF2D5] text-[#B87A06]"
-                                                            : item.status_transaksi ===
-                                                              "DONE"
-                                                            ? "bg-[#D6FFDE] text-[#0A6810]"
-                                                            : item.status_transaksi ===
-                                                              "PAID"
-                                                            ? "bg-[#D6FFDE] text-[#0A6810]"
-                                                            : item.status_transaksi ===
-                                                              "ON_PROGRESS"
-                                                            ? item.jenis_pengiriman ===
-                                                              "COURIER"
-                                                              ? "bg-[#DDEDFC] text-[#1C274C]"
-                                                              : item.jenis_pengiriman ===
-                                                                "SELF_PICKUP"
-                                                              ? "bg-[#DDEDFC] text-[#1C274C]"
-                                                              : "bg-gray-200 text-gray-800"
-                                                            : item.status_transaksi ===
-                                                              "CANCELLED"
-                                                            ? "bg-[#FFEAEF] text-[#F0144A]"
-                                                            : "bg-gray-100 text-gray-500"
-                                                        }`}
+                            ${
+                                item.status_transaksi ===
+                                "PENDING"
+                                ? "bg-[#FFF2D5] text-[#B87A06]"
+                                : item.status_transaksi ===
+                                    "DONE"
+                                ? "bg-[#D6FFDE] text-[#0A6810]"
+                                : item.status_transaksi ===
+                                    "PAID"
+                                ? "bg-[#D6FFDE] text-[#0A6810]"
+                                : item.status_transaksi ===
+                                    "ON_PROGRESS"
+                                ? item.jenis_pengiriman ===
+                                    "COURIER"
+                                    ? "bg-[#DDEDFC] text-[#1C274C]"
+                                    : item.jenis_pengiriman ===
+                                    "SELF_PICKUP"
+                                    ? "bg-[#DDEDFC] text-[#1C274C]"
+                                    : "bg-gray-200 text-gray-800"
+                                : item.status_transaksi ===
+                                    "CANCELLED"
+                                ? "bg-[#FFEAEF] text-[#F0144A]"
+                                : "bg-gray-100 text-gray-500"
+                            }`}
                         >
                           {item.status_transaksi === "PENDING"
                             ? "Menunggu Pembayaran"
@@ -456,7 +412,7 @@ export default function Riwayat() {
                                   new Date(item.tanggal_pesan).setDate(
                                     new Date(item.tanggal_pesan).getDate() + 5
                                   )
-                                ).toLocaleDateString()}` // 5 hari setelah tanggal transaksi
+                                ).toLocaleDateString()}` 
                               : item.status_transaksi === "ON_PROGRESS" &&
                                 item.jenis_pengiriman === "COURIER"
                               ? `Barang diambil kurir pada ${formatTanggal(
@@ -639,7 +595,6 @@ export default function Riwayat() {
 
             <div className="flex mb-3 mt-3 justify-between">
               <div className="w-180 h-120 overflow-y-scroll hide-scrollbar">
-                {/* Status Transaksi */}
                 <div
                   className={`px-4 py-2 rounded-full text-xs font-semibold w-fit
                     ${

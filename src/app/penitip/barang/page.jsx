@@ -11,22 +11,15 @@ import { useEffect, useRef, useState } from "react";
 export default function PenitipBarangPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userLoading, setUserLoading] = useState(true);
   const [barangList, setBarangList] = useState([]);
-  const [barangLoading, setBarangLoading] = useState(false);
-
-  const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const dropdownRef = useRef(null);
-
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedBarang, setSelectedBarang] = useState(null);
-
   const [isClient, setIsClient] = useState(false);
-  useEffect(() => setIsClient(true), []);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => setIsClient(true), []);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -47,21 +40,16 @@ export default function PenitipBarangPage() {
             setUser(data.user);
           } else {
             setUser(null);
-            setError(userData.message || "User not authenticated");
             router.push("/login");
           }
         } else {
           setUser(null);
-          setError(userData.message || "User not authenticated");
           if (res.status === 401) {
             router.push("/login");
           }
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
-        setError("Terjadi kesalahan");
-      } finally {
-        setUserLoading(false);
       }
     };
 
@@ -72,7 +60,6 @@ export default function PenitipBarangPage() {
   useEffect(() => {
     const fetchBarangPenitip = async () => {
       try {
-        setBarangLoading(true);
         const res = await fetch(
           `/api/barang/by-penitip?q=${encodeURIComponent(searchQuery)}`
         );
@@ -80,8 +67,6 @@ export default function PenitipBarangPage() {
         setBarangList(data.barang || []);
       } catch (err) {
         console.error("Gagal mengambil barang:", err);
-      } finally {
-        setBarangLoading(false);
       }
     };
 

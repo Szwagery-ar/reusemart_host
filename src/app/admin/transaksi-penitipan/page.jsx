@@ -2,10 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlusCircle } from "lucide-react";
-import { NextResponse } from "next/server";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
 
 export default function TransaksiPenitipanPage() {
   const [barangList, setBarangList] = useState([]);
@@ -34,18 +30,6 @@ export default function TransaksiPenitipanPage() {
     },
   ]);
 
-  // const handleChange = (index, e) => {
-  //     const { name, value, type, files } = e.target;
-  //     setFormDataList((prev) => {
-  //         const newList = [...prev];
-  //         newList[index] = {
-  //             ...newList[index],
-  //             [name]: type === 'file' ? files : value,
-  //         };
-  //         return newList;
-  //     });
-  // };
-
   const handleChange = (index, e) => {
     const { name, value, type, files } = e.target;
     setFormDataList((prev) => {
@@ -56,7 +40,6 @@ export default function TransaksiPenitipanPage() {
         const newFiles = Array.from(files);
         const existing = item[name] ? Array.from(item[name]) : [];
 
-        // Gabungkan file lama dan baru
         const combined = [...existing, ...newFiles];
         item[name] = new FileListItems(combined);
       } else {
@@ -71,14 +54,6 @@ export default function TransaksiPenitipanPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // for (let i = 0; i < formDataList.length; i++) {
-    //     const item = formDataList[i];
-    //     if ((item.kategori_ids || []).includes(1) && !item.tanggal_garansi) {
-    //         alert(`Barang ke-${i + 1} wajib memiliki tanggal garansi karena termasuk Elektronik`);
-    //         return;
-    //     }
-    // }
-
     const token = document.cookie
       .split("; ")
       .find((row) => row.startsWith("token="))
@@ -90,8 +65,6 @@ export default function TransaksiPenitipanPage() {
       id_penitip: selectedPenitip,
     }));
     form.append("items", JSON.stringify(finalItems));
-
-    // form.append("items", JSON.stringify(formDataList));
 
     formDataList.forEach((item, index) => {
       Array.from(item.gambar || []).forEach((file) => {
@@ -200,55 +173,13 @@ export default function TransaksiPenitipanPage() {
         />
         <button
           onClick={() => setShowSidebar(true)}
-          // className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
           className="bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] text-white px-6 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition"
-          //w-full text-white py-3 rounded-full font-semibold bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]
         >
           Tambah Penitipan Barang
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2  lg:grid-cols-3 gap-6">
-        {/* {barangList.map((barang) => (
-                    <div
-                        key={barang.id_barang}
-                        // onClick={() => router.push(`/admin/barang/${barang.id_barang}`)}
-                        className="border p-4 rounded-lg shadow-sm bg-white cursor-pointer hover:shadow-md transition"
-                    >
-                        {Array.isArray(barang.gambar_barang) && barang.gambar_barang.length > 0 ? (
-                            <img
-                                src={barang.gambar_barang[0].src_img}
-                                alt={barang.nama_barang}
-                                className="w-full h-100 object-cover rounded"
-                            />
-                        ) : (
-                            <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400 rounded">
-                                Tidak ada gambar
-                            </div>
-                        )}
-                        <h2 className="text-lg font-semibold mt-2">{barang.nama_barang}</h2>
-                        <p className="text-sm text-gray-600">Kode: {barang.kode_produk}</p>
-                        <p className="text-sm text-gray-600">Harga: Rp{parseInt(barang.harga_barang).toLocaleString("id-ID")}</p>
-                        <p className="text-sm text-gray-600">Status Titip: {barang.status_titip}</p>
-                        <p className="text-sm text-gray-600">Garansi: {barang.tanggal_garansi?.split('T')[0] || '-'}</p>
-                        <p className="text-sm text-gray-600">Tanggal Masuk: {barang.tanggal_masuk?.split('T')[0]}</p>
-                        <p className="text-sm text-gray-600">Tanggal Keluar: {barang.tanggal_keluar?.split('T')[0] || '-'}</p>
-                        <p className="text-sm text-gray-600">Penitip: {barang.penitip_name || '-'}</p>
-
-                        <div className="mt-2 text-right">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    router.push(`/admin/transaksi-penitipan/nota-penitipan/${encodeURIComponent(barang.id_penitipan)}`);
-                                }}
-                                className="text-sm text-blue-600 underline hover:text-blue-800"
-                            >
-                                Lihat Nota
-                            </button>
-                        </div>
-                    </div>
-                ))} */}
-
         {barangList.map((penitipan) => (
           <div
             key={penitipan.id_penitipan}
@@ -295,15 +226,6 @@ export default function TransaksiPenitipanPage() {
                 </div>
               ))}
             </div>
-
-            {/* <div className="text-right mt-4">
-                            <button
-                                onClick={() => router.push(`/admin/transaksi-penitipan/nota-penitipan/${encodeURIComponent(penitipan.id_penitipan)}`)}
-                                className="text-sm text-blue-600 underline hover:text-blue-800"
-                            >
-                                Lihat Nota
-                            </button>
-                        </div> */}
             <div className="text-right mt-4 flex justify-end gap-2">
               <button
                 onClick={() =>
@@ -382,30 +304,11 @@ export default function TransaksiPenitipanPage() {
 
                   {item.isEditing && (
                     <div className="mt-4 grid gap-2">
-                      {/* 1. Gambar */}
-                      {/* <div>
-                                                <label className="font-semibold text-sm">Gambar Barang:</label>
-                                                <input name="gambar" type="file" multiple onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" />
-                                                {item.gambar && (
-                                                    <div className="flex gap-2 mt-2 flex-wrap">
-                                                        {Array.from(item.gambar).map((file, i) => (
-                                                            <img
-                                                                key={i}
-                                                                src={URL.createObjectURL(file)}
-                                                                alt={`preview-${i}`}
-                                                                className="w-20 h-20 object-cover border rounded"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div> */}
-
                       <div>
                         <label className="font-semibold text-sm">
                           Gambar Barang:
                         </label>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {/* Preview gambar */}
                           {item.gambar &&
                             Array.from(item.gambar).map((file, i) => (
                               <div key={i} className="relative w-20 h-20">
@@ -433,7 +336,6 @@ export default function TransaksiPenitipanPage() {
                               </div>
                             ))}
 
-                          {/* Tombol + untuk menambah file */}
                           <label className="w-20 h-20 border border-dashed rounded flex items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-100">
                             +
                             <input
@@ -447,8 +349,6 @@ export default function TransaksiPenitipanPage() {
                           </label>
                         </div>
                       </div>
-
-                      {/* 2. Kategori */}
                       <div className="mt-2">
                         <label className="font-semibold text-sm">
                           Kategori:
@@ -487,8 +387,6 @@ export default function TransaksiPenitipanPage() {
                           ))}
                         </div>
                       </div>
-
-                      {/* 3. Nama Barang */}
                       <div>
                         <label className="font-semibold text-sm">
                           Nama Barang:
@@ -501,8 +399,6 @@ export default function TransaksiPenitipanPage() {
                           required
                         />
                       </div>
-
-                      {/* 4. Harga */}
                       <div>
                         <label className="font-semibold text-sm">
                           Harga Barang:
@@ -516,8 +412,6 @@ export default function TransaksiPenitipanPage() {
                           required
                         />
                       </div>
-
-                      {/* 5. Berat */}
                       <div>
                         <label className="font-semibold text-sm">
                           Berat Barang:
@@ -531,19 +425,6 @@ export default function TransaksiPenitipanPage() {
                           required
                         />
                       </div>
-
-                      {/* 6. Penitip */}
-                      {/* <div>
-                                                <label className="font-semibold text-sm">Penitip:</label>
-                                                <select name="id_penitip" value={item.id_penitip} onChange={(e) => handleChange(index, e)} className="border px-3 py-2 rounded w-full" required>
-                                                    <option value="">---</option>
-                                                    {penitipOptions.map(p => (
-                                                        <option key={p.id_penitip} value={p.id_penitip}>{p.id_penitip} - {p.nama}</option>
-                                                    ))}
-                                                </select>
-                                            </div> */}
-
-                      {/* 7. QC */}
                       <div>
                         <label className="font-semibold text-sm">
                           Petugas QC:
@@ -563,8 +444,6 @@ export default function TransaksiPenitipanPage() {
                           ))}
                         </select>
                       </div>
-
-                      {/* 8. Deskripsi */}
                       <div>
                         <label className="font-semibold text-sm">
                           Deskripsi Barang:
@@ -577,8 +456,6 @@ export default function TransaksiPenitipanPage() {
                           required
                         />
                       </div>
-
-                      {/* Optional: Tanggal Garansi jika Elektronik */}
                       {item.kategori_ids.includes(1) && (
                         <div>
                           <label className="font-semibold text-sm">

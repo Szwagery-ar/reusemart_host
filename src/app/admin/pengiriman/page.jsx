@@ -3,11 +3,9 @@
 import { useEffect, useState } from "react";
 import { EllipsisVertical, Printer, X } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { handlePrintPDF } from "../../../utils/printPengirimanNota";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-import { handlePrintPDF } from "../../../utils/printPengirimanNota";
 
 export default function AdminPengirimanPage() {
   const [transaksiList, setTransaksiList] = useState([]);
@@ -21,7 +19,6 @@ export default function AdminPengirimanPage() {
   const [filterJenis, setFilterJenis] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [transaksiDetail, setTransaksiDetail] = useState(null);
-
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   useEffect(() => {

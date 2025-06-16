@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { redirect } from 'next/navigation';
-import LogoutButton from '@/components/LogoutButton/LogoutButton';
 
 export default async function OrganisasiDashboard() {
     const cookieStore = await cookies();

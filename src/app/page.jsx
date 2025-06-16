@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
 
@@ -33,7 +32,7 @@ export default function Home() {
   };
 
   const navigateToLogin = () => {
-    router.push("/login"); // Navigate to the login page
+    router.push("/login");
   };
 
   return (

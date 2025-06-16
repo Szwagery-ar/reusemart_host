@@ -14,10 +14,7 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [usePoin, setUsePoin] = useState(true);
-
   const [poinDigunakan, setPoinDigunakan] = useState(0);
-  const poinLoyalitas = user?.poin_loyalitas || 0;
 
   const totalHarga = cartItems
     .filter((item) => selectedItems.includes(item.id_bridge_barang))

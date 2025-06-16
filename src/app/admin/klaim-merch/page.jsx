@@ -1,14 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { EllipsisVertical, Printer, X } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EllipsisVertical, X } from "lucide-react";
 import WithRole from "@/components/WithRole/WithRole";
 
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-import { handlePrintPDF } from "../../../utils/printPengirimanNota";
 
 export default function AdminKlaimPage() {
   const [klaimList, setKlaimList] = useState([]);
@@ -145,7 +142,6 @@ export default function AdminKlaimPage() {
             <option value="BELUM">Belum Diambil</option>
           </select>
         </div>
-
         <div className="overflow-x-auto">
           <div className="grid grid-cols-7 bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)] text-white p-3 rounded-lg font-semibold text-sm">
             <div>ID</div>
