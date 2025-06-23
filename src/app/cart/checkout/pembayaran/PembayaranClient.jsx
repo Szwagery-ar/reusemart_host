@@ -8,7 +8,6 @@ export default function PembayaranPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id_transaksi = searchParams.get("id_transaksi");
-
   const [transaksi, setTransaksi] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -71,8 +70,6 @@ export default function PembayaranPage() {
       console.error("Upload gagal:", errMsg);
       return alert("Gagal mengupload bukti pembayaran.");
     }
-
-    const uploadData = await uploadRes.json();
 
     alert("Bukti pembayaran berhasil dikirim!");
     setIsUploaded(true);

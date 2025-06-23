@@ -13,7 +13,6 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 const formatToJt = (value) => {
   if (!value || value === 0) return 'Rp 0';
   
-  // Konversi ke number jika berupa string
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   
   if (numValue >= 1_000_000) {
@@ -26,9 +25,6 @@ const formatToJt = (value) => {
 };
 
 export default function BarChartJt({ data }) {
-  // Debug: log data untuk melihat nilai sebenarnya
-  console.log('Chart data:', data);
-  
   const chartData = {
     labels: data.map((d) => d.name),
     datasets: [

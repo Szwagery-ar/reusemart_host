@@ -6,7 +6,6 @@ export default function PegawaiPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Retrieve user data from localStorage
     const userData = JSON.parse(localStorage.getItem('user'));
     if (userData) {
       setUser(userData);
