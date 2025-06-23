@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,9 @@ import { CalendarIcon, EllipsisVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export default function PenitipBarangPage() {
+
+export default function PerpanjanganLanjutanPage() {
+
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [userLoading, setUserLoading] = useState(true);
@@ -23,6 +26,8 @@ export default function PenitipBarangPage() {
 
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedBarang, setSelectedBarang] = useState(null);
+
+    const [showModalPerpanjangan, setShowModalPerpanjangan] = useState(false);
 
     const [isClient, setIsClient] = useState(false);
     useEffect(() => setIsClient(true), []);
@@ -74,7 +79,7 @@ export default function PenitipBarangPage() {
             try {
                 setBarangLoading(true);
                 const res = await fetch(
-                    `/api/barang/by-penitip?q=${encodeURIComponent(searchQuery)}`
+                    `/api/penitip/penitipan-lanjutan?q=${encodeURIComponent(searchQuery)}`
                 );
                 const data = await res.json();
                 setBarangList(data.barang || []);
@@ -128,16 +133,23 @@ export default function PenitipBarangPage() {
 
     const handleAjukanPerpanjangan = async (id_barang) => {
         const barang = barangList.find((b) => b.id_barang === id_barang);
-        if (!barang || !barang.tanggal_expire) {
+        if (!barang || !barang.tanggal_expire || !barang.komisi_penitip || !barang.harga_barang) {
             alert("Data barang tidak valid.");
+            return;
+        }
+
+        // Hitung potongan
+        const potongan = barang.harga_barang * 0.05;
+
+        // Cek saldo
+        if (barang.komisi_penitip < potongan) {
+            alert("Saldo penitip tidak mencukupi untuk memperpanjang.");
             return;
         }
 
         try {
             const tanggalLama = new Date(barang.tanggal_expire);
-            const tanggalBaru = new Date(
-                tanggalLama.setDate(tanggalLama.getDate() + 30)
-            );
+            const tanggalBaru = new Date(tanggalLama.setDate(tanggalLama.getDate() + 30));
 
             const res = await fetch(`/api/barang/by-penitip/${id_barang}`, {
                 method: "PUT",
@@ -148,6 +160,7 @@ export default function PenitipBarangPage() {
                     tanggal_expire: tanggalBaru.toISOString().split("T")[0],
                     status_titip: "EXTENDED",
                     is_extended: 1,
+                    potongan_komisi: potongan, // bisa digunakan di backend untuk update saldo
                 }),
             });
 
@@ -163,16 +176,19 @@ export default function PenitipBarangPage() {
                             tanggal_expire: tanggalBaru.toISOString().split("T")[0],
                             status_titip: "EXTENDED",
                             is_extended: 1,
+                            komisi_penitip: item.komisi_penitip - potongan,
                         }
                         : item
                 )
             );
             setShowDetailModal(false);
+            setShowModalPerpanjangan(false);
         } catch (err) {
             console.error("Error perpanjangan:", err);
             alert("Terjadi kesalahan saat memperpanjang.");
         }
     };
+
 
     const handleAjukanPengembalian = async (id_barang) => {
         try {
@@ -211,7 +227,7 @@ export default function PenitipBarangPage() {
             {
                 /* Main Content */
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-4xl font-[Montage-Demo]">Barang Titipan</h2>
+                    <h2 className="text-4xl font-[Montage-Demo]">Perpanjangan Penitipan Lanjutan</h2>
                     <div className="flex items-center gap-4">
                         {isClient && (
                             <div className="font-mono text-lg text-gray-800 flex gap-2">
@@ -255,24 +271,6 @@ export default function PenitipBarangPage() {
                 </div>
             }
 
-            {/* Tabs */}
-            <Tabs defaultValue="semua" className="mb-4">
-                <TabsList className="flex gap-4">
-                    {[
-                        "Semua",
-                        "Sedang Dititipkan",
-                        "Masa Titip Habis",
-                        "Dalam Transaksi",
-                        "Terjual",
-                        "Didonasikan",
-                    ].map((tab) => (
-                        <TabsTrigger key={tab} value={tab.toLowerCase().replace(/ /g, "-")}>
-                            {tab}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-            </Tabs>
-
             {/* Search and Filters */}
             <div className="flex gap-4 items-center mb-6">
                 <Input
@@ -291,13 +289,11 @@ export default function PenitipBarangPage() {
             </div>
 
             {/* Table Header */}
-            <div className="grid grid-cols-[60px_1fr_140px_140px_140px_140px_100px_80px] text-white p-4 rounded-xl font-semibold text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
-                <div>Kode</div>
+            <div className="grid grid-cols-[60px_1fr_140px_140px_140px_100px_80px] text-white p-4 rounded-xl font-semibold text-sm bg-[radial-gradient(ellipse_130.87%_392.78%_at_121.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
+                <div>ID</div>
                 <div>Nama</div>
-                <div>Harga</div>
                 <div>Tanggal Masuk</div>
                 <div>Tanggal Expire</div>
-                <div>Tanggal Terbeli</div>
                 <div>Status</div>
                 <div className="flex justify-center">Action</div>
             </div>
@@ -305,23 +301,19 @@ export default function PenitipBarangPage() {
             {/* Items */}
             {barangList.length === 0 ? (
                 <div className="flex flex-row justify-center p-4 mt-3 rounded-xl border-1 border-black text-sm">
-                    <p>Kamu belum menitipkan barang. Yuk titipin barangmu sekarang!</p>
+                    <p>Belum ada barang yang diperpanjang</p>
                 </div>
             ) : (
                 <div>
                     {barangList.map((item) => (
                         <div
                             key={item.id_barang}
-                            className="grid grid-cols-[60px_1fr_140px_140px_140px_140px_100px_80px] p-4 mt-3 rounded-xl border border-black text-sm"
+                            className="grid grid-cols-[60px_1fr_140px_140px_140px_100px_80px] p-4 mt-3 rounded-xl border border-black text-sm"
                         >
                             <div>{item.kode_produk}</div>
                             <div className="truncate">{item.nama_barang}</div>
-                            <div className="truncate">{formatRupiah(item.harga_barang)}</div>
                             <div>{formatDate(item.tanggal_masuk)}</div>
                             <div>{formatDate(item.tanggal_expire)}</div>
-                            <div>
-                                {item.tanggal_keluar ? formatDate(item.tanggal_keluar) : "-"}
-                            </div>
                             <div>{item.status_titip}</div>
                             <div className="flex justify-center items-center">
                                 <div className="relative dropdown-action">
@@ -438,33 +430,24 @@ export default function PenitipBarangPage() {
                         </div>
 
                         <div className="flex gap-5">
-                            {isClient &&
-                                (() => {
-                                    const expireDate = new Date(selectedBarang.tanggal_expire);
-                                    const today = new Date(currentTime);
-                                    expireDate.setHours(0, 0, 0, 0);
-                                    today.setHours(0, 0, 0, 0);
-                                    const selisihHari = Math.ceil(
-                                        (expireDate - today) / (1000 * 60 * 60 * 24)
-                                    );
-
-                                    const isH3OrLess = selisihHari <= 3;
-                                    const isAvailable =
-                                        selectedBarang.status_titip?.toLowerCase() === "available";
-
-                                    return isH3OrLess && isAvailable;
-                                })() && (
-                                    <div className="mt-6">
-                                        <button
-                                            onClick={() =>
-                                                handleAjukanPerpanjangan(selectedBarang.id_barang)
+                            {isClient && selectedBarang && (
+                                <div className="mt-6">
+                                    <button
+                                        onClick={() => {
+                                            const potongan = selectedBarang.harga_barang * 0.05;
+                                            if (selectedBarang.komisi_penitip < potongan) {
+                                                alert("Saldo penitip tidak mencukupi untuk mengajukan perpanjangan.");
+                                                return;
                                             }
-                                            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                                        >
-                                            Ajukan Perpanjangan
-                                        </button>
-                                    </div>
-                                )}
+                                            setShowModalPerpanjangan(true);
+                                        }}
+                                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                                    >
+                                        Ajukan Perpanjangan Lanjutan
+                                    </button>
+                                </div>
+                            )}
+
 
                             {isClient &&
                                 (() => {
@@ -512,6 +495,43 @@ export default function PenitipBarangPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showModalPerpanjangan && (
+                <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-60">
+                    <div className="bg-white fixed p-6 w-lg overflow-y-auto shadow-lg rounded-md z-70">
+                        <p className="text-lg">
+                            Apakah Anda Yakin Akan memperpanjang masa penitipan barang ini dengan harga Rp. <b>{formatRupiah(selectedBarang.harga_barang)}</b> dan pemotongan saldo sebesar <b>{formatRupiah(selectedBarang.harga_barang * 0.05)}</b>
+                        </p>
+                        <p className="text-xs text-gray-600 mb-2">
+                            *Perpanjangan lanjutan akan memotong saldo penitip sebesar <b>5%</b> dari harga barang.
+                        </p>
+
+                        {selectedBarang && (
+                            <div className="text-sm mb-4">
+                                <p>Harga Barang: <b>{formatRupiah(selectedBarang.harga_barang)}</b></p>
+                                <p>Saldo Penitip (Komisi): <b>{formatRupiah(selectedBarang.komisi_penitip)}</b></p>
+                                <p>Biaya Perpanjangan (5%): <b>{formatRupiah(selectedBarang.harga_barang * 0.05)}</b></p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-4 mt-4">
+                            <button
+                                onClick={() => handleAjukanPerpanjangan(selectedBarang.id_barang)}
+                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                            >
+                                Ajukan Perpanjangan Lanjutan
+                            </button>
+                            <button
+                                onClick={() => setShowModalPerpanjangan(false)}
+                                className="px-4 py-2 bg-gray-200 rounded"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             )}
         </div>
     );

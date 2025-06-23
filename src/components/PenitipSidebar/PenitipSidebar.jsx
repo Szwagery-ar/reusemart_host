@@ -40,6 +40,7 @@ export default function PenitipSidebar() {
         { name: 'Dashboard', path: '/penitip', icon: LayoutDashboard },
         { name: 'Barang Titipan', path: '/penitip/barang', icon: Package },
         { name: 'Riwayat Transaksi', path: '/penitip/riwayat', icon: ClipboardList },
+        { name: 'Perpanjangan Lanjutan', path: '/penitip/perpanjangan-lanjutan', icon: ClipboardList },
     ];
 
     return (
