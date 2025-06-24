@@ -59,10 +59,10 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-5">
               <div className="bg-[#220593] rounded-4xl overflow-hidden">
                 <div className="w-xs">
-                  <img src="/images/home/guitar.png" alt="" className="" />
+                  <img src="/images/Home/Guitar.png" alt="" className="" />
                 </div>
                 <div className="w-xs">
-                  <img src="/images/home/camera.png" alt="" className="" />
+                  <img src="/images/Home/Camera.png" alt="" className="" />
                 </div>
               </div>
               <div className="bg-[#220593] rounded-4xl p-4">
@@ -94,7 +94,7 @@ export default function Home() {
         <div className="grid grid-cols-3 gap-4 mt-4">
           <div className="bg-[#220593] rounded-4xl p-3 inline-flex">
             <img
-              src="/images/home/linear/Tag-Price.png"
+              src="/images/Home/Linear/Tag-Price.png"
               alt="Tag Price"
               className="scale-80"
             />
@@ -110,7 +110,7 @@ export default function Home() {
           </div>
           <div className="bg-[#220593] rounded-4xl p-3 inline-flex">
             <img
-              src="/images/home/linear/verified-check.png"
+              src="/images/Home/Linear/Verified-Check.png"
               alt="Verified Check"
               className="scale-80"
             />
@@ -125,7 +125,7 @@ export default function Home() {
           </div>
           <div className="bg-[#220593] rounded-4xl p-3 inline-flex">
             <img
-              src="/images/home/linear/hand-stars.png"
+              src="/images/Home/Linear/Hand-Stars.png"
               alt="Hand Stars"
               className="scale-80"
             />
@@ -142,7 +142,7 @@ export default function Home() {
         </div>
 
         <div className="mt-4 rounded-4xl overflow-hidden">
-          <img src="/images/home/promo-1.png" alt="promo 1" className="" />
+          <img src="/images/Home/Promo-1.png" alt="promo 1" className="" />
         </div>
 
         <div className="mt-20 flex place-content-between ">
@@ -200,7 +200,7 @@ export default function Home() {
         <div className="grid grid-cols-4 grid-rows-3 gap-4">
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Interior-2.png"
+              src="/images/Home/Kategori/Categories-Interior-2.png"
               alt="Interior"
               className="h-full w-full object-cover"
             />
@@ -210,7 +210,7 @@ export default function Home() {
           </div>
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Elektronik-1.png"
+              src="/images/Home/Kategori/Categories-Elektronik-1.png"
               alt="Elektronik"
               className="h-full w-full object-cover"
             />
@@ -220,7 +220,7 @@ export default function Home() {
           </div>
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Buku-1.png"
+              src="/images/Home/Kategori/Categories-Buku-1.png"
               alt="Buku"
               className="h-full w-full object-cover"
             />
@@ -230,7 +230,7 @@ export default function Home() {
           </div>
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Hobi-1.png"
+              src="/images/Home/Kategori/Categories-Hobi-1.png"
               alt="Hobi"
               className="h-full w-full object-cover"
             />
@@ -240,7 +240,7 @@ export default function Home() {
           </div>
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Pakaian-1.png"
+              src="/images/Home/Kategori/Categories-Pakaian-1.png"
               alt="Pakaian"
               className="h-full w-full object-cover"
             />
@@ -251,7 +251,7 @@ export default function Home() {
 
           <div className="col-span-2">
             <img
-              src="/images/home/kategori/Group-79.png"
+              src="/images/Home/Kategori/Group-79.png"
               alt="Pakaian"
               className="h-full w-full object-cover"
             />
@@ -259,7 +259,7 @@ export default function Home() {
 
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Outdoor-1.png"
+              src="/images/Home/Kategori/Categories-Outdoor-1.png"
               alt="Outdoor"
               className="h-full w-full object-cover"
             />
@@ -269,7 +269,7 @@ export default function Home() {
           </div>
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Otomotif-1.png"
+              src="/images/Home/Kategori/Categories-Otomotif-1.png"
               alt="Otomotif"
               className="h-full w-full object-cover"
             />
@@ -279,7 +279,7 @@ export default function Home() {
           </div>
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Bayi-1.png"
+              src="/images/Home/Kategori/Categories-Bayi-1.png"
               alt="Bayi"
               className="h-full w-full object-cover"
             />
@@ -289,7 +289,7 @@ export default function Home() {
           </div>
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Kantor-3.png"
+              src="/images/Home/Kategori/Categories-Kantor-3.png"
               alt="Kantor"
               className="h-full w-full object-cover"
             />
@@ -299,7 +299,7 @@ export default function Home() {
           </div>
           <div className="relative bg-gray-500 rounded-4xl overflow-clip">
             <img
-              src="/images/home/kategori/Categories-Kosmetik-1.png"
+              src="/images/Home/Kategori/Categories-Kosmetik-1.png"
               alt="Kosmetik"
               className="h-full w-full object-cover"
             />
