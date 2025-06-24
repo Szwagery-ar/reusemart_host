@@ -25,7 +25,7 @@ export async function POST(req) {
         const token = jwt.sign({ id: user.id_penitip, role: 'penitip' }, JWT_SECRET, { expiresIn: '1h' });
 
         // Menunggu cookies() secara asinkron
-        const cookieStore = await cookies();
+        const cookieStore = cookies();
         cookieStore.set('token', token, {
           httpOnly: true,
           path: '/',
@@ -57,7 +57,7 @@ export async function POST(req) {
         const token = jwt.sign({ id: user.id_pembeli, role: 'pembeli' }, JWT_SECRET, { expiresIn: '1h' });
 
         // Menunggu cookies() secara asinkron
-        const cookieStore = await cookies();
+        const cookieStore = cookies();
         cookieStore.set('token', token, {
           httpOnly: true,
           path: '/',
@@ -82,7 +82,7 @@ export async function POST(req) {
         const token = jwt.sign({ id: user.id_organisasi, role: 'organisasi' }, JWT_SECRET, { expiresIn: '1h' });
 
         // Menunggu cookies() secara asinkron
-        const cookieStore = await cookies();
+        const cookieStore = cookies();
         cookieStore.set('token', token, {
           httpOnly: true,
           path: '/',
