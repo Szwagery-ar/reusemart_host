@@ -1,8 +1,9 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
+// import { writeFile } from "fs/promises";
+// import path from "path";
+// import { v4 as uuidv4 } from "uuid";
+import { put } from "@vercel/blob";
 
 export async function GET(request) {
     try {
@@ -34,9 +35,9 @@ export async function GET(request) {
             WHERE 1=1
         `;
 
-    let values = [];
-    if (search) {
-      query += `
+        let values = [];
+        if (search) {
+            query += `
                 AND (
                     LOWER(b.id_barang) LIKE ? OR
                     LOWER(b.kode_produk) LIKE ? OR
@@ -180,15 +181,24 @@ export async function POST(request) {
         // Simpan gambar ke file system dan path-nya ke DB
         for (const file of gambarFiles) {
             const buffer = Buffer.from(await file.arrayBuffer());
-            const filename = `${uuidv4()}-${file.name}`;
-            const filePath = path.join(process.cwd(), "public/uploads", filename);
-
-            await writeFile(filePath, buffer);
+            const filename = `barang-${Date.now()}-${file.name}`;
+            const { url } = await put(filename, buffer, { access: "public" });
 
             await pool.query(
                 `INSERT INTO gambarbarang (id_barang, src_img) VALUES (?, ?)`,
-                [id_barang, `/uploads/${filename}`] // simpan path ke kolom src_img
+                [id_barang, url] // simpan full CDN URL
             );
+
+            // const buffer = Buffer.from(await file.arrayBuffer());
+            // const filename = `${uuidv4()}-${file.name}`;
+            // const filePath = path.join(process.cwd(), "public/uploads", filename);
+
+            // await writeFile(filePath, buffer);
+
+            // await pool.query(
+            //     `INSERT INTO gambarbarang (id_barang, src_img) VALUES (?, ?)`,
+            //     [id_barang, `/uploads/${filename}`] // simpan path ke kolom src_img
+            // );
         }
 
         return NextResponse.json(
