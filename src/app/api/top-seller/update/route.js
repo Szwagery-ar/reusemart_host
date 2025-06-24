@@ -86,15 +86,30 @@ export async function POST() {
         await connection.query(`UPDATE penitip SET badge_level = 'novice'`);
 
         // 2. Update badge_level ke 'TOP SELLER' berdasarkan jml_barang_terjual_bulanan tertinggi
+        // await connection.query(`
+        //     UPDATE penitip
+        //     SET badge_level = 'TOP SELLER'
+        //     WHERE id_penitip = (
+        //         SELECT id_penitip
+        //         FROM penitip
+        //         ORDER BY jml_barang_terjual_bulanan DESC
+        //         LIMIT 1
+        //     )
+        // `);
+
+        //Adjustment
         await connection.query(`
             UPDATE penitip
+            JOIN (
+                SELECT id_penitip FROM (
+                    SELECT id_penitip
+                    FROM penitip
+                    ORDER BY jml_barang_terjual_bulanan DESC
+                    LIMIT 1
+                ) AS sub
+            ) AS top
+            ON penitip.id_penitip = top.id_penitip
             SET badge_level = 'TOP SELLER'
-            WHERE id_penitip = (
-                SELECT id_penitip
-                FROM penitip
-                ORDER BY jml_barang_terjual_bulanan DESC
-                LIMIT 1
-            )
         `);
 
         // 3. Hitung total penjualan bulanan berdasarkan transaksi 'DONE'
