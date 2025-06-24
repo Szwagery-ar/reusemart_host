@@ -101,10 +101,10 @@ export async function POST(request) {
 
         const id_penitip = items[0].id_penitip;
         const tanggal_masuk = new Date();
-
+        const dummyNota = 'pending';
         const [insertPenitipan] = await pool.query(
-            `INSERT INTO penitipanbarang (id_penitip, tanggal_masuk) VALUES (?, ?)`,
-            [id_penitip, tanggal_masuk]
+            `INSERT INTO penitipanbarang (id_penitip, tanggal_masuk, no_nota) VALUES (?, ?, ?)`,
+            [id_penitip, tanggal_masuk, dummyNota]
         );
         const id_penitipan = insertPenitipan.insertId;
 
