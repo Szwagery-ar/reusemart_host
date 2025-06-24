@@ -20,8 +20,8 @@ export async function verifyUserRole(allowedRoles = []) {
 
     if (decoded.role === 'pegawai') {
       const [result] = await pool.query(`
-        SELECT j.nama_jabatan FROM Pegawai p
-        LEFT JOIN Jabatan j ON p.id_jabatan = j.id_jabatan
+        SELECT j.nama_jabatan FROM pegawai p
+        LEFT JOIN jabatan j ON p.id_jabatan = j.id_jabatan
         WHERE p.id_pegawai = ?
       `, [decoded.id]);
 
