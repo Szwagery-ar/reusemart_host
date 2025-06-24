@@ -19,20 +19,37 @@ export async function PATCH(request, { params }) {
 
         const { diskon, id_pembeli } = txRows[0];
 
+        // const [bridgeItems] = await pool.query(`
+        //     SELECT bc.id_bridge_barang
+        //     FROM barang b
+        //     JOIN bridgebarangcart bc ON b.id_barang = bc.id_barang
+        //     WHERE bc.id_transaksi = ?;
+        // `, [id_transaksi]);
+
+        // if (bridgeItems.length > 0) {
+        //     const ids = bridgeItems.map(b => b.id_bridge_barang);
+        //     await pool.query(`
+        //         DELETE FROM bridgebarangcart
+        //         WHERE id_bridge_barang IN (?)
+        //     `, [ids]);
+        // }
+
+
+        //pakai db yang baru
         const [bridgeItems] = await pool.query(`
-            SELECT bc.id_bridge_barang
-            FROM barang b
-            JOIN bridgebarangcart bc ON b.id_barang = bc.id_barang
-            WHERE bc.id_transaksi = ?;
+            SELECT bbt.id_bridge_barang_transaksi
+            FROM bridgebarangtransaksi bbt
+            WHERE bbt.ID_Transaksi = ?;
         `, [id_transaksi]);
 
         if (bridgeItems.length > 0) {
-            const ids = bridgeItems.map(b => b.id_bridge_barang);
+            const ids = bridgeItems.map(b => b.id_bridge_barang_transaksi);
             await pool.query(`
-                DELETE FROM bridgebarangcart
-                WHERE id_bridge_barang IN (?)
+                DELETE FROM bridgebarangtransaksi
+                WHERE id_bridge_barang_transaksi IN (?);
             `, [ids]);
         }
+
 
         await pool.query(`UPDATE transaksi SET status_transaksi = 'CANCELLED' WHERE id_transaksi = ?`, [id_transaksi]);
 
