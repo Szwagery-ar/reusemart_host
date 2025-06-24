@@ -61,12 +61,12 @@ export default function Register() {
   return (
     <div className="min-h-screen w-full flex text-white bg-[radial-gradient(ellipse_130.87%_392.78%_at_-1.67%_100%,_#26C2FF_0%,_#220593_90%)]">
       <img
-        src="/images/login/Stringbackground.png"
+        src="/images/Login/Stringbackground.png"
         alt="background"
         className="absolute right-0 w-[50%] rotate-180"
       />
       <div className="hidden relative lg:flex w-1/2 items-center justify-center">
-        <img src="/images/login/register.png" alt="gambar login" className="" />
+        <img src="/images/Login/Register.png" alt="gambar login" className="" />
       </div>
       <div className="z-3 w-full lg:w-1/2 flex flex-col justify-center px-10 xl:px-25 lg:px-20 md:px-30 py-10">
         <h3 className="text-5xl lg:text-6xl md:text-6xl mb-5 font-[Montage-Demo] text-center">

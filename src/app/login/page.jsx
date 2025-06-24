@@ -190,7 +190,7 @@ export default function Login() {
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row text-white bg-[radial-gradient(ellipse_130.87%_392.78%_at_101.67%_0.00%,_#26C2FF_0%,_#220593_90%)]">
       <img
-        src="/images/login/Stringbackground.png"
+        src="/images/Login/Stringbackground.png"
         alt="background"
         className="absolute bottom-0 w-[50%]"
       />
@@ -326,7 +326,7 @@ export default function Login() {
         {/* <img src="/images/login/Strips.png" alt="garis"
           className='absolute w-[25%] top-10 right-130'
         /> */}
-        <img src="/images/login/Gambar1.png" alt="gambar login" className="" />
+        <img src="/images/Login/Gambar1.png" alt="gambar login" className="" />
         {/* <img src="/images/login/login 2.png" alt="gambar login"
           className='absolute bottom-20 right-120 w-[30%] rounded-[40px] shadow-[-15px_15px_0px_0px_rgba(255,255,255,1.00)]'
         /> */}
