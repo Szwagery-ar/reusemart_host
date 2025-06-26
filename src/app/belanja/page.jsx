@@ -105,7 +105,7 @@ export default function Belanja() {
         <div>
             <div className="px-6 md:px-20 mt-24">
                 <img
-                    src="/images/Home/promo-1.png"
+                    src="/images/Home/Promo-1.png"
                     alt="Banner Promo"
                     className="rounded-3xl w-full max-h-[300px] object-cover"
                 />
