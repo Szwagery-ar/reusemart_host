@@ -21,16 +21,29 @@ export async function GET(request) {
 
 
         // 1. Penjualan Bulanan
+        // const [penjualanRows] = await pool.query(`
+        //     SELECT 
+        //         MONTHNAME(t.tanggal_lunas) AS bulan,
+        //         COUNT(bt.id_barang) AS jumlah_terjual,
+        //         SUM(DISTINCT t.harga_akhir) AS jumlah_penjualan
+        //     FROM transaksi t
+        //     JOIN bridgebarangtransaksi bt ON t.id_transaksi = bt.id_transaksi
+        //     WHERE t.status_transaksi = 'DONE' ${isAll ? "" : "AND YEAR(t.tanggal_lunas) = ?"}
+        //     GROUP BY MONTHNAME(t.tanggal_lunas)
+        //     ORDER BY MONTH(t.tanggal_lunas)
+        // `, isAll ? [] : [tahunNumber]);
+
         const [penjualanRows] = await pool.query(`
             SELECT 
+                MONTH(t.tanggal_lunas) AS bulan_angka,
                 MONTHNAME(t.tanggal_lunas) AS bulan,
                 COUNT(bt.id_barang) AS jumlah_terjual,
                 SUM(DISTINCT t.harga_akhir) AS jumlah_penjualan
             FROM transaksi t
             JOIN bridgebarangtransaksi bt ON t.id_transaksi = bt.id_transaksi
             WHERE t.status_transaksi = 'DONE' ${isAll ? "" : "AND YEAR(t.tanggal_lunas) = ?"}
-            GROUP BY MONTHNAME(t.tanggal_lunas)
-            ORDER BY MONTH(t.tanggal_lunas)
+            GROUP BY bulan_angka, bulan
+            ORDER BY bulan_angka
         `, isAll ? [] : [tahunNumber]);
 
         const penjualan = penjualanRows.map(row => ({
