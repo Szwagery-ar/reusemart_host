@@ -29,7 +29,7 @@ export async function GET(request) {
             FROM transaksi t
             JOIN bridgebarangtransaksi bt ON t.id_transaksi = bt.id_transaksi
             WHERE t.status_transaksi = 'DONE' ${isAll ? "" : "AND YEAR(t.tanggal_lunas) = ?"}
-            GROUP BY MONTH(t.tanggal_lunas)
+            GROUP BY MONTHNAME(t.tanggal_lunas)
             ORDER BY MONTH(t.tanggal_lunas)
         `, isAll ? [] : [tahunNumber]);
 
