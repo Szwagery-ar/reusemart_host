@@ -8,7 +8,7 @@ export async function POST(req) {
   const { email, password } = await req.json();
 
   try {
-    const userRoles = ['Penitip', 'Pembeli', 'Pegawai'];
+    const userRoles = ['penitip', 'pembeli', 'pegawai'];
 
     for (const role of userRoles) {
       const [result] = await pool.query(
@@ -33,11 +33,11 @@ export async function POST(req) {
       let finalRole = role.toLowerCase();
 
       // Jika pegawai, ambil nama_jabatan sebagai role
-      if (role === 'Pegawai') {
+      if (role === 'pegawai') {
         const [jabatanResult] = await pool.query(
           `SELECT j.nama_jabatan 
-           FROM Pegawai p
-           LEFT JOIN Jabatan j ON p.id_jabatan = j.id_jabatan
+           FROM pegawai p
+           LEFT JOIN jabatan j ON p.id_jabatan = j.id_jabatan
            WHERE p.id_pegawai = ?`,
           [user.id_pegawai]
         );
