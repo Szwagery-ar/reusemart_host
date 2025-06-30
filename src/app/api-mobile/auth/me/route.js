@@ -23,7 +23,7 @@ export async function GET(request) {
     if (role === "penitip") {
       const [rows] = await pool.query(
         `SELECT id_penitip AS id, nama, email, no_ktp, no_telepon, src_img_profile, jml_barang_terjual, badge_level, komisi, poin_reward
-        FROM Penitip 
+        FROM penitip 
         WHERE id_penitip = ?
         `,
         [id]
@@ -33,7 +33,7 @@ export async function GET(request) {
       const [rows] = await pool.query(
         `
         SELECT id_pembeli, nama, email, no_telepon, poin_loyalitas, src_img_profile
-        FROM Pembeli 
+        FROM pembeli 
         WHERE id_pembeli = ?
       `,
         [id]
@@ -52,8 +52,8 @@ export async function GET(request) {
           p.komisi,
           p.src_img_profile,
           j.nama_jabatan
-        FROM Pegawai p
-        LEFT JOIN Jabatan j ON p.id_jabatan = j.id_jabatan
+        FROM pegawai p
+        LEFT JOIN jabatan j ON p.id_jabatan = j.id_jabatan
         WHERE p.id_pegawai = ?
         `,
         [id]
